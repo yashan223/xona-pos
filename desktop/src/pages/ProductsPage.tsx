@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Package, Plus, Trash2, Edit3, Save, X } from 'lucide-react';
+import { Package, Plus, Trash2, Edit3, Save, X, FolderPlus } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
 import { productApi } from '@/lib/api';
 import type { ProductRecord, User } from '@/lib/api';
@@ -12,8 +12,13 @@ interface ProductsPageProps {
 
 export default function ProductsPage({ currentUser }: ProductsPageProps) {
   const [products, setProducts] = useState<ProductRecord[]>(cachedProducts || []);
+  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(!cachedProducts);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All');
+  
+  // Custom categories list state (stored in localStorage)
+  const [newCategoryName, setNewCategoryName] = useState('');
   
   // Form states
   const [isEditing, setIsEditing] = useState<string | null>(null); // product ID or 'new'
@@ -28,6 +33,10 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
   const [formError, setFormError] = useState('');
   const [uploading, setUploading] = useState(false);
   const [formTrackStock, setFormTrackStock] = useState(true);
+  
+  // Inline category input state for select dropdown
+  const [showNewCatInput, setShowNewCatInput] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
 
   useEffect(() => {
     loadProducts();
@@ -49,6 +58,13 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
       const data = await productApi.getAll();
       setProducts(data);
       cachedProducts = data;
+      
+      // Sync and load categories
+      const savedCats = localStorage.getItem('product_categories');
+      const customCats = savedCats ? JSON.parse(savedCats) : ['General', 'Electronics', 'Beverages', 'Snacks'];
+      const productCats = Array.from(new Set(data.map(p => p.category)));
+      const combined = Array.from(new Set([...customCats, ...productCats])).filter(Boolean).sort();
+      setCategories(combined);
     } catch (err) {
       console.error('Failed to load products:', err);
     } finally {
@@ -79,6 +95,8 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
         cachedProducts = updated;
         return updated;
       });
+      // Broadcast WebSocket-style reload event locally
+      window.dispatchEvent(new CustomEvent('products_updated'));
     } catch (err) {
       console.error('Failed to delete product:', err);
     }
@@ -96,6 +114,8 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
     setFormDescription(prod.description || '');
     setFormImageUrl(prod.imageUrl || '');
     setFormError('');
+    setShowNewCatInput(false);
+    setNewCatName('');
   };
 
   const startAddNew = () => {
@@ -110,6 +130,45 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
     setFormDescription('');
     setFormImageUrl('');
     setFormError('');
+    setShowNewCatInput(false);
+    setNewCatName('');
+  };
+
+  const handleAddCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCategoryName.trim()) return;
+    
+    const saved = localStorage.getItem('product_categories');
+    const customCats: string[] = saved ? JSON.parse(saved) : ['General', 'Electronics', 'Beverages', 'Snacks'];
+    
+    const formatted = newCategoryName.trim();
+    if (!customCats.includes(formatted)) {
+      customCats.push(formatted);
+      localStorage.setItem('product_categories', JSON.stringify(customCats));
+      
+      const combined = Array.from(new Set([...customCats, ...products.map(p => p.category)])).filter(Boolean).sort();
+      setCategories(combined);
+      setNewCategoryName('');
+      alert(`Category "${formatted}" created successfully.`);
+    } else {
+      alert('This category already exists.');
+    }
+  };
+
+  const handleDeleteCategory = (cat: string) => {
+    if (!confirm(`Are you sure you want to remove the category "${cat}"? This will not delete products assigned to it, but they will be reassigned to 'General' next time they are saved.`)) return;
+    
+    const saved = localStorage.getItem('product_categories');
+    const customCats: string[] = saved ? JSON.parse(saved) : ['General', 'Electronics', 'Beverages', 'Snacks'];
+    
+    const filtered = customCats.filter(c => c !== cat);
+    localStorage.setItem('product_categories', JSON.stringify(filtered));
+    
+    const combined = Array.from(new Set([...filtered, ...products.map(p => p.category)])).filter(Boolean).sort();
+    setCategories(combined);
+    if (selectedCategoryFilter === cat) {
+      setSelectedCategoryFilter('All');
+    }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,15 +194,31 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
 
   const saveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    let activeCategory = formCategory;
+    if (showNewCatInput && newCatName.trim()) {
+      activeCategory = newCatName.trim();
+      const saved = localStorage.getItem('product_categories');
+      const customCats: string[] = saved ? JSON.parse(saved) : ['General', 'Electronics', 'Beverages', 'Snacks'];
+      if (!customCats.includes(activeCategory)) {
+        customCats.push(activeCategory);
+        localStorage.setItem('product_categories', JSON.stringify(customCats));
+      }
+    }
+
     if (!formName || !formSku || !formPrice) {
       setFormError('Name, SKU and Price are required.');
+      return;
+    }
+    if (!activeCategory) {
+      setFormError('Please select or specify a category.');
       return;
     }
 
     const payload = {
       name: formName,
       sku: formSku,
-      category: formCategory || 'General',
+      category: activeCategory,
       price: parseFloat(formPrice),
       cost: parseFloat(formCost || '0'),
       stock: formTrackStock ? parseInt(formStock || '0', 10) : -1,
@@ -168,6 +243,9 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
         });
       }
       setIsEditing(null);
+      // Trigger update and category reload
+      loadProducts();
+      window.dispatchEvent(new CustomEvent('products_updated'));
     } catch (err: any) {
       setFormError(err.message || 'Failed to save product.');
     }
@@ -177,8 +255,11 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
     return `Rs. ${Number(val).toFixed(2)}`;
   };
 
+  // Filter products by selected category
+  const filteredGridProducts = products.filter(p => selectedCategoryFilter === 'All' || p.category === selectedCategoryFilter);
+
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-fade-in">
+    <div className="p-6 max-w-6xl mx-auto space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -197,6 +278,186 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
             Add Product
           </button>
         )}
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        {/* CATEGORIES PANEL (Left sidebar) */}
+        <div className="w-full lg:w-64 flex-shrink-0 space-y-4">
+          <div className="glass-card p-5 bg-card/30 border border-border/40 rounded-2xl space-y-4">
+            <div className="flex justify-between items-center border-b border-border/40 pb-2">
+              <h3 className="text-sm font-bold text-foreground">Categories</h3>
+              <span className="text-[10px] bg-secondary text-muted-foreground px-2 py-0.5 rounded-full font-bold">
+                {categories.length}
+              </span>
+            </div>
+
+            {/* Category selection list */}
+            <div className="space-y-1 max-h-[250px] overflow-y-auto pr-1">
+              <button
+                onClick={() => setSelectedCategoryFilter('All')}
+                className={`w-full flex justify-between items-center px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  selectedCategoryFilter === 'All'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-secondary/40 hover:text-foreground'
+                }`}
+              >
+                <span>All Products</span>
+                <span className="bg-secondary/60 text-[9px] px-1.5 py-0.5 rounded font-mono text-muted-foreground">
+                  {products.length}
+                </span>
+              </button>
+
+              {categories.map(cat => {
+                const count = products.filter(p => p.category === cat).length;
+                return (
+                  <div key={cat} className="group flex justify-between items-center w-full rounded-lg hover:bg-secondary/30 pr-2">
+                    <button
+                      onClick={() => setSelectedCategoryFilter(cat)}
+                      className={`flex-1 text-left px-3 py-2 text-xs font-medium transition-all cursor-pointer truncate ${
+                        selectedCategoryFilter === cat
+                          ? 'text-primary font-bold'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <span className="bg-secondary/60 text-[9px] px-1.5 py-0.5 rounded font-mono text-muted-foreground">
+                        {count}
+                      </span>
+                      {currentUser?.role === 'admin' && (
+                        <button
+                          onClick={() => handleDeleteCategory(cat)}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-all cursor-pointer rounded"
+                          title="Delete Category"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Admin add category form */}
+            {currentUser?.role === 'admin' && (
+              <form onSubmit={handleAddCategory} className="pt-3 border-t border-border/20 space-y-2">
+                <label className="text-[10px] text-muted-foreground font-semibold block">Create Category</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. Bakery"
+                    value={newCategoryName}
+                    onChange={e => setNewCategoryName(e.target.value)}
+                    className="flex-1 bg-secondary/40 border border-border/50 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-primary text-foreground"
+                  />
+                  <button
+                    type="submit"
+                    className="p-1.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/95 transition-all flex items-center justify-center cursor-pointer"
+                    title="Add Category"
+                  >
+                    <FolderPlus className="w-4 h-4" />
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+
+        {/* PRODUCTS LISTING AREA (Right side) */}
+        <div className="flex-1 space-y-4 w-full">
+          {/* Search Bar */}
+          <SearchBar
+            placeholder="Search product catalog by prefix (O(log N) AVL Tree lookup)..."
+            onSearch={handleSearch}
+          />
+
+          {/* Products Grid */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+            </div>
+          ) : filteredGridProducts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border border-border/30 rounded-2xl bg-card/10 text-center">
+              <Package className="w-12 h-12 mb-4 opacity-30" />
+              <p className="text-base font-medium">
+                {searchQuery ? 'No matching products found' : 'No products in this category yet'}
+              </p>
+              <p className="text-sm mt-1">
+                {searchQuery ? 'Try another search query' : 'Add products to begin checkout'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredGridProducts.map(prod => (
+                <div key={prod.id} className="glass-card p-5 border border-border/40 rounded-2xl bg-card/30 flex flex-col justify-between hover:bg-card/60 transition-all hover:scale-[1.01] hover:border-primary/20">
+                  <div className="flex gap-4">
+                    {prod.imageUrl ? (
+                      <img src={prod.imageUrl} alt={prod.name} className="w-16 h-16 rounded-xl object-cover border border-border/50 flex-shrink-0" />
+                    ) : (
+                      <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary border border-primary/20">
+                        <Package className="w-7 h-7" />
+                      </div>
+                    )}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] bg-primary/15 text-primary border border-primary/20 font-bold px-2 py-0.5 rounded-md">
+                          {prod.category}
+                        </span>
+                        <span className="text-[10px] bg-secondary text-muted-foreground font-mono px-2 py-0.5 rounded-md">
+                          {prod.sku}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-sm text-foreground">{prod.name}</h3>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{prod.description || 'No description provided.'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center mt-5 pt-3 border-t border-border/20">
+                    <div className="flex gap-6">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">Price</p>
+                        <p className="font-bold text-sm text-primary">{formatCurrency(prod.price)}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">Stock</p>
+                        <p className={`font-semibold text-sm ${prod.stock === -1 ? 'text-emerald-400' : (prod.stock < 5 ? 'text-destructive font-bold animate-pulse' : 'text-foreground')}`}>
+                          {prod.stock === -1 ? 'Unlimited' : `${prod.stock} units`}
+                        </p>
+                      </div>
+                      {currentUser?.role === 'admin' && (
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Cost</p>
+                          <p className="font-medium text-sm text-muted-foreground">{formatCurrency(prod.cost)}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {currentUser?.role === 'admin' && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => startEdit(prod)}
+                          className="p-2 rounded-lg bg-secondary/80 hover:bg-primary/20 hover:text-primary text-muted-foreground transition-all cursor-pointer"
+                          title="Edit Product"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(prod.id)}
+                          className="p-2 rounded-lg bg-secondary/80 hover:bg-destructive/20 hover:text-destructive text-muted-foreground transition-all cursor-pointer"
+                          title="Delete Product"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Editor Modal / Inline Form */}
@@ -241,14 +502,41 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                 </div>
 
                 <div>
-                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Category</label>
-                  <input
-                    type="text"
-                    value={formCategory}
-                    onChange={e => setFormCategory(e.target.value)}
+                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Category *</label>
+                  <select
+                    value={showNewCatInput ? '__new__' : formCategory}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (val === '__new__') {
+                        setShowNewCatInput(true);
+                        setFormCategory('');
+                      } else {
+                        setShowNewCatInput(false);
+                        setFormCategory(val);
+                      }
+                    }}
                     className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                    placeholder="e.g. Electronics"
-                  />
+                  >
+                    <option value="">-- Select Category --</option>
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                    {currentUser?.role === 'admin' && (
+                      <option value="__new__" className="text-primary font-semibold">+ Create New Category...</option>
+                    )}
+                  </select>
+                  
+                  {showNewCatInput && (
+                    <input
+                      type="text"
+                      value={newCatName}
+                      onChange={e => {
+                        setNewCatName(e.target.value);
+                      }}
+                      placeholder="New category name..."
+                      className="w-full mt-2 bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground animate-fade-in"
+                    />
+                  )}
                 </div>
 
                 <div>
@@ -351,97 +639,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
               </button>
             </div>
           </form>
-        </div>
-      )}
-
-      {/* Search Bar */}
-      <SearchBar
-        placeholder="Search product catalog by prefix (O(log N) AVL Tree lookup)..."
-        onSearch={handleSearch}
-      />
-
-      {/* Products Grid */}
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-        </div>
-      ) : products.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border border-border/30 rounded-2xl bg-card/10">
-          <Package className="w-12 h-12 mb-4 opacity-30" />
-          <p className="text-base font-medium">
-            {searchQuery ? 'No matching products found' : 'No products in catalog yet'}
-          </p>
-          <p className="text-sm mt-1">
-            {searchQuery ? 'Try another search query' : 'Add products to begin checkout'}
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {products.map(prod => (
-            <div key={prod.id} className="glass-card p-5 border border-border/40 rounded-2xl bg-card/30 flex flex-col justify-between hover:bg-card/60 transition-all hover:scale-[1.01] hover:border-primary/20">
-              <div className="flex gap-4">
-                {prod.imageUrl ? (
-                  <img src={prod.imageUrl} alt={prod.name} className="w-16 h-16 rounded-xl object-cover border border-border/50 flex-shrink-0" />
-                ) : (
-                  <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary border border-primary/20">
-                    <Package className="w-7 h-7" />
-                  </div>
-                )}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] bg-primary/15 text-primary border border-primary/20 font-bold px-2 py-0.5 rounded-md">
-                      {prod.category}
-                    </span>
-                    <span className="text-[10px] bg-secondary text-muted-foreground font-mono px-2 py-0.5 rounded-md">
-                      {prod.sku}
-                    </span>
-                  </div>
-                  <h3 className="font-bold text-sm text-foreground">{prod.name}</h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{prod.description || 'No description provided.'}</p>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center mt-5 pt-3 border-t border-border/20">
-                <div className="flex gap-6">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Price</p>
-                    <p className="font-bold text-sm text-primary">{formatCurrency(prod.price)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Stock</p>
-                    <p className={`font-semibold text-sm ${prod.stock === -1 ? 'text-emerald-400' : (prod.stock < 5 ? 'text-destructive font-bold animate-pulse' : 'text-foreground')}`}>
-                      {prod.stock === -1 ? 'Unlimited' : `${prod.stock} units`}
-                    </p>
-                  </div>
-                  {currentUser?.role === 'admin' && (
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Cost</p>
-                      <p className="font-medium text-sm text-muted-foreground">{formatCurrency(prod.cost)}</p>
-                    </div>
-                  )}
-                </div>
-
-                {currentUser?.role === 'admin' && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => startEdit(prod)}
-                      className="p-2 rounded-lg bg-secondary/80 hover:bg-primary/20 hover:text-primary text-muted-foreground transition-all cursor-pointer"
-                      title="Edit Product"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(prod.id)}
-                      className="p-2 rounded-lg bg-secondary/80 hover:bg-destructive/20 hover:text-destructive text-muted-foreground transition-all cursor-pointer"
-                      title="Delete Product"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
         </div>
       )}
     </div>
