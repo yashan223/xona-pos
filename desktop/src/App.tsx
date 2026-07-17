@@ -8,7 +8,6 @@ import SolutionsPage from '@/pages/SolutionsPage';
 import GraphPage from '@/pages/GraphPage';
 import ReportsPage from '@/pages/ReportsPage';
 import LoginPage from '@/pages/LoginPage';
-import RegisterPage from '@/pages/RegisterPage';
 import AdminPage from '@/pages/AdminPage';
 import type { User } from '@/lib/api';
 import DarkVeil from '@/components/DarkVeil';
@@ -16,7 +15,6 @@ import DarkVeil from '@/components/DarkVeil';
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
-  const [isRegistering, setIsRegistering] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
 
   useEffect(() => {
@@ -81,13 +79,9 @@ export default function App() {
     }
 
     if (!currentUser) {
-      if (isRegistering) {
-        return <RegisterPage onNavigateToLogin={() => setIsRegistering(false)} />;
-      }
       return (
         <LoginPage
           onLoginSuccess={handleLoginSuccess}
-          onNavigateToRegister={() => setIsRegistering(true)}
         />
       );
     }

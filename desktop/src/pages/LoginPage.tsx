@@ -10,10 +10,9 @@ import Logo from '@/components/Logo';
 
 interface LoginPageProps {
   onLoginSuccess: (user: User) => void;
-  onNavigateToRegister: () => void;
 }
 
-export default function LoginPage({ onLoginSuccess, onNavigateToRegister }: LoginPageProps) {
+export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -79,7 +78,7 @@ export default function LoginPage({ onLoginSuccess, onNavigateToRegister }: Logi
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="cashier1"
+                  placeholder="user"
                   className="pl-9 bg-secondary/35 border-border/80 focus-visible:ring-primary/30"
                   disabled={loading}
                   autoFocus
@@ -127,17 +126,6 @@ export default function LoginPage({ onLoginSuccess, onNavigateToRegister }: Logi
               )}
             </Button>
           </form>
-
-          {/* Footer Link */}
-          <div className="text-center text-xs text-muted-foreground pt-2">
-            Don't have an account?{' '}
-            <button
-              onClick={onNavigateToRegister}
-              className="text-primary font-medium hover:underline cursor-pointer focus:outline-none"
-            >
-              Register here
-            </button>
-          </div>
         </CardContent>
       </Card>
     </div>

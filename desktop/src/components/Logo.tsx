@@ -32,7 +32,7 @@ export default function Logo({ collapsed = false, className = 'h-10 w-auto' }: L
 
   return (
     <svg
-      viewBox="0 0 240 80"
+      viewBox="0 0 260 80"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
@@ -83,7 +83,7 @@ export default function Logo({ collapsed = false, className = 'h-10 w-auto' }: L
       <line
         x1="68"
         y1="60"
-        x2="225"
+        x2="245"
         y2="60"
         stroke="currentColor"
         strokeWidth="2"
