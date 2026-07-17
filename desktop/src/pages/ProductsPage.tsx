@@ -475,7 +475,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
       {/* Editor Modal / Inline Form */}
       {isEditing && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto md:py-12 animate-fade-in">
-          <form onSubmit={saveProduct} className="glass-card w-full max-w-lg bg-card border border-border rounded-2xl shadow-xl p-6 animate-scale-in space-y-4 my-auto">
+          <form onSubmit={saveProduct} className="glass-card w-full max-w-3xl bg-card border border-border rounded-2xl shadow-xl p-6 animate-scale-in space-y-4 my-auto">
             {/* Header */}
             <div className="flex justify-between items-center pb-3 border-b border-border/40">
               <h3 className="text-lg font-bold text-foreground">
@@ -489,146 +489,159 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
             {/* Form Content */}
             {formError && <p className="text-xs text-destructive bg-destructive/10 p-2.5 rounded-lg font-medium">{formError}</p>}
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <label className="text-xs text-muted-foreground font-semibold mb-1 block">Product Name *</label>
-                <input
-                  type="text"
-                  value={formName}
-                  onChange={e => setFormName(e.target.value)}
-                  className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                  placeholder="Product Name"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column: Info & Media */}
+              <div className="space-y-4 w-full">
+                <div>
+                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Product Name *</label>
+                  <input
+                    type="text"
+                    value={formName}
+                    onChange={e => setFormName(e.target.value)}
+                    className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                    placeholder="Product Name"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Image URL</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={formImageUrl}
+                      onChange={e => setFormImageUrl(e.target.value)}
+                      className="flex-1 min-w-0 bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                      placeholder="https://..."
+                    />
+                    <label className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors select-none flex-shrink-0">
+                      {uploading ? 'Uploading...' : 'Upload'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        disabled={uploading}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Description</label>
+                  <textarea
+                    value={formDescription}
+                    onChange={e => setFormDescription(e.target.value)}
+                    className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary h-[88px] resize-none text-foreground"
+                    placeholder="Product notes and specs..."
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="text-xs text-muted-foreground font-semibold mb-1 block">SKU / Barcode *</label>
-                <input
-                  type="text"
-                  value={formSku}
-                  onChange={e => setFormSku(e.target.value)}
-                  className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                  placeholder="SKU-Code"
-                />
-              </div>
+              {/* Right Column: Pricing & Inventory */}
+              <div className="space-y-4 w-full">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-muted-foreground font-semibold mb-1 block">SKU / Barcode *</label>
+                    <input
+                      type="text"
+                      value={formSku}
+                      onChange={e => setFormSku(e.target.value)}
+                      className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                      placeholder="SKU-Code"
+                    />
+                  </div>
 
-              <div>
-                <label className="text-xs text-muted-foreground font-semibold mb-1 block">Category *</label>
-                <select
-                  value={showNewCatInput ? '__new__' : formCategory}
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (val === '__new__') {
-                      setShowNewCatInput(true);
-                      setFormCategory('');
-                    } else {
-                      setShowNewCatInput(false);
-                      setFormCategory(val);
-                    }
-                  }}
-                  className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                >
-                  <option value="">-- Select Category --</option>
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                  {currentUser?.role === 'admin' && (
-                    <option value="__new__" className="text-primary font-semibold">+ Create New Category...</option>
-                  )}
-                </select>
-                
+                  <div>
+                    <label className="text-xs text-muted-foreground font-semibold mb-1 block">Category *</label>
+                    <select
+                      value={showNewCatInput ? '__new__' : formCategory}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === '__new__') {
+                          setShowNewCatInput(true);
+                          setFormCategory('');
+                        } else {
+                          setShowNewCatInput(false);
+                          setFormCategory(val);
+                        }
+                      }}
+                      className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                    >
+                      <option value="">-- Select Category --</option>
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                      {currentUser?.role === 'admin' && (
+                        <option value="__new__" className="text-primary font-semibold">+ Create New...</option>
+                      )}
+                    </select>
+                  </div>
+                </div>
+
                 {showNewCatInput && (
-                  <input
-                    type="text"
-                    value={newCatName}
-                    onChange={e => {
-                      setNewCatName(e.target.value);
-                    }}
-                    placeholder="New category name..."
-                    className="w-full mt-2 bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground animate-fade-in"
-                  />
+                  <div className="animate-fade-in">
+                    <label className="text-xs text-muted-foreground font-semibold mb-1 block">New Category Name *</label>
+                    <input
+                      type="text"
+                      value={newCatName}
+                      onChange={e => {
+                        setNewCatName(e.target.value);
+                      }}
+                      placeholder="New category name..."
+                      className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                    />
+                  </div>
                 )}
-              </div>
 
-              <div>
-                <label className="text-xs text-muted-foreground font-semibold mb-1 block">Price (LKR) *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formPrice}
-                  onChange={e => setFormPrice(e.target.value)}
-                  className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                  placeholder="Price"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-muted-foreground font-semibold mb-1 block">Cost (LKR)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formCost}
-                  onChange={e => setFormCost(e.target.value)}
-                  className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                  placeholder="Cost"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-xs text-muted-foreground font-semibold">Stock Quantity</label>
-                  <label className="text-[10px] text-primary font-semibold flex items-center gap-1 cursor-pointer select-none">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-muted-foreground font-semibold mb-1 block">Price (LKR) *</label>
                     <input
-                      type="checkbox"
-                      checked={formTrackStock}
-                      onChange={e => setFormTrackStock(e.target.checked)}
-                      className="rounded border-border text-primary focus:ring-primary/20"
+                      type="number"
+                      step="0.01"
+                      value={formPrice}
+                      onChange={e => setFormPrice(e.target.value)}
+                      className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                      placeholder="Price"
                     />
-                    Track Inventory
-                  </label>
-                </div>
-                <input
-                  type="number"
-                  value={formStock}
-                  onChange={e => setFormStock(e.target.value)}
-                  disabled={!formTrackStock}
-                  className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-40 transition-all text-foreground"
-                  placeholder={formTrackStock ? "Stock count" : "Unlimited stock"}
-                />
-              </div>
+                  </div>
 
-              <div className="col-span-2">
-                <label className="text-xs text-muted-foreground font-semibold mb-1 block">Image URL</label>
-                <div className="flex gap-2">
+                  <div>
+                    <label className="text-xs text-muted-foreground font-semibold mb-1 block">Cost (LKR)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formCost}
+                      onChange={e => setFormCost(e.target.value)}
+                      className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                      placeholder="Cost"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-xs text-muted-foreground font-semibold">Stock Quantity</label>
+                    <label className="text-[10px] text-primary font-semibold flex items-center gap-1 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={formTrackStock}
+                        onChange={e => setFormTrackStock(e.target.checked)}
+                        className="rounded border-border text-primary focus:ring-primary/20"
+                      />
+                      Track Inventory
+                    </label>
+                  </div>
                   <input
-                    type="text"
-                    value={formImageUrl}
-                    onChange={e => setFormImageUrl(e.target.value)}
-                    className="flex-1 min-w-0 bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                    placeholder="https://..."
+                    type="number"
+                    value={formStock}
+                    onChange={e => setFormStock(e.target.value)}
+                    disabled={!formTrackStock}
+                    className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-40 transition-all text-foreground"
+                    placeholder={formTrackStock ? "Stock count" : "Unlimited stock"}
                   />
-                  <label className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors select-none flex-shrink-0">
-                    {uploading ? 'Uploading...' : 'Upload'}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      disabled={uploading}
-                    />
-                  </label>
                 </div>
               </div>
-            </div>
-
-            <div>
-              <label className="text-xs text-muted-foreground font-semibold mb-1 block">Description</label>
-              <textarea
-                value={formDescription}
-                onChange={e => setFormDescription(e.target.value)}
-                className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary h-20 resize-none text-foreground"
-                placeholder="Product notes and specs..."
-              />
             </div>
 
             {/* Fixed Footer Buttons */}
