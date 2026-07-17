@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import store from '../persistence/store.js';
 import reportRepository from '../repositories/reportRepository.js';
-import { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeModel, GraphEdgeModel } from '../persistence/database.js';
+import { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeModel, GraphEdgeModel, SavedReportModel } from '../persistence/database.js';
 import { runSeed } from '../seed.js';
 import fs from 'fs';
 import path from 'path';
@@ -88,9 +88,27 @@ class ReportController {
 
       const pdfBuffer = await generateSalesReportPDF(stats, patterns, popularProducts, reportType, allProducts);
 
-      let filename = 'sales_report.pdf';
-      if (reportType === 'category') filename = 'category_sales_report.pdf';
-      else if (reportType === 'daily') filename = 'daily_sales_report.pdf';
+      // Ensure reports directory exists on server disk
+      const reportsDir = path.join(process.cwd(), 'reports');
+      if (!fs.existsSync(reportsDir)) {
+        fs.mkdirSync(reportsDir, { recursive: true });
+      }
+
+      // Save report PDF physically on disk
+      const reportId = `rep_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+      const filename = `${reportType}_sales_report_${new Date().toISOString().split('T')[0]}_${reportId}.pdf`;
+      const filePath = path.join(reportsDir, filename);
+      fs.writeFileSync(filePath, pdfBuffer);
+
+      // Save metadata entry in MongoDB
+      await SavedReportModel.create({
+        _id: reportId,
+        reportType,
+        filename,
+        filePath: `/reports/${filename}`,
+        generatedBy: userRole,
+        createdAt: new Date().toISOString(),
+      });
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
@@ -98,6 +116,54 @@ class ReportController {
     } catch (err: any) {
       console.error('[reports] generate PDF error:', err);
       res.status(500).json({ error: err.message || 'Failed to generate sales report PDF' });
+    }
+  };
+
+  listSavedReports = async (req: Request, res: Response) => {
+    try {
+      const userRole = req.headers['x-user-role'] as string;
+      if (userRole !== 'admin' && userRole !== 'owner') {
+        res.status(403).json({ error: 'Unauthorized. Only admins and owners can view reports.' });
+        return;
+      }
+
+      const reports = await SavedReportModel.find({}).sort({ createdAt: -1 }).lean();
+      res.json(reports);
+    } catch (err) {
+      console.error('[reports] list saved reports error:', err);
+      res.status(500).json({ error: 'Failed to list saved reports' });
+    }
+  };
+
+  deleteSavedReport = async (req: Request, res: Response) => {
+    try {
+      const userRole = req.headers['x-user-role'] as string;
+      if (userRole !== 'admin' && userRole !== 'owner') {
+        res.status(403).json({ error: 'Unauthorized. Only admins and owners can manage reports.' });
+        return;
+      }
+
+      const reportId = req.params.id as string;
+      const report = await SavedReportModel.findById(reportId).lean();
+
+      if (!report) {
+        res.status(404).json({ error: 'Saved report not found' });
+        return;
+      }
+
+      // Delete file from disk if it exists
+      const fullPath = path.join(process.cwd(), 'reports', report.filename);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+
+      // Delete Mongoose entry
+      await SavedReportModel.deleteOne({ _id: reportId });
+
+      res.json({ message: 'Saved report deleted successfully' });
+    } catch (err) {
+      console.error('[reports] delete saved report error:', err);
+      res.status(500).json({ error: 'Failed to delete saved report' });
     }
   };
 

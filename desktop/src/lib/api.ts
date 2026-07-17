@@ -231,7 +231,20 @@ export const reportApi = {
   deleteBackup: (filename: string) => request<{ message: string }>(`/reports/backups/${filename}`, { method: 'DELETE' }),
 
   uploadBackup: (backupData: any) => request<{ message: string }>('/reports/backups/upload', { method: 'POST', body: JSON.stringify({ backupData }) }),
+
+  listSavedReports: () => request<SavedReportRecord[]>('/reports/saved'),
+
+  deleteSavedReport: (id: string) => request<{ message: string }>(`/reports/saved/${id}`, { method: 'DELETE' }),
 };
+
+export interface SavedReportRecord {
+  _id: string;
+  reportType: 'summary' | 'category' | 'daily';
+  filename: string;
+  filePath: string;
+  generatedBy: string;
+  createdAt: string;
+}
 
 // ─── Auth APIs ─────────────────────────────────────────
 

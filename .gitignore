@@ -36,5 +36,6 @@ backend/.env.production
 
 # POS Receipts & Backups
 /backend/receipts/
+/backend/reports/
 /backups/
 *.bak

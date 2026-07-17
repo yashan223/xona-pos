@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { RefreshCw, Package, TrendingUp, DollarSign, FileText } from 'lucide-react';
 import { reportApi } from '@/lib/api';
-import type { ProductRecord, POSPatterns, User } from '@/lib/api';
+import type { ProductRecord, POSPatterns, User, SavedReportRecord } from '@/lib/api';
 import { useNotification } from '@/context/NotificationContext';
 
 interface ReportsPageProps {
@@ -9,13 +9,14 @@ interface ReportsPageProps {
 }
 
 export default function ReportsPage({ currentUser }: ReportsPageProps) {
-  const { toast } = useNotification();
+  const { confirm, toast } = useNotification();
   const [popularProducts, setPopularProducts] = useState<ProductRecord[]>([]);
   const [patterns, setPatterns] = useState<POSPatterns | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'popular' | 'patterns' | 'timeline'>('popular');
+  const [activeTab, setActiveTab] = useState<'popular' | 'patterns' | 'timeline' | 'saved'>('popular');
   const [exporting, setExporting] = useState(false);
   const [selectedReportType, setSelectedReportType] = useState<'summary' | 'category' | 'daily'>('summary');
+  const [savedReports, setSavedReports] = useState<SavedReportRecord[]>([]);
 
   useEffect(() => {
     loadReports();
@@ -38,6 +39,12 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
       ]);
       setPopularProducts(products);
       setPatterns(pats);
+
+      const isAuth = currentUser?.role === 'admin' || currentUser?.role === 'owner';
+      if (isAuth) {
+        const savedList = await reportApi.listSavedReports();
+        setSavedReports(savedList);
+      }
     } catch (err) {
       console.error('Failed to load reports:', err);
     } finally {
@@ -78,6 +85,7 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
       a.remove();
       window.URL.revokeObjectURL(url);
       toast.success('Sales report PDF downloaded successfully!');
+      loadReports();
     } catch (err: any) {
       console.error('Fetch PDF failed, falling back to direct download:', err);
       // Fallback for Electron environments
@@ -85,6 +93,7 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
         const role = currentUser?.role || 'cashier';
         window.open(`http://localhost:3000/api/reports/pdf?type=${selectedReportType}&role=${role}`);
         toast.success('Sales report PDF generated successfully!');
+        loadReports();
       } catch (fallbackErr: any) {
         toast.error('Failed to generate PDF sales report.');
       }
@@ -93,10 +102,32 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
     }
   }
 
+  const handleDeleteSavedReport = async (id: string) => {
+    const isConfirmed = await confirm({
+      title: 'Delete Saved Report',
+      message: 'Are you sure you want to delete this archived report PDF? This file will be permanently deleted from the disk.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    if (!isConfirmed) return;
+
+    try {
+      await reportApi.deleteSavedReport(id);
+      toast.success('Saved report deleted successfully');
+      loadReports();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete saved report');
+    }
+  };
+
   const tabs = [
     { key: 'popular' as const, label: 'Top Sold Items', icon: Package },
     { key: 'patterns' as const, label: 'Sales Patterns', icon: TrendingUp },
     { key: 'timeline' as const, label: 'Revenue Trends', icon: DollarSign },
+    ...((currentUser?.role === 'admin' || currentUser?.role === 'owner') ? [
+      { key: 'saved' as const, label: 'Saved PDF Reports', icon: FileText }
+    ] : []),
   ];
 
   return (
@@ -174,6 +205,7 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
           {activeTab === 'popular' && <PopularProductsTab products={popularProducts} />}
           {activeTab === 'patterns' && <PatternsTab patterns={patterns} />}
           {activeTab === 'timeline' && <TimelineTab timeline={patterns?.timeline || []} />}
+          {activeTab === 'saved' && <SavedReportsTab reports={savedReports} onDelete={handleDeleteSavedReport} />}
         </div>
       )}
     </div>
@@ -392,6 +424,88 @@ function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message:
     <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border border-border/20 rounded-xl bg-card/10">
       <Icon className="w-12 h-12 mb-4 opacity-30" />
       <p className="text-sm font-semibold">{message}</p>
+    </div>
+  );
+}
+
+// ─── Saved PDF Reports Tab ────────────────────────────
+
+function SavedReportsTab({
+  reports,
+  onDelete
+}: {
+  reports: SavedReportRecord[];
+  onDelete: (id: string) => void;
+}) {
+  const formatReportType = (type: string) => {
+    if (type === 'summary') return 'Overview Summary';
+    if (type === 'category') return 'Category-wise Sales';
+    if (type === 'daily') return 'Daily Sales Timeline';
+    return type;
+  };
+
+  if (reports.length === 0) {
+    return <EmptyState icon={FileText} message="No saved reports archived in database yet. Try exporting one!" />;
+  }
+
+  return (
+    <div className="glass-card overflow-hidden border border-border/30 rounded-2xl bg-card/10">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr className="border-b border-border bg-muted/20 text-xs font-semibold text-muted-foreground uppercase">
+              <th className="p-3.5">Filename</th>
+              <th className="p-3.5">Report Type</th>
+              <th className="p-3.5">Generated By</th>
+              <th className="p-3.5">Created Date</th>
+              <th className="p-3.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/20">
+            {reports.map((report) => (
+              <tr key={report._id} className="hover:bg-secondary/10 transition-colors">
+                <td className="p-3.5 font-mono text-foreground select-all text-left">
+                  {report.filename}
+                </td>
+                <td className="p-3.5 text-left">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                    report.reportType === 'category'
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      : report.reportType === 'daily'
+                      ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
+                      : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                  }`}>
+                    {formatReportType(report.reportType)}
+                  </span>
+                </td>
+                <td className="p-3.5 text-muted-foreground text-left uppercase">
+                  {report.generatedBy}
+                </td>
+                <td className="p-3.5 text-muted-foreground text-left">
+                  {new Date(report.createdAt).toLocaleString()}
+                </td>
+                <td className="p-3.5 text-right space-x-2 whitespace-nowrap">
+                  <a
+                    href={`http://localhost:3000/reports/${report.filename}`}
+                    download
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-block px-3 py-1 bg-primary/10 text-primary hover:bg-primary/20 rounded-md border border-primary/20 transition-all text-[11px] font-semibold cursor-pointer"
+                  >
+                    Download
+                  </a>
+                  <button
+                    onClick={() => onDelete(report._id)}
+                    className="px-3 py-1 bg-destructive/10 text-destructive hover:bg-destructive/20 rounded-md border border-destructive/20 transition-all text-[11px] font-semibold cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

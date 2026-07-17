@@ -21,6 +21,12 @@ router.get('/stats', reportController.getStats);
 // GET /api/reports/pdf — Generate PDF sales report
 router.get('/pdf', reportController.generatePdfReport);
 
+// GET /api/reports/saved — List all saved PDF reports
+router.get('/saved', reportController.listSavedReports);
+
+// DELETE /api/reports/saved/:id — Delete a saved PDF report
+router.delete('/saved/:id', reportController.deleteSavedReport);
+
 // POST /api/reports/reset — Reset and seed POS database
 router.post('/reset', reportController.resetDatabase);
 

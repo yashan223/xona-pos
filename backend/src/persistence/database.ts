@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { hashPassword } from '../lib/crypto.js';
-import { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeModel, GraphEdgeModel } from '../models/index.js';
+import { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeModel, GraphEdgeModel, SavedReportModel } from '../models/index.js';
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/xona-pos';
 
@@ -15,7 +15,7 @@ mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 })
   });
 
 // Re-export models for external usage in repositories
-export { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeModel, GraphEdgeModel };
+export { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeModel, GraphEdgeModel, SavedReportModel };
 
 // ─── Database Initialization ──────────────────────────────
 
