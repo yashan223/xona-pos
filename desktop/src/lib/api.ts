@@ -221,6 +221,16 @@ export const reportApi = {
   resetDatabase: () => request<{ message: string }>('/reports/reset', { method: 'POST' }),
 
   clearDatabase: () => request<{ message: string }>('/reports/clear', { method: 'POST' }),
+
+  listBackups: () => request<{ filename: string; size: number; createdAt: string }[]>('/reports/backups'),
+
+  createBackup: () => request<{ message: string; filename: string }>('/reports/backups', { method: 'POST' }),
+
+  restoreBackup: (filename: string) => request<{ message: string }>(`/reports/backups/${filename}/restore`, { method: 'POST' }),
+
+  deleteBackup: (filename: string) => request<{ message: string }>(`/reports/backups/${filename}`, { method: 'DELETE' }),
+
+  uploadBackup: (backupData: any) => request<{ message: string }>('/reports/backups/upload', { method: 'POST', body: JSON.stringify({ backupData }) }),
 };
 
 // ─── Auth APIs ─────────────────────────────────────────

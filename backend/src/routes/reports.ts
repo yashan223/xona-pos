@@ -24,4 +24,12 @@ router.post('/reset', reportController.resetDatabase);
 // POST /api/reports/clear — Clear database (admin user retained)
 router.post('/clear', reportController.clearDatabase);
 
+// Backup & Restore operations
+router.get('/backups', reportController.listBackups);
+router.post('/backups', reportController.createBackup);
+router.post('/backups/:filename/restore', reportController.restoreBackup);
+router.get('/backups/:filename/download', reportController.downloadBackup);
+router.delete('/backups/:filename', reportController.deleteBackup);
+router.post('/backups/upload', reportController.uploadBackup);
+
 export default router;
