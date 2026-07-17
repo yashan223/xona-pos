@@ -5,9 +5,10 @@
 const BASE_URL = 'http://localhost:3000/api';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  const headers: Record<string, string> = {};
+  if (!(options?.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   const saved = localStorage.getItem('currentUser');
   if (saved) {
@@ -146,6 +147,15 @@ export const productApi = {
     request<ProductRecord>(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   delete: (id: string) => request<{ message: string }>(`/products/${id}`, { method: 'DELETE' }),
+
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return request<{ imageUrl: string }>('/products/upload', {
+      method: 'POST',
+      body: formData,
+    });
+  },
 };
 
 // ─── Transaction APIs ──────────────────────────────────

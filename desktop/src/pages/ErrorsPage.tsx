@@ -26,6 +26,7 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
   const [formDescription, setFormDescription] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
   const [formError, setFormError] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     loadProducts();
@@ -98,6 +99,23 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
     setFormDescription('');
     setFormImageUrl('');
     setFormError('');
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setFormError('');
+    try {
+      const res = await productApi.uploadImage(file);
+      setFormImageUrl(res.imageUrl);
+    } catch (err: any) {
+      console.error('Image upload failed:', err);
+      setFormError(err.message || 'Image upload failed.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const cancelEdit = () => {
@@ -257,13 +275,25 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
 
                 <div>
                   <label className="text-xs text-muted-foreground font-semibold mb-1 block">Image URL</label>
-                  <input
-                    type="text"
-                    value={formImageUrl}
-                    onChange={e => setFormImageUrl(e.target.value)}
-                    className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
-                    placeholder="https://..."
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={formImageUrl}
+                      onChange={e => setFormImageUrl(e.target.value)}
+                      className="flex-1 min-w-0 bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                      placeholder="https://..."
+                    />
+                    <label className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors select-none">
+                      {uploading ? 'Uploading...' : 'Upload'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        disabled={uploading}
+                      />
+                    </label>
+                  </div>
                 </div>
               </div>
 
