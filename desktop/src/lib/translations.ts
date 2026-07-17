@@ -43,9 +43,6 @@ export const translations = {
     
     // Checkout Register
     currentBasket: 'Current Basket',
-    customerLoyalty: 'Customer Loyalty',
-    newCustomer: 'New Customer',
-    walkInCustomer: 'Walk-in Customer',
     subtotal: 'Subtotal',
     discount: 'Discount',
     vat: 'VAT',
@@ -108,9 +105,6 @@ export const translations = {
     
     // Checkout Register
     currentBasket: 'වත්මන් කූඩය',
-    customerLoyalty: 'පාරිභෝගික ලෝයල්ටි',
-    newCustomer: 'නව පාරිභෝගිකයා',
-    walkInCustomer: 'පැමිණි පාරිභෝගිකයා',
     subtotal: 'අනු එකතුව',
     discount: 'වට්ටම්',
     vat: 'වැට් බද්ද (VAT)',

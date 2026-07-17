@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Package, Plus, Trash2, Edit3, Save, X, FolderPlus } from 'lucide-react';
+import { Package, Plus, Trash2, Edit3, Save, X } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
 import { productApi } from '@/lib/api';
 import type { ProductRecord, User } from '@/lib/api';
@@ -17,8 +17,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All');
   
-  // Custom categories list state (stored in localStorage)
-  const [newCategoryName, setNewCategoryName] = useState('');
+
   
   // Form states
   const [isEditing, setIsEditing] = useState<string | null>(null); // product ID or 'new'
@@ -134,42 +133,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
     setNewCatName('');
   };
 
-  const handleAddCategory = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCategoryName.trim()) return;
-    
-    const saved = localStorage.getItem('product_categories');
-    const customCats: string[] = saved ? JSON.parse(saved) : ['General', 'Electronics', 'Beverages', 'Snacks'];
-    
-    const formatted = newCategoryName.trim();
-    if (!customCats.includes(formatted)) {
-      customCats.push(formatted);
-      localStorage.setItem('product_categories', JSON.stringify(customCats));
-      
-      const combined = Array.from(new Set([...customCats, ...products.map(p => p.category)])).filter(Boolean).sort();
-      setCategories(combined);
-      setNewCategoryName('');
-      alert(`Category "${formatted}" created successfully.`);
-    } else {
-      alert('This category already exists.');
-    }
-  };
 
-  const handleDeleteCategory = (cat: string) => {
-    if (!confirm(`Are you sure you want to remove the category "${cat}"? This will not delete products assigned to it, but they will be reassigned to 'General' next time they are saved.`)) return;
-    
-    const saved = localStorage.getItem('product_categories');
-    const customCats: string[] = saved ? JSON.parse(saved) : ['General', 'Electronics', 'Beverages', 'Snacks'];
-    
-    const filtered = customCats.filter(c => c !== cat);
-    localStorage.setItem('product_categories', JSON.stringify(filtered));
-    
-    const combined = Array.from(new Set([...filtered, ...products.map(p => p.category)])).filter(Boolean).sort();
-    setCategories(combined);
-    if (selectedCategoryFilter === cat) {
-      setSelectedCategoryFilter('All');
-    }
-  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -281,196 +245,137 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
         )}
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
-        {/* CATEGORIES PANEL (Left sidebar) */}
-        <div className="w-full lg:w-64 flex-shrink-0 space-y-4">
-          <div className="glass-card p-5 bg-card/30 border border-border/40 rounded-2xl space-y-4">
-            <div className="flex justify-between items-center border-b border-border/40 pb-2">
-              <h3 className="text-sm font-bold text-foreground">Categories</h3>
-              <span className="text-[10px] bg-secondary text-muted-foreground px-2 py-0.5 rounded-full font-bold">
-                {categories.length}
-              </span>
-            </div>
-
-            {/* Category selection list */}
-            <div className="space-y-1 max-h-[250px] overflow-y-auto pr-1">
-              <button
-                onClick={() => setSelectedCategoryFilter('All')}
-                className={`w-full flex justify-between items-center px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  selectedCategoryFilter === 'All'
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:bg-secondary/40 hover:text-foreground'
-                }`}
-              >
-                <span>All Products</span>
-                <span className="bg-secondary/60 text-[9px] px-1.5 py-0.5 rounded font-mono text-muted-foreground">
-                  {products.length}
-                </span>
-              </button>
-
+      <div className="space-y-4 w-full">
+        {/* Controls: Search and Category Filter */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1">
+            <SearchBar
+              placeholder="Search product catalog by name or prefix..."
+              onSearch={handleSearch}
+            />
+          </div>
+          <div className="w-full sm:w-64">
+            <select
+              value={selectedCategoryFilter}
+              onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+              className="w-full bg-[#0d0e12] border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all cursor-pointer appearance-none"
+              style={{
+                backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`,
+                backgroundPosition: 'right 0.75rem center',
+                backgroundSize: '1.25rem',
+                backgroundRepeat: 'no-repeat',
+                paddingRight: '2.5rem'
+              }}
+            >
+              <option value="All">All Categories ({products.length})</option>
               {categories.map(cat => {
                 const count = products.filter(p => p.category === cat).length;
                 return (
-                  <div key={cat} className="group flex justify-between items-center w-full rounded-lg hover:bg-secondary/30 pr-2">
-                    <button
-                      onClick={() => setSelectedCategoryFilter(cat)}
-                      className={`flex-1 text-left px-3 py-2 text-xs font-medium transition-all cursor-pointer truncate ${
-                        selectedCategoryFilter === cat
-                          ? 'text-primary font-bold'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                    <div className="flex items-center gap-1.5">
-                      <span className="bg-secondary/60 text-[9px] px-1.5 py-0.5 rounded font-mono text-muted-foreground">
-                        {count}
-                      </span>
-                      {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
-                        <button
-                          onClick={() => handleDeleteCategory(cat)}
-                          className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-all cursor-pointer rounded"
-                          title="Delete Category"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                  <option key={cat} value={cat}>
+                    {cat} ({count})
+                  </option>
                 );
               })}
-            </div>
-
-            {/* Admin add category form */}
-            {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
-              <form onSubmit={handleAddCategory} className="pt-3 border-t border-border/20 space-y-2">
-                <label className="text-[10px] text-muted-foreground font-semibold block">Create Category</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Category Name"
-                    value={newCategoryName}
-                    onChange={e => setNewCategoryName(e.target.value)}
-                    className="flex-1 bg-secondary/40 border border-border/50 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-primary text-foreground"
-                  />
-                  <button
-                    type="submit"
-                    className="p-1.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/95 transition-all flex items-center justify-center cursor-pointer"
-                    title="Add Category"
-                  >
-                    <FolderPlus className="w-4 h-4" />
-                  </button>
-                </div>
-              </form>
-            )}
+            </select>
           </div>
         </div>
 
-        {/* PRODUCTS LISTING AREA (Right side) */}
-        <div className="flex-1 space-y-4 w-full">
-          {/* Search Bar */}
-          <SearchBar
-            placeholder="Search product catalog by name or prefix..."
-            onSearch={handleSearch}
-          />
-
-          {/* Products Grid */}
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-            </div>
-          ) : filteredGridProducts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border border-border/30 rounded-2xl bg-card/10 text-center">
-              <Package className="w-12 h-12 mb-4 opacity-30" />
-              <p className="text-base font-medium">
-                {searchQuery ? 'No matching products found' : 'No products in this category yet'}
-              </p>
-              <p className="text-sm mt-1">
-                {searchQuery ? 'Try another search query' : 'Add products to begin checkout'}
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredGridProducts.map(prod => (
-                <div
-                  key={prod.id}
-                  onClick={() => (currentUser?.role === 'admin' || currentUser?.role === 'owner') && startEdit(prod)}
-                  className={`glass-card p-5 border border-border/40 rounded-2xl bg-card/30 flex flex-col justify-between hover:bg-card/60 transition-all hover:scale-[1.01] hover:border-primary/20 ${
-                    (currentUser?.role === 'admin' || currentUser?.role === 'owner') ? 'cursor-pointer select-none' : ''
-                  }`}
-                >
-                  <div className="flex gap-4">
-                    {prod.imageUrl ? (
-                      <img src={prod.imageUrl} alt={prod.name} className="w-16 h-16 rounded-xl object-cover border border-border/50 flex-shrink-0" />
-                    ) : (
-                      <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary border border-primary/20">
-                        <Package className="w-7 h-7" />
-                      </div>
-                    )}
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] bg-primary/15 text-primary border border-primary/20 font-bold px-2 py-0.5 rounded-md">
-                          {prod.category}
-                        </span>
-                        <span className="text-[10px] bg-secondary text-muted-foreground font-mono px-2 py-0.5 rounded-md">
-                          {prod.sku}
-                        </span>
-                      </div>
-                      <h3 className="font-bold text-sm text-foreground">{prod.name}</h3>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{prod.description || 'No description provided.'}</p>
+        {/* Products Grid */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+          </div>
+        ) : filteredGridProducts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border border-border/30 rounded-2xl bg-card/10 text-center">
+            <Package className="w-12 h-12 mb-4 opacity-30" />
+            <p className="text-base font-medium">
+              {searchQuery ? 'No matching products found' : 'No products in this category yet'}
+            </p>
+            <p className="text-sm mt-1">
+              {searchQuery ? 'Try another search query' : 'Add products to begin checkout'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredGridProducts.map(prod => (
+              <div
+                key={prod.id}
+                onClick={() => (currentUser?.role === 'admin' || currentUser?.role === 'owner') && startEdit(prod)}
+                className={`glass-card p-5 border border-border/40 rounded-2xl bg-card/30 flex flex-col justify-between hover:bg-card/60 transition-all hover:scale-[1.01] hover:border-primary/20 ${
+                  (currentUser?.role === 'admin' || currentUser?.role === 'owner') ? 'cursor-pointer select-none' : ''
+                }`}
+              >
+                <div className="flex gap-4">
+                  {prod.imageUrl ? (
+                    <img src={prod.imageUrl} alt={prod.name} className="w-16 h-16 rounded-xl object-cover border border-border/50 flex-shrink-0" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary border border-primary/20">
+                      <Package className="w-7 h-7" />
                     </div>
-                  </div>
-
-                  <div className="flex justify-between items-center mt-5 pt-3 border-t border-border/20">
-                    <div className="flex gap-6">
-                      <div>
-                        <p className="text-[10px] text-muted-foreground">Price</p>
-                        <p className="font-bold text-sm text-primary">{formatCurrency(prod.price)}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-muted-foreground">Stock</p>
-                        <p className={`font-semibold text-sm ${prod.stock === -1 ? 'text-emerald-400' : (prod.stock < 5 ? 'text-destructive font-bold animate-pulse' : 'text-foreground')}`}>
-                          {prod.stock === -1 ? 'Unlimited' : `${prod.stock} units`}
-                        </p>
-                      </div>
-                      {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
-                        <div>
-                          <p className="text-[10px] text-muted-foreground">Cost</p>
-                          <p className="font-medium text-sm text-muted-foreground">{formatCurrency(prod.cost)}</p>
-                        </div>
-                      )}
+                  )}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] bg-primary/15 text-primary border border-primary/20 font-bold px-2 py-0.5 rounded-md">
+                        {prod.category}
+                      </span>
+                      <span className="text-[10px] bg-secondary text-muted-foreground font-mono px-2 py-0.5 rounded-md">
+                        {prod.sku}
+                      </span>
                     </div>
-
-                    {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            startEdit(prod);
-                          }}
-                          className="p-2 rounded-lg bg-secondary/80 hover:bg-primary/20 hover:text-primary text-muted-foreground transition-all cursor-pointer"
-                          title="Edit Product"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(prod.id);
-                          }}
-                          className="p-2 rounded-lg bg-secondary/80 hover:bg-destructive/20 hover:text-destructive text-muted-foreground transition-all cursor-pointer"
-                          title="Delete Product"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )}
+                    <h3 className="font-bold text-sm text-foreground">{prod.name}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{prod.description || 'No description provided.'}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+
+                <div className="flex justify-between items-center mt-5 pt-3 border-t border-border/20">
+                  <div className="flex gap-6">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Price</p>
+                      <p className="font-bold text-sm text-primary">{formatCurrency(prod.price)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Stock</p>
+                      <p className={`font-semibold text-sm ${prod.stock === -1 ? 'text-emerald-400' : (prod.stock < 5 ? 'text-destructive font-bold animate-pulse' : 'text-foreground')}`}>
+                        {prod.stock === -1 ? 'Unlimited' : `${prod.stock} units`}
+                      </p>
+                    </div>
+                    {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">Cost</p>
+                        <p className="font-medium text-sm text-muted-foreground">{formatCurrency(prod.cost)}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startEdit(prod);
+                        }}
+                        className="p-2 rounded-lg bg-secondary/80 hover:bg-primary/20 hover:text-primary text-muted-foreground transition-all cursor-pointer"
+                        title="Edit Product"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(prod.id);
+                        }}
+                        className="p-2 rounded-lg bg-secondary/80 hover:bg-destructive/20 hover:text-destructive text-muted-foreground transition-all cursor-pointer"
+                        title="Delete Product"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       </div>
 

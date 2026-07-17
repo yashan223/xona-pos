@@ -33,3 +33,8 @@ backend/.env
 backend/.env.local
 backend/.env.development
 backend/.env.production
+
+# POS Receipts & Backups
+/backend/receipts/
+/backups/
+*.bak

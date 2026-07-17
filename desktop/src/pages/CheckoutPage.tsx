@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, Search, Plus, Minus, Trash2, Tag, Sparkles, CheckCircle2, UserPlus, RefreshCw, Printer, Banknote } from 'lucide-react';
-import { productApi, transactionApi, customerApi, graphApi } from '@/lib/api';
-import type { ProductRecord, CustomerRecord, TransactionItem, User, GraphNode } from '@/lib/api';
+import { ShoppingCart, Search, Plus, Minus, Trash2, Tag, Sparkles, CheckCircle2, RefreshCw, Printer, Banknote } from 'lucide-react';
+import { productApi, transactionApi, graphApi } from '@/lib/api';
+import type { ProductRecord, TransactionItem, User, GraphNode } from '@/lib/api';
 
 interface CheckoutPageProps {
   currentUser: User | null;
@@ -11,14 +11,12 @@ interface CheckoutPageProps {
 export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
   const [catalog, setCatalog] = useState<ProductRecord[]>([]);
   const [filteredCatalog, setFilteredCatalog] = useState<ProductRecord[]>([]);
-  const [customers, setCustomers] = useState<CustomerRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   
   // Cart state
   const [cart, setCart] = useState<(TransactionItem & { product: ProductRecord })[]>([]);
   const [discountPercent, setDiscountPercent] = useState<number>(0);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const paymentMethod = 'cash';
   
   // Recommendations state (powered by co-occurrence Graph BFS)
@@ -27,11 +25,6 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
   // UI states
   const [loading, setLoading] = useState(true);
   const [checkoutResult, setCheckoutResult] = useState<any | null>(null); // receipt modal
-  const [showAddCustomer, setShowAddCustomer] = useState(false);
-  const [newCustName, setNewCustName] = useState('');
-  const [newCustPhone, setNewCustPhone] = useState('');
-  const [newCustEmail, setNewCustEmail] = useState('');
-  const [custError, setCustError] = useState('');
 
   // Derived categories list
   const categories = ['All', ...Array.from(new Set(catalog.map(p => p.category)))];
@@ -63,34 +56,19 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
       }
     };
 
-    const handleCustomersUpdate = async () => {
-      try {
-        const data = await customerApi.getAll();
-        setCustomers(data);
-      } catch (err) {
-        console.error('Failed to reload customers:', err);
-      }
-    };
-
     window.addEventListener('products_updated', handleProductsUpdate);
-    window.addEventListener('customers_updated', handleCustomersUpdate);
 
     return () => {
       window.removeEventListener('products_updated', handleProductsUpdate);
-      window.removeEventListener('customers_updated', handleCustomersUpdate);
     };
   }, []);
 
   async function loadData() {
     setLoading(true);
     try {
-      const [prodData, custData] = await Promise.all([
-        productApi.getAll(),
-        customerApi.getAll()
-      ]);
+      const prodData = await productApi.getAll();
       setCatalog(prodData);
       setFilteredCatalog(prodData);
-      setCustomers(custData);
     } catch (err) {
       console.error('Failed to load register data:', err);
     } finally {
@@ -199,30 +177,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
     }
   }
 
-  // Register customer dialog
-  const createCustomer = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCustName) {
-      setCustError('Name is required');
-      return;
-    }
-    try {
-      const created = await customerApi.create({
-        name: newCustName,
-        phone: newCustPhone,
-        email: newCustEmail
-      });
-      setCustomers(prev => [...prev, created]);
-      setSelectedCustomerId(created.id);
-      setShowAddCustomer(false);
-      setNewCustName('');
-      setNewCustPhone('');
-      setNewCustEmail('');
-      setCustError('');
-    } catch (err: any) {
-      setCustError(err.message || 'Failed to create customer');
-    }
-  };
+
 
   // Checkout process
   const processCheckout = async () => {
@@ -238,7 +193,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
     try {
       const tx = await transactionApi.create({
         cashierId: currentUser.username,
-        customerId: selectedCustomerId || null,
+        customerId: null,
         items: cart.map(i => ({
           productId: i.productId,
           name: i.name,
@@ -256,7 +211,6 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
       setCheckoutResult(tx);
       setCart([]);
       setDiscountPercent(0);
-      setSelectedCustomerId('');
       setRecommendations([]);
       
       // Reload stock catalogs
@@ -414,31 +368,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
             </span>
           </div>
 
-          {/* CRM Loyalty Selector */}
-          <div className="space-y-1">
-            <label className="text-[10px] text-muted-foreground font-semibold flex justify-between">
-              <span>Customer Loyalty</span>
-              <button
-                onClick={() => setShowAddCustomer(true)}
-                className="text-primary hover:underline flex items-center gap-0.5 cursor-pointer font-bold"
-              >
-                <UserPlus className="w-2.5 h-2.5" />
-                New Customer
-              </button>
-            </label>
-            <select
-              value={selectedCustomerId}
-              onChange={e => setSelectedCustomerId(e.target.value)}
-              className="w-full bg-secondary/50 border border-sidebar-border rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
-            >
-              <option value="">Walk-in Customer</option>
-              {customers.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.name} ({c.phone || 'No Phone'} - {c.loyaltyPoints} pts)
-                </option>
-              ))}
-            </select>
-          </div>
+
         </div>
 
         {/* Cart Items List */}
@@ -519,63 +449,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
         </div>
       </div>
 
-      {/* Customer Registry Popup */}
-      {showAddCustomer && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="glass-card w-full max-w-sm bg-card border border-border rounded-xl shadow-xl p-5 animate-scale-in">
-            <h3 className="text-sm font-bold mb-3">Add Customer to Loyalty Program</h3>
-            <form onSubmit={createCustomer} className="space-y-3">
-              {custError && <p className="text-xs text-destructive">{custError}</p>}
-              <div>
-                <label className="text-[10px] text-muted-foreground block mb-1">Customer Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={newCustName}
-                  onChange={e => setNewCustName(e.target.value)}
-                  className="w-full bg-secondary/40 border border-border/50 rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
-                  placeholder="John Doe"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground block mb-1">Phone Number</label>
-                <input
-                  type="text"
-                  value={newCustPhone}
-                  onChange={e => setNewCustPhone(e.target.value)}
-                  className="w-full bg-secondary/40 border border-border/50 rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
-                  placeholder="555-0199"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground block mb-1">Email Address</label>
-                <input
-                  type="email"
-                  value={newCustEmail}
-                  onChange={e => setNewCustEmail(e.target.value)}
-                  className="w-full bg-secondary/40 border border-border/50 rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
-                  placeholder="john@doe.com"
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddCustomer(false)}
-                  className="px-3.5 py-1.5 rounded-lg bg-secondary text-foreground text-xs font-semibold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold cursor-pointer"
-                >
-                  Register
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+
 
       {/* Checkout Receipt Modal (Fixed and Scrollable layout) */}
       {checkoutResult && (
@@ -598,10 +472,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
                 <span>Cashier:</span>
                 <span>{checkoutResult.cashierId}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Customer ID:</span>
-                <span>{checkoutResult.customerId || 'Walk-in'}</span>
-              </div>
+
               
               <div className="border-t border-border/40 pt-2 border-dotted">
                 <p className="font-bold mb-1 border-b border-border/20 pb-1">Items List</p>

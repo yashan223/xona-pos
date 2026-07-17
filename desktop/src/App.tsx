@@ -37,7 +37,7 @@ export default function App() {
           const res = await fetch('http://localhost:3000/');
           if (res.ok) {
             setCurrentUser(parsed);
-            setCurrentPage(parsed.role === 'admin' ? 'admin' : 'dashboard');
+            setCurrentPage('dashboard');
           } else {
             localStorage.removeItem('currentUser');
           }
@@ -60,7 +60,7 @@ export default function App() {
       localStorage.removeItem('currentUser');
       localStorage.setItem('rememberMePreference', 'false');
     }
-    setCurrentPage(user.role === 'admin' ? 'admin' : 'dashboard');
+    setCurrentPage('dashboard');
   };
 
   const handleLogout = () => {
