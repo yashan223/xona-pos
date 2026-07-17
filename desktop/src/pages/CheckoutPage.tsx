@@ -15,15 +15,15 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
   const [filteredCatalog, setFilteredCatalog] = useState<ProductRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  
+
   // Cart state
   const [cart, setCart] = useState<(TransactionItem & { product: ProductRecord })[]>([]);
   const [discountPercent, setDiscountPercent] = useState<number>(0);
   const paymentMethod = 'cash';
-  
+
   // Recommendations state (powered by co-occurrence Graph BFS)
   const [recommendations, setRecommendations] = useState<GraphNode[]>([]);
-  
+
   // UI states
   const [loading, setLoading] = useState(true);
   const [checkoutResult, setCheckoutResult] = useState<any | null>(null); // receipt modal
@@ -215,7 +215,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
       setDiscountPercent(0);
       setRecommendations([]);
       toast.success('Checkout completed successfully!');
-      
+
       // Reload stock catalogs
       const updatedCatalog = await productApi.getAll();
       setCatalog(updatedCatalog);
@@ -239,12 +239,12 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
 
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-10px)] overflow-hidden animate-fade-in relative">
-      
+
       {/* Catalog / Left Panel */}
       <div className="flex-1 flex flex-col p-6 overflow-y-auto space-y-4 border-r border-border/20">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-xl font-bold tracking-tight">Checkout Register</h1>
+            <h1 className="text-xl font-bold tracking-tight">Checkout</h1>
             <p className="text-xs text-muted-foreground">Scan or select items to checkout</p>
           </div>
           <button onClick={loadData} className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 text-muted-foreground cursor-pointer">
@@ -270,11 +270,10 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
             <button
               key={cat}
               onClick={() => handleCategorySelect(cat)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors ${
-                selectedCategory === cat
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors ${selectedCategory === cat
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'bg-secondary/60 hover:bg-secondary text-muted-foreground'
-              }`}
+                }`}
             >
               {cat}
             </button>
@@ -298,18 +297,16 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
                 key={prod.id}
                 onClick={() => addToCart(prod)}
                 disabled={prod.stock === 0}
-                className={`glass-card p-3 border border-border/30 rounded-xl bg-card/20 hover:bg-card/50 hover:border-primary/20 text-left transition-all flex flex-col justify-between h-36 ${
-                  prod.stock === 0 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
-                }`}
+                className={`glass-card p-3 border border-border/30 rounded-xl bg-card/20 hover:bg-card/50 hover:border-primary/20 text-left transition-all flex flex-col justify-between h-36 ${prod.stock === 0 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+                  }`}
               >
                 <div>
                   <div className="flex justify-between items-start gap-1">
                     <span className="text-[9px] bg-secondary px-1.5 py-0.5 rounded font-mono text-muted-foreground">
                       {prod.sku}
                     </span>
-                    <span className={`text-[8px] font-bold px-1 py-0.25 rounded uppercase ${
-                      prod.stock === -1 ? 'bg-green-500/20 text-green-400' : (prod.stock < 5 ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400')
-                    }`}>
+                    <span className={`text-[8px] font-bold px-1 py-0.25 rounded uppercase ${prod.stock === -1 ? 'bg-green-500/20 text-green-400' : (prod.stock < 5 ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400')
+                      }`}>
                       Stock: {prod.stock === -1 ? 'Unlimited' : prod.stock}
                     </span>
                   </div>
@@ -358,7 +355,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
 
       {/* Cart / Right Panel */}
       <div className="w-full lg:w-[360px] bg-sidebar border-t lg:border-t-0 border-sidebar-border p-6 flex flex-col justify-between h-[calc(100vh-10px)]">
-        
+
         {/* Cart Title & Customer Selection */}
         <div className="space-y-4">
           <div className="flex justify-between items-center border-b border-sidebar-border pb-3">
@@ -412,7 +409,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
               <span>Subtotal</span>
               <span>{formatCurrency(cartSubtotal)}</span>
             </div>
-            
+
             {/* Discount row */}
             <div className="flex justify-between text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
@@ -433,7 +430,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
               <span>VAT ({vatEnabled ? `${vatPercentage}%` : 'Disabled'})</span>
               <span>{formatCurrency(cartTax)}</span>
             </div>
-            
+
             <div className="flex justify-between text-sm font-bold text-foreground pt-1.5 border-t border-sidebar-border/30">
               <span>Total Amount</span>
               <span className="text-primary">{formatCurrency(cartTotal)}</span>
@@ -476,7 +473,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
                 <span>{checkoutResult.cashierId}</span>
               </div>
 
-              
+
               <div className="border-t border-border/40 pt-2 border-dotted">
                 <p className="font-bold mb-1 border-b border-border/20 pb-1">Items List</p>
                 {checkoutResult.items.map((item: any) => (

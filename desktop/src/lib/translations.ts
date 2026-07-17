@@ -7,7 +7,7 @@ export const translations = {
     dashboard: 'Dashboard',
     userPanel: 'User Panel',
     productsCatalog: 'Products Catalog',
-    checkoutRegister: 'Checkout Register',
+    checkoutRegister: 'Checkout',
     transactionsLog: 'Transactions Log',
     recommendationNet: 'Recommendation Net',
     salesReports: 'Sales Reports',
@@ -15,7 +15,7 @@ export const translations = {
     systemAdmin: 'System Admin',
     cashier: 'Cashier',
     owner: 'Owner',
-    
+
     // Dashboard
     revenue: 'Revenue',
     todaySales: "Today's Sales",
@@ -23,7 +23,7 @@ export const translations = {
     activeCashiers: 'Active Cashiers',
     popularProducts: 'Popular Products',
     recentTransactions: 'Recent Transactions',
-    
+
     // Products Catalog
     addProduct: 'Add Product',
     editProduct: 'Edit Product',
@@ -40,7 +40,7 @@ export const translations = {
     description: 'Description',
     save: 'Save',
     cancel: 'Cancel',
-    
+
     // Checkout Register
     currentBasket: 'Current Basket',
     subtotal: 'Subtotal',
@@ -53,7 +53,7 @@ export const translations = {
     nextCustomer: 'Next Customer',
     viewPdfBill: 'View PDF Bill',
     transactionComplete: 'Transaction Complete',
-    
+
     // Settings
     systemSettings: 'System Settings',
     taxVatSettings: 'Tax & VAT Settings',
@@ -77,7 +77,7 @@ export const translations = {
     systemAdmin: 'පද්ධති පරිපාලක',
     cashier: 'කැෂියර්',
     owner: 'අයිතිකරු',
-    
+
     // Dashboard
     revenue: 'ආදායම',
     todaySales: 'අද විකුණුම්',
@@ -85,7 +85,7 @@ export const translations = {
     activeCashiers: 'ක්‍රියාකාරී සේවකයින්',
     popularProducts: 'ජනප්‍රිය භාණ්ඩ',
     recentTransactions: 'මෑත ගනුදෙනු',
-    
+
     // Products Catalog
     addProduct: 'භාණ්ඩයක් එක් කරන්න',
     editProduct: 'භාණ්ඩය සංස්කරණය කරන්න',
@@ -102,7 +102,7 @@ export const translations = {
     description: 'විස්තරය',
     save: 'සුරකින්න',
     cancel: 'අවලංගු කරන්න',
-    
+
     // Checkout Register
     currentBasket: 'වත්මන් කූඩය',
     subtotal: 'අනු එකතුව',
@@ -115,7 +115,7 @@ export const translations = {
     nextCustomer: 'ඊළඟ පාරිභෝගිකයා',
     viewPdfBill: 'PDF බිල්පත බලන්න',
     transactionComplete: 'ගනුදෙනුව සාර්ථකයි',
-    
+
     // Settings
     systemSettings: 'පද්ධති සැකසුම්',
     taxVatSettings: 'බදු සහ වැට් සැකසුම්',
@@ -136,7 +136,7 @@ export const getLanguage = (): Language => {
 
 export const useTranslation = () => {
   const [lang, setLang] = useState<Language>(getLanguage());
-  
+
   useEffect(() => {
     const handleLangChange = () => {
       setLang(getLanguage());

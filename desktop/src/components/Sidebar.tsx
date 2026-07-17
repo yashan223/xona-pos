@@ -28,9 +28,9 @@ interface SidebarProps {
 
 const navItems: { page: Page; label: string; icon: React.ElementType; role?: 'admin' | 'user' }[] = [
   { page: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { page: 'checkout', label: 'Checkout', icon: ShoppingCart, role: 'user' },
   { page: 'admin', label: 'User Panel', icon: Shield, role: 'admin' },
   { page: 'products', label: 'Products Catalog', icon: Package },
-  { page: 'checkout', label: 'Checkout Register', icon: ShoppingCart, role: 'user' },
   { page: 'transactions', label: 'Transactions Log', icon: Receipt, role: 'user' },
   { page: 'graph', label: 'Recommendation Net', icon: GitBranch, role: 'user' },
   { page: 'reports', label: 'Sales Reports', icon: BarChart3 },
