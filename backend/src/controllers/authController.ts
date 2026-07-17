@@ -9,7 +9,7 @@ class AuthController {
 
   register = async (req: Request, res: Response) => {
     try {
-      const { username, password, email } = req.body;
+      const { username, password, email, role } = req.body;
 
       if (!username || !password) {
         return res.status(400).json({ error: 'Username and password are required' });
@@ -34,8 +34,9 @@ class AuthController {
       const id = this._generateId();
       const pwHash = hashPassword(password);
       const createdAt = new Date().toISOString();
+      const chosenRole = role && ['admin', 'cashier', 'owner'].includes(role) ? role : 'cashier';
 
-      const user = await userRepository.createUser(id, trimmedUsername, pwHash, email || '', createdAt);
+      const user = await userRepository.createUser(id, trimmedUsername, pwHash, email || '', createdAt, chosenRole);
 
       res.status(201).json({
         message: 'User registered successfully',
@@ -120,6 +121,55 @@ class AuthController {
     } catch (err) {
       console.error('[auth] updateUserRole error:', err);
       res.status(500).json({ error: 'Failed to update user role' });
+    }
+  };
+
+  updateUser = async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id as string;
+      const { username, password, email, role } = req.body;
+
+      const updateData: { username?: string; email?: string; passwordHash?: string; role?: string } = {};
+
+      if (username) {
+        const trimmedUsername = username.trim();
+        if (trimmedUsername.length < 3) {
+          return res.status(400).json({ error: 'Username must be at least 3 characters' });
+        }
+        const existing = await userRepository.getUserByUsername(trimmedUsername);
+        if (existing && existing.id !== id) {
+          return res.status(400).json({ error: 'Username is already taken' });
+        }
+        updateData.username = trimmedUsername;
+      }
+
+      if (email !== undefined) {
+        updateData.email = email;
+      }
+
+      if (password) {
+        if (password.length < 6) {
+          return res.status(400).json({ error: 'Password must be at least 6 characters' });
+        }
+        updateData.passwordHash = hashPassword(password);
+      }
+
+      if (role) {
+        if (role !== 'admin' && role !== 'cashier' && role !== 'owner') {
+          return res.status(400).json({ error: 'Invalid role' });
+        }
+        updateData.role = role;
+      }
+
+      const success = await userRepository.updateUser(id, updateData);
+      if (!success) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      res.json({ message: 'User updated successfully' });
+    } catch (err) {
+      console.error('[auth] updateUser error:', err);
+      res.status(500).json({ error: 'Failed to update user' });
     }
   };
 }

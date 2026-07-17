@@ -9,7 +9,7 @@ import { KeyRound, User as UserIcon, AlertCircle, Eye, EyeOff } from 'lucide-rea
 import Logo from '@/components/Logo';
 
 interface LoginPageProps {
-  onLoginSuccess: (user: User) => void;
+  onLoginSuccess: (user: User, rememberMe: boolean) => void;
 }
 
 export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
@@ -18,6 +18,9 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem('rememberMePreference') === 'true';
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +37,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
         username: username.trim(),
         password: password
       });
-      onLoginSuccess(response.user);
+      onLoginSuccess(response.user, rememberMe);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid credentials. Please try again.');
     } finally {
@@ -108,6 +111,20 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+            </div>
+
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center space-x-2 py-1 select-none">
+              <input
+                id="rememberMe"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 rounded border-border/80 bg-secondary/35 text-primary focus:ring-primary/30 cursor-pointer accent-primary"
+              />
+              <Label htmlFor="rememberMe" className="text-xs text-muted-foreground cursor-pointer">
+                Remember Me
+              </Label>
             </div>
 
             {/* Submit */}

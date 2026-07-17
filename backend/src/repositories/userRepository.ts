@@ -53,6 +53,11 @@ class UserRepository {
     const res = await UserModel.updateOne({ _id: id }, { role });
     return (res.modifiedCount || 0) > 0;
   }
+
+  async updateUser(id: string, updateData: { username?: string; email?: string; passwordHash?: string }): Promise<boolean> {
+    const res = await UserModel.updateOne({ _id: id }, { $set: updateData });
+    return (res.modifiedCount || 0) > 0 || (res.matchedCount || 0) > 0;
+  }
 }
 
 export const userRepository = new UserRepository();

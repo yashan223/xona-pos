@@ -244,7 +244,7 @@ export interface User {
 }
 
 export const authApi = {
-  register: (data: { username: string; password?: string; email?: string }) =>
+  register: (data: { username: string; password?: string; email?: string; role?: string }) =>
     request<{ message: string; user: User }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
 
   login: (data: { username: string; password?: string }) =>
@@ -255,4 +255,7 @@ export const authApi = {
   delete: (id: string) => request<{ message: string }>(`/auth/users/${id}`, { method: 'DELETE' }),
 
   updateRole: (id: string, role: string) => request<{ message: string }>(`/auth/users/${id}/role`, { method: 'POST', body: JSON.stringify({ role }) }),
+
+  update: (id: string, data: { username?: string; password?: string; email?: string; role?: string }) =>
+    request<{ message: string }>(`/auth/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 };

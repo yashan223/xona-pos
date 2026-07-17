@@ -51,9 +51,15 @@ export default function App() {
     checkAuth();
   }, []);
 
-  const handleLoginSuccess = (user: User) => {
+  const handleLoginSuccess = (user: User, rememberMe: boolean) => {
     setCurrentUser(user);
-    localStorage.setItem('currentUser', JSON.stringify(user));
+    if (rememberMe) {
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      localStorage.setItem('rememberMePreference', 'true');
+    } else {
+      localStorage.removeItem('currentUser');
+      localStorage.setItem('rememberMePreference', 'false');
+    }
     setCurrentPage(user.role === 'admin' ? 'admin' : 'dashboard');
   };
 

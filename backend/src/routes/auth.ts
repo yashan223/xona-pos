@@ -18,4 +18,7 @@ router.delete('/users/:id', authController.deleteUser);
 // POST /api/auth/users/:id/role — Update a user's role
 router.post('/users/:id/role', authController.updateUserRole);
 
+// PUT /api/auth/users/:id — Update user credentials
+router.put('/users/:id', authController.updateUser);
+
 export default router;

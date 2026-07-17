@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "timestamp": "2026-07-17T09:08:57.070Z",
+  "data": {
+    "users": [
+      {
+        "_id": "admin-user-id",
+        "username": "admin",
+        "passwordHash": "0b821132aca09c28823f808d5fb5b777:6b58181784dc6e826563661c8a521812e711e2a0664ec2364dc7c3da5c9d1551076480786d2207ba7e1d2acb6903d798358dfb59fdb36e8fc5273b27158ea228",
+        "email": "admin@xona-pos.dev",
+        "createdAt": "2026-07-17T09:00:05.105Z",
+        "role": "admin",
+        "__v": 0
+      }
+    ],
+    "products": [],
+    "customers": [],
+    "transactions": [],
+    "graphNodes": [],
+    "graphEdges": []
+  }
+}

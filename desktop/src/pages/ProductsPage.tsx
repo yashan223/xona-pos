@@ -259,7 +259,8 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
   const filteredGridProducts = products.filter(p => selectedCategoryFilter === 'All' || p.category === selectedCategoryFilter);
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6 animate-fade-in">
+    <>
+      <div className="p-6 max-w-6xl mx-auto space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -471,11 +472,12 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
           )}
         </div>
       </div>
+      </div>
 
       {/* Editor Modal / Inline Form */}
       {isEditing && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto md:py-12 animate-fade-in">
-          <form onSubmit={saveProduct} className="glass-card w-full max-w-3xl bg-card border border-border rounded-2xl shadow-xl p-6 animate-scale-in space-y-4 my-auto">
+          <form onSubmit={saveProduct} className="glass-card w-full max-w-3xl bg-card border border-border rounded-2xl shadow-xl p-6 animate-scale-in space-y-4 my-8">
             {/* Header */}
             <div className="flex justify-between items-center pb-3 border-b border-border/40">
               <h3 className="text-lg font-bold text-foreground">
@@ -664,6 +666,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
           </form>
         </div>
       )}
-    </div>
+    </>
   );
 }
