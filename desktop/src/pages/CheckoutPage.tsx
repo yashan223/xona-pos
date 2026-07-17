@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, Search, Plus, Minus, Trash2, Tag, CreditCard, Sparkles, CheckCircle2, UserPlus, RefreshCw, Printer } from 'lucide-react';
+import { ShoppingCart, Search, Plus, Minus, Trash2, Tag, Sparkles, CheckCircle2, UserPlus, RefreshCw, Printer, Banknote } from 'lucide-react';
 import { productApi, transactionApi, customerApi, graphApi } from '@/lib/api';
 import type { ProductRecord, CustomerRecord, TransactionItem, User, GraphNode } from '@/lib/api';
 
@@ -19,7 +19,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
   const [cart, setCart] = useState<(TransactionItem & { product: ProductRecord })[]>([]);
   const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'mobile'>('cash');
+  const paymentMethod = 'cash';
   
   // Recommendations state (powered by co-occurrence Graph BFS)
   const [recommendations, setRecommendations] = useState<GraphNode[]>([]);
@@ -507,30 +507,13 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
             </div>
           </div>
 
-          {/* Payment Method Selector */}
-          <div className="grid grid-cols-3 gap-1.5">
-            {(['cash', 'card', 'mobile'] as const).map(method => (
-              <button
-                key={method}
-                onClick={() => setPaymentMethod(method)}
-                className={`py-1.5 rounded-lg border text-xs font-semibold uppercase transition-all cursor-pointer ${
-                  paymentMethod === method
-                    ? 'bg-primary/10 border-primary text-primary shadow-sm'
-                    : 'bg-secondary/40 border-sidebar-border text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {method}
-              </button>
-            ))}
-          </div>
-
           {/* Checkout Button */}
           <button
             onClick={processCheckout}
             disabled={cart.length === 0}
             className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-bold shadow-md shadow-primary/20 hover:bg-primary/95 transition-all text-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <CreditCard className="w-4 h-4" />
+            <Banknote className="w-4 h-4" />
             Complete Checkout {formatCurrency(cartTotal)}
           </button>
         </div>

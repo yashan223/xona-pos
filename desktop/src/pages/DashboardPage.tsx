@@ -63,9 +63,9 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-8 animate-fade-in">
+    <div className="p-6 h-full flex flex-col space-y-6 max-w-6xl mx-auto overflow-hidden animate-fade-in text-left">
       {/* Header */}
-      <div>
+      <div className="flex-shrink-0">
         <h1 className="text-2xl font-bold tracking-tight">POS Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Overview of Xona Point of Sale operations
@@ -73,7 +73,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0">
         <StatsCard
           title="Total Products"
           value={stats?.products.total ?? 0}
@@ -106,15 +106,15 @@ export default function DashboardPage() {
       </div>
 
       {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Selling Products (Max Heap) */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
+        {/* Top Selling Products */}
+        <div className="flex flex-col h-full overflow-hidden">
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 flex-shrink-0">
             <Package className="w-5 h-5 text-success" />
             Top Selling Products (Popularity Ranked)
           </h2>
           {topProducts.length > 0 ? (
-            <div className="max-h-[500px] overflow-y-auto pr-2 space-y-3">
+            <div className="flex-1 overflow-y-auto pr-2 space-y-3 min-h-0">
               {topProducts.slice(0, 5).map((prod, i) => (
                 <div key={prod.id} className="glass-card p-4 flex items-center justify-between border border-border/40 rounded-xl bg-card/40 hover:bg-card/70 transition-all">
                   <div className="flex items-center gap-3">
@@ -141,13 +141,13 @@ export default function DashboardPage() {
         </div>
 
         {/* Timeline activity feed */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <div className="flex flex-col h-full overflow-hidden">
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 flex-shrink-0">
             <Clock className="w-5 h-5 text-primary" />
             Recent Transactions
           </h2>
           {timeline.length > 0 ? (
-            <div className="max-h-[500px] overflow-y-auto pr-2 space-y-3">
+            <div className="flex-1 overflow-y-auto pr-2 space-y-3 min-h-0">
               {timeline.slice(0, 5).map((tx) => (
                 <div key={tx.id} className="glass-card p-4 flex flex-col gap-2 border border-border/40 rounded-xl bg-card/40 hover:bg-card/70 transition-all">
                   <div className="flex justify-between items-center">
