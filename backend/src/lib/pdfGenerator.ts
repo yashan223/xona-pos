@@ -64,7 +64,7 @@ export async function generateReceiptPDF(transaction: any): Promise<string> {
       if (transaction.discount > 0) {
         doc.text(`Discount:`.padEnd(28) + `-Rs.${Number(transaction.discount).toFixed(2)}`.padStart(18));
       }
-      doc.text(`Tax (8%):`.padEnd(28) + `Rs.${Number(transaction.tax).toFixed(2)}`.padStart(18));
+      doc.text(`VAT:`.padEnd(28) + `Rs.${Number(transaction.tax).toFixed(2)}`.padStart(18));
       doc.font('Helvetica-Bold');
       doc.fontSize(7).text(`Total:`.padEnd(28) + `Rs.${Number(transaction.totalAmount).toFixed(2)}`.padStart(18));
       doc.font('Helvetica');

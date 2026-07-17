@@ -15,12 +15,22 @@ import { authApi, productApi, reportApi } from '@/lib/api';
 import type { User, ProductRecord, SystemStats } from '@/lib/api';
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'users' | 'records' | 'maintenance'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'records' | 'maintenance' | 'settings'>('users');
   
   // States
   const [users, setUsers] = useState<User[]>([]);
   const [products, setProducts] = useState<ProductRecord[]>([]);
   const [stats, setStats] = useState<SystemStats | null>(null);
+
+  // VAT & Tax Settings
+  const [vatEnabled, setVatEnabled] = useState(() => {
+    const saved = localStorage.getItem('vatEnabled');
+    return saved !== null ? saved === 'true' : true;
+  });
+  const [vatPercentage, setVatPercentage] = useState(() => {
+    const saved = localStorage.getItem('vatPercentage');
+    return saved !== null ? parseFloat(saved) : 8;
+  });
   
   const [loading, setLoading] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -41,6 +51,9 @@ export default function AdminPage() {
   const loadData = async () => {
     setLoading(true);
     try {
+      if (activeTab === 'settings') {
+        return;
+      }
       if (activeTab === 'users') {
         const usersData = await authApi.getUsers();
         setUsers(usersData);
@@ -177,10 +190,10 @@ export default function AdminPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Settings className="w-6 h-6 text-primary" />
-            Admin Panel
+            User Panel
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            System administration, cashier privileges, and database controls
+            System configuration, cashier privileges, and database controls
           </p>
         </div>
         <button
@@ -241,6 +254,17 @@ export default function AdminPage() {
         >
           <Database className="w-4 h-4" />
           Database Maintenance
+        </button>
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
+            activeTab === 'settings'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Settings className="w-4 h-4" />
+          System Settings
         </button>
       </div>
 
@@ -438,6 +462,74 @@ export default function AdminPage() {
                       <Trash2 className="w-3.5 h-3.5" />
                       Wipe Database Logs
                     </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="space-y-6 max-w-xl animate-fade-in">
+              <div className="glass-card p-5 space-y-4 bg-card/30 border border-border/40 rounded-2xl">
+                <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2">
+                  <Settings className="w-4 h-4 text-primary" />
+                  Tax & VAT Settings
+                </h3>
+                
+                <div className="space-y-4">
+                  {/* VAT Toggle */}
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/20 border border-border/50">
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground text-left">Enable VAT Calculation</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5 text-left">
+                        Toggle to enable or disable VAT tax additions on checkouts.
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={vatEnabled}
+                        onChange={(e) => {
+                          const val = e.target.checked;
+                          localStorage.setItem('vatEnabled', String(val));
+                          setVatEnabled(val);
+                          showFeedback('success', `VAT calculations ${val ? 'enabled' : 'disabled'} successfully.`);
+                          // Trigger window event so other loaded pages pick it up
+                          window.dispatchEvent(new CustomEvent('products_updated'));
+                        }}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-secondary/60 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
+
+                  {/* VAT Percentage */}
+                  <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
+                    <div>
+                      <h4 className="text-sm font-semibold text-left">VAT Percentage</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5 text-left">
+                        Specify the VAT tax rate applied to items during checkout.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 max-w-[150px]">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={vatPercentage}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          localStorage.setItem('vatPercentage', String(val));
+                          setVatPercentage(val);
+                          // Trigger window event so checkout register reloads
+                          window.dispatchEvent(new CustomEvent('products_updated'));
+                        }}
+                        disabled={!vatEnabled}
+                        className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-primary disabled:opacity-40 transition-all text-foreground"
+                      />
+                      <span className="text-sm font-bold text-foreground">%</span>
+                    </div>
                   </div>
                 </div>
               </div>

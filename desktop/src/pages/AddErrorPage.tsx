@@ -269,9 +269,11 @@ export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
   };
 
   // Calculations
+  const vatEnabled = localStorage.getItem('vatEnabled') !== 'false';
+  const vatPercentage = parseFloat(localStorage.getItem('vatPercentage') || '8');
   const cartSubtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
   const discountAmount = parseFloat((cartSubtotal * (discountPercent / 100)).toFixed(2));
-  const cartTax = parseFloat(((cartSubtotal - discountAmount) * 0.08).toFixed(2)); // 8% sales tax
+  const cartTax = vatEnabled ? parseFloat(((cartSubtotal - discountAmount) * (vatPercentage / 100)).toFixed(2)) : 0;
   const cartTotal = parseFloat((cartSubtotal - discountAmount + cartTax).toFixed(2));
 
   const formatCurrency = (val: number) => {
@@ -495,7 +497,7 @@ export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
             </div>
 
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Tax (8%)</span>
+              <span>VAT ({vatEnabled ? `${vatPercentage}%` : 'Disabled'})</span>
               <span>{formatCurrency(cartTax)}</span>
             </div>
             
@@ -639,7 +641,7 @@ export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
                   </div>
                 )}
                 <div className="flex justify-between text-[11px]">
-                  <span>Tax (8%):</span>
+                  <span>VAT:</span>
                   <span>{formatCurrency(checkoutResult.tax)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-sm border-t border-border/20 pt-1">

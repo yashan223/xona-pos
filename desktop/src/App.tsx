@@ -67,10 +67,13 @@ export default function App() {
       case 'products':
         return <ErrorsPage currentUser={currentUser} />;
       case 'checkout':
+        if (currentUser?.role === 'admin') return <AdminPage />;
         return <AddErrorPage currentUser={currentUser} onSuccess={() => {}} />;
       case 'transactions':
+        if (currentUser?.role === 'admin') return <AdminPage />;
         return <SolutionsPage currentUser={currentUser} />;
       case 'graph':
+        if (currentUser?.role === 'admin') return <AdminPage />;
         return <GraphPage />;
       case 'reports':
         return <ReportsPage />;
