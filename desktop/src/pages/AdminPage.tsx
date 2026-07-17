@@ -5,7 +5,6 @@ import {
   RefreshCw,
   UserCheck,
   UserX,
-  Info,
   Plus,
   X,
   Edit3,
@@ -13,14 +12,15 @@ import {
 import { authApi } from '@/lib/api';
 import type { User } from '@/lib/api';
 import { useTranslation } from '@/lib/translations';
+import { useNotification } from '@/context/NotificationContext';
 
 export default function AdminPage() {
   const { t } = useTranslation();
+  const { confirm, toast } = useNotification();
   
   // States
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
   // Current logged in user info (to prevent self-delete/demote)
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -52,26 +52,21 @@ export default function AdminPage() {
       setUsers(usersData);
     } catch (err) {
       console.error('Failed to load admin data:', err);
-      showFeedback('error', 'Failed to retrieve cashier accounts');
+      toast.error('Failed to retrieve cashier accounts');
     } finally {
       setLoading(false);
     }
-  };
-
-  const showFeedback = (type: 'success' | 'error', text: string) => {
-    setFeedbackMsg({ type, text });
-    setTimeout(() => setFeedbackMsg(null), 5000);
   };
 
   // User Actions
   const handleToggleRole = async (userId: string, currentRole?: string) => {
     const targetUser = users.find(u => u.id === userId);
     if (targetUser?.username === 'admin') {
-      showFeedback('error', 'The default admin role cannot be modified.');
+      toast.error('The default admin role cannot be modified.');
       return;
     }
     if (userId === currentUser?.id) {
-      showFeedback('error', 'You cannot demote or modify your own role.');
+      toast.error('You cannot demote or modify your own role.');
       return;
     }
 
@@ -85,34 +80,39 @@ export default function AdminPage() {
     }
     try {
       await authApi.updateRole(userId, nextRole);
-      showFeedback('success', `Successfully updated role for ${targetUser?.username} to ${nextRole}`);
+      toast.success(`Successfully updated role for ${targetUser?.username} to ${nextRole}`);
       loadData();
     } catch (err) {
-      showFeedback('error', 'Failed to update user role');
+      toast.error('Failed to update user role');
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
     const targetUser = users.find(u => u.id === userId);
     if (targetUser?.username === 'admin') {
-      showFeedback('error', 'The default admin user cannot be deleted.');
+      toast.error('The default admin user cannot be deleted.');
       return;
     }
     if (userId === currentUser?.id) {
-      showFeedback('error', 'You cannot delete your own logged-in user.');
+      toast.error('You cannot delete your own logged-in user.');
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete user "${targetUser?.username}"?`)) {
-      return;
-    }
+    const isConfirmed = await confirm({
+      title: 'Delete User',
+      message: `Are you sure you want to delete user "${targetUser?.username}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    if (!isConfirmed) return;
 
     try {
       await authApi.delete(userId);
-      showFeedback('success', `User ${targetUser?.username} deleted successfully`);
+      toast.success(`User ${targetUser?.username} deleted successfully`);
       loadData();
     } catch (err) {
-      showFeedback('error', 'Failed to delete user');
+      toast.error('Failed to delete user');
     }
   };
 
@@ -225,22 +225,10 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Feedback message banner */}
-      {feedbackMsg && (
-        <div
-          className={`p-3 rounded-lg flex items-center gap-2 border text-xs animate-fade-in ${
-            feedbackMsg.type === 'success'
-              ? 'bg-success/10 border-success/30 text-success'
-              : 'bg-destructive/10 border-destructive/30 text-destructive'
-          }`}
-        >
-          <Info className="w-4 h-4 flex-shrink-0" />
-          <span>{feedbackMsg.text}</span>
-        </div>
-      )}
+
 
       {/* Loading indicator */}
-      {loading && !feedbackMsg && (
+      {loading && (
         <div className="flex items-center justify-center py-20">
           <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
         </div>

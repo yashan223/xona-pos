@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { ShoppingCart, Search, Plus, Minus, Trash2, Tag, Sparkles, CheckCircle2, RefreshCw, Printer, Banknote } from 'lucide-react';
+import { useNotification } from '@/context/NotificationContext';
 import { productApi, transactionApi, graphApi } from '@/lib/api';
 import type { ProductRecord, TransactionItem, User, GraphNode } from '@/lib/api';
 
@@ -9,6 +10,7 @@ interface CheckoutPageProps {
 }
 
 export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
+  const { toast } = useNotification();
   const [catalog, setCatalog] = useState<ProductRecord[]>([]);
   const [filteredCatalog, setFilteredCatalog] = useState<ProductRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,7 +105,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
   const addToCart = (product: ProductRecord) => {
     const isUnlimited = product.stock === -1;
     if (!isUnlimited && product.stock <= 0) {
-      alert('Product is out of stock!');
+      toast.warning('Product is out of stock!');
       return;
     }
 
@@ -112,7 +114,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
       let updated;
       if (existing) {
         if (!isUnlimited && existing.quantity >= product.stock) {
-          alert(`Cannot add more. Only ${product.stock} units available in inventory.`);
+          toast.warning(`Cannot add more. Only ${product.stock} units available in inventory.`);
           return prev;
         }
         updated = prev.map(item =>
@@ -146,7 +148,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
         if (newQty <= 0) return null;
         const isUnlimited = item.product.stock === -1;
         if (!isUnlimited && newQty > item.product.stock) {
-          alert(`Cannot add more. Only ${item.product.stock} units available.`);
+          toast.warning(`Cannot add more. Only ${item.product.stock} units available.`);
           return item;
         }
         return {
@@ -182,11 +184,11 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
   // Checkout process
   const processCheckout = async () => {
     if (cart.length === 0) {
-      alert('Cart is empty.');
+      toast.warning('Cart is empty.');
       return;
     }
     if (!currentUser) {
-      alert('Cashier is not logged in.');
+      toast.warning('Cashier is not logged in.');
       return;
     }
 
@@ -212,13 +214,14 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
       setCart([]);
       setDiscountPercent(0);
       setRecommendations([]);
+      toast.success('Checkout completed successfully!');
       
       // Reload stock catalogs
       const updatedCatalog = await productApi.getAll();
       setCatalog(updatedCatalog);
       setFilteredCatalog(updatedCatalog);
     } catch (err: any) {
-      alert(err.message || 'Checkout process failed.');
+      toast.error(err.message || 'Checkout process failed.');
     }
   };
 

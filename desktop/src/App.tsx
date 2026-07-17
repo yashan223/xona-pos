@@ -14,6 +14,7 @@ import MaintenancePage from '@/pages/MaintenancePage';
 import type { User } from '@/lib/api';
 import DarkVeil from '@/components/DarkVeil';
 import { startWebSocketListener } from '@/lib/websocket';
+import { NotificationProvider } from '@/context/NotificationContext';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -128,20 +129,22 @@ export default function App() {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-background text-foreground z-10 flex">
-      {/* DarkVeil Background */}
-      <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden" style={{ width: '100%', height: '100%', opacity: 0.65 }}>
-        <DarkVeil
-          hueShift={0}
-          noiseIntensity={0}
-          scanlineIntensity={0}
-          speed={0.5}
-          scanlineFrequency={0}
-          warpAmount={0}
-          resolutionScale={1}
-        />
+    <NotificationProvider>
+      <div className="relative w-screen h-screen overflow-hidden bg-background text-foreground z-10 flex">
+        {/* DarkVeil Background */}
+        <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden" style={{ width: '100%', height: '100%', opacity: 0.65 }}>
+          <DarkVeil
+            hueShift={0}
+            noiseIntensity={0}
+            scanlineIntensity={0}
+            speed={0.5}
+            scanlineFrequency={0}
+            warpAmount={0}
+            resolutionScale={1}
+          />
+        </div>
+        {renderContent()}
       </div>
-      {renderContent()}
-    </div>
+    </NotificationProvider>
   );
 }

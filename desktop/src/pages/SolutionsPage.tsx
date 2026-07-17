@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Receipt, Search, RotateCcw, Printer, Clock } from 'lucide-react';
+import { useNotification } from '@/context/NotificationContext';
 import { transactionApi } from '@/lib/api';
 import type { TransactionRecord, User } from '@/lib/api';
 
@@ -10,6 +11,7 @@ interface SolutionsPageProps {
 }
 
 export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
+  const { confirm, toast } = useNotification();
   const [transactions, setTransactions] = useState<TransactionRecord[]>(cachedTransactions || []);
   const [filteredTransactions, setFilteredTransactions] = useState<TransactionRecord[]>(cachedTransactions || []);
   const [loading, setLoading] = useState(!cachedTransactions);
@@ -54,7 +56,15 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
   };
 
   const handleRefund = async (id: string) => {
-    if (!confirm('Are you sure you want to refund this transaction? All items stock will be returned to inventory.')) return;
+    const isConfirmed = await confirm({
+      title: 'Refund Transaction',
+      message: 'Are you sure you want to refund this transaction? All items stock will be returned to inventory.',
+      confirmText: 'Refund',
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    if (!isConfirmed) return;
+
     try {
       const res = await transactionApi.refund(id);
       
@@ -67,9 +77,9 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
 
       setFilteredTransactions(prev => prev.map(t => t.id === id ? res.transaction : t));
       
-      alert(res.message);
+      toast.success(res.message || 'Transaction refunded successfully.');
     } catch (err: any) {
-      alert(err.message || 'Refund failed');
+      toast.error(err.message || 'Refund failed');
     }
   };
 

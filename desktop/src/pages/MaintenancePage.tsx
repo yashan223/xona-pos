@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Database, Info } from 'lucide-react';
+import { Database } from 'lucide-react';
 import { reportApi } from '@/lib/api';
 import { useTranslation } from '@/lib/translations';
+import { useNotification } from '@/context/NotificationContext';
 
 export default function MaintenancePage() {
   const { t } = useTranslation();
+  const { confirm, toast } = useNotification();
   const [backups, setBackups] = useState<{ filename: string; size: number; createdAt: string }[]>([]);
   const [loading, setLoading] = useState(false);
-  const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     loadBackups();
@@ -22,52 +23,59 @@ export default function MaintenancePage() {
     }
   };
 
-  const showFeedback = (type: 'success' | 'error', text: string) => {
-    setFeedbackMsg({ type, text });
-    setTimeout(() => setFeedbackMsg(null), 5000);
-  };
+
 
   const handleCreateBackup = async () => {
     setLoading(true);
     try {
       const res = await reportApi.createBackup();
-      showFeedback('success', res.message || 'Backup created successfully');
+      toast.success(res.message || 'Backup created successfully');
       loadBackups();
     } catch (err) {
-      showFeedback('error', 'Failed to create database backup');
+      toast.error('Failed to create database backup');
     } finally {
       setLoading(false);
     }
   };
 
   const handleRestoreBackup = async (filename: string) => {
-    if (!confirm(`Are you sure you want to restore the database from backup file "${filename}"? All current data will be overwritten.`)) {
-      return;
-    }
+    const isConfirmed = await confirm({
+      title: 'Restore Database',
+      message: `Are you sure you want to restore the database from backup file "${filename}"? All current data will be overwritten.`,
+      confirmText: 'Restore',
+      cancelText: 'Cancel',
+      type: 'warning'
+    });
+    if (!isConfirmed) return;
 
     setLoading(true);
     try {
       const res = await reportApi.restoreBackup(filename);
-      showFeedback('success', res.message || 'Database restored successfully');
+      toast.success(res.message || 'Database restored successfully');
     } catch (err) {
-      showFeedback('error', 'Failed to restore database from backup');
+      toast.error('Failed to restore database from backup');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteBackup = async (filename: string) => {
-    if (!confirm(`Are you sure you want to delete backup file "${filename}"?`)) {
-      return;
-    }
+    const isConfirmed = await confirm({
+      title: 'Delete Backup',
+      message: `Are you sure you want to delete backup file "${filename}"?`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    if (!isConfirmed) return;
 
     setLoading(true);
     try {
       const res = await reportApi.deleteBackup(filename);
-      showFeedback('success', res.message || 'Backup deleted successfully');
+      toast.success(res.message || 'Backup deleted successfully');
       loadBackups();
     } catch (err) {
-      showFeedback('error', 'Failed to delete backup file');
+      toast.error('Failed to delete backup file');
     } finally {
       setLoading(false);
     }
@@ -84,20 +92,25 @@ export default function MaintenancePage() {
         const backupData = JSON.parse(text);
 
         if (!backupData || !backupData.data) {
-          showFeedback('error', 'Invalid backup file format.');
+          toast.error('Invalid backup file format.');
           return;
         }
 
-        if (!confirm('Are you sure you want to restore the database from this uploaded file? All current records will be overwritten.')) {
-          return;
-        }
+        const isConfirmed = await confirm({
+          title: 'Restore from Upload',
+          message: 'Are you sure you want to restore the database from this uploaded file? All current records will be overwritten.',
+          confirmText: 'Restore',
+          cancelText: 'Cancel',
+          type: 'warning'
+        });
+        if (!isConfirmed) return;
 
         setLoading(true);
         const res = await reportApi.uploadBackup(backupData);
-        showFeedback('success', res.message || 'Database restored from uploaded backup successfully');
+        toast.success(res.message || 'Database restored from uploaded backup successfully');
         loadBackups();
       } catch (err) {
-        showFeedback('error', 'Failed to parse or restore uploaded backup file.');
+        toast.error('Failed to parse or restore uploaded backup file.');
       } finally {
         setLoading(false);
         e.target.value = '';
@@ -127,18 +140,7 @@ export default function MaintenancePage() {
         </p>
       </div>
 
-      {feedbackMsg && (
-        <div
-          className={`p-3 rounded-lg flex items-center gap-2 border text-xs animate-fade-in ${
-            feedbackMsg.type === 'success'
-              ? 'bg-success/10 border-success/30 text-success'
-              : 'bg-destructive/10 border-destructive/30 text-destructive'
-          }`}
-        >
-          <Info className="w-4 h-4 flex-shrink-0" />
-          <span>{feedbackMsg.text}</span>
-        </div>
-      )}
+
 
       {/* Backup & Restore Controls */}
       <div className="glass-card p-5 space-y-4 bg-card/30 border border-border/40 rounded-2xl">

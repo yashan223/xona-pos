@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Settings, Info } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { useTranslation } from '@/lib/translations';
+import { useNotification } from '@/context/NotificationContext';
 
 export default function SettingsPage() {
   const { t, lang, setLanguage } = useTranslation();
+  const { toast } = useNotification();
 
   const [vatEnabled, setVatEnabled] = useState(() => {
     const saved = localStorage.getItem('vatEnabled');
@@ -14,12 +16,7 @@ export default function SettingsPage() {
     return saved !== null ? parseFloat(saved) : 15;
   });
 
-  const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const showFeedback = (type: 'success' | 'error', text: string) => {
-    setFeedbackMsg({ type, text });
-    setTimeout(() => setFeedbackMsg(null), 5000);
-  };
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6 animate-fade-in text-left">
@@ -33,18 +30,7 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      {feedbackMsg && (
-        <div
-          className={`p-3 rounded-lg flex items-center gap-2 border text-xs animate-fade-in ${
-            feedbackMsg.type === 'success'
-              ? 'bg-success/10 border-success/30 text-success'
-              : 'bg-destructive/10 border-destructive/30 text-destructive'
-          }`}
-        >
-          <Info className="w-4 h-4 flex-shrink-0" />
-          <span>{feedbackMsg.text}</span>
-        </div>
-      )}
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
         {/* VAT & Tax Settings Card */}
@@ -70,7 +56,7 @@ export default function SettingsPage() {
                     const val = e.target.checked;
                     localStorage.setItem('vatEnabled', String(val));
                     setVatEnabled(val);
-                    showFeedback('success', `VAT calculations ${val ? 'enabled' : 'disabled'} successfully.`);
+                    toast.success(`VAT calculations ${val ? 'enabled' : 'disabled'} successfully.`);
                     window.dispatchEvent(new CustomEvent('products_updated'));
                   }}
                   className="sr-only peer"

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Package, Plus, Trash2, Edit3, Save, X } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
+import { useNotification } from '@/context/NotificationContext';
 import { productApi } from '@/lib/api';
 import type { ProductRecord, User } from '@/lib/api';
 
@@ -11,6 +12,7 @@ interface ProductsPageProps {
 }
 
 export default function ProductsPage({ currentUser }: ProductsPageProps) {
+  const { confirm, toast } = useNotification();
   const [products, setProducts] = useState<ProductRecord[]>(cachedProducts || []);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(!cachedProducts);
@@ -86,7 +88,15 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
   }, []);
 
   async function handleDelete(id: string) {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    const isConfirmed = await confirm({
+      title: 'Delete Product',
+      message: 'Are you sure you want to delete this product? This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    if (!isConfirmed) return;
+
     try {
       await productApi.delete(id);
       setProducts(prev => {
@@ -94,10 +104,11 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
         cachedProducts = updated;
         return updated;
       });
+      toast.success('Product deleted successfully.');
       // Broadcast WebSocket-style reload event locally
       window.dispatchEvent(new CustomEvent('products_updated'));
-    } catch (err) {
-      console.error('Failed to delete product:', err);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete product.');
     }
   }
 
