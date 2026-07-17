@@ -464,8 +464,11 @@ function SavedReportsTab({
           <tbody className="divide-y divide-border/20">
             {reports.map((report) => (
               <tr key={report._id} className="hover:bg-secondary/10 transition-colors">
-                <td className="p-3.5 font-mono text-foreground select-all text-left">
-                  {report.filename}
+                <td className="p-3.5 text-left">
+                  <div className="font-mono text-foreground font-semibold select-all">{report.filename}</div>
+                  <div className="text-[9px] text-muted-foreground mt-1 select-all font-mono break-all bg-secondary/30 p-1 rounded border border-border/20 max-w-sm">
+                    {report.localPath}
+                  </div>
                 </td>
                 <td className="p-3.5 text-left">
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${

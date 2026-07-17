@@ -128,7 +128,12 @@ class ReportController {
       }
 
       const reports = await SavedReportModel.find({}).sort({ createdAt: -1 }).lean();
-      res.json(reports);
+      const reportsWithLocalPath = reports.map((r: any) => ({
+        ...r,
+        localPath: path.join(process.cwd(), 'reports', r.filename)
+      }));
+
+      res.json(reportsWithLocalPath);
     } catch (err) {
       console.error('[reports] list saved reports error:', err);
       res.status(500).json({ error: 'Failed to list saved reports' });

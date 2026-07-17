@@ -242,6 +242,7 @@ export interface SavedReportRecord {
   reportType: 'summary' | 'category' | 'daily';
   filename: string;
   filePath: string;
+  localPath: string;
   generatedBy: string;
   createdAt: string;
 }
