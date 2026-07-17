@@ -18,6 +18,9 @@ router.get('/timeline', reportController.getTimeline);
 // GET /api/reports/stats — Store statistics
 router.get('/stats', reportController.getStats);
 
+// GET /api/reports/pdf — Generate PDF sales report
+router.get('/pdf', reportController.generatePdfReport);
+
 // POST /api/reports/reset — Reset and seed POS database
 router.post('/reset', reportController.resetDatabase);
 

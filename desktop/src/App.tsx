@@ -85,7 +85,7 @@ export default function App() {
         if (currentUser?.role === 'admin') return <AdminPage />;
         return <GraphPage />;
       case 'reports':
-        return <ReportsPage />;
+        return <ReportsPage currentUser={currentUser} />;
       case 'settings':
         if (currentUser?.role !== 'admin') return <DashboardPage />;
         return <SettingsPage />;

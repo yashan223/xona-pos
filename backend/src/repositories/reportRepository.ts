@@ -35,10 +35,11 @@ class ReportRepository {
       {
         $group: {
           _id: { $substr: ['$createdAt', 0, 10] }, // YYYY-MM-DD
-          revenue: { $sum: '$totalAmount' }
+          revenue: { $sum: '$totalAmount' },
+          count: { $sum: 1 }
         }
       },
-      { $project: { date: '$_id', revenue: 1, _id: 0 } },
+      { $project: { date: '$_id', revenue: 1, count: 1, _id: 0 } },
       { $sort: { date: -1 } },
       { $limit: 30 }
     ]);

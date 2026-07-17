@@ -5,6 +5,7 @@ import { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeMode
 import { runSeed } from '../seed.js';
 import fs from 'fs';
 import path from 'path';
+import { generateSalesReportPDF } from '../lib/reportPdfGenerator.js';
 
 const getBackupsDir = () => {
   const dir = path.join(process.cwd(), 'backups');
@@ -62,6 +63,41 @@ class ReportController {
     } catch (err) {
       console.error('[reports] stats error:', err);
       res.status(500).json({ error: 'Failed to get stats' });
+    }
+  };
+
+  generatePdfReport = async (req: Request, res: Response) => {
+    try {
+      // Role enforcement check (Owner/Admin roles only)
+      const userRole = (req.headers['x-user-role'] as string) || (req.query.role as string);
+      if (userRole !== 'admin' && userRole !== 'owner') {
+        res.status(403).json({ error: 'Unauthorized. Only admins and owners can generate sales reports.' });
+        return;
+      }
+
+      const reportType = (req.query.type as 'summary' | 'category' | 'daily') || 'summary';
+
+      const stats = await reportRepository.getStats();
+      const patterns = await reportRepository.getPOSPatterns();
+      const popularProducts = await reportRepository.getPopularProducts();
+
+      let allProducts: any[] = [];
+      if (reportType === 'category') {
+        allProducts = await ProductModel.find().sort({ category: 1, salesCount: -1 }).lean();
+      }
+
+      const pdfBuffer = await generateSalesReportPDF(stats, patterns, popularProducts, reportType, allProducts);
+
+      let filename = 'sales_report.pdf';
+      if (reportType === 'category') filename = 'category_sales_report.pdf';
+      else if (reportType === 'daily') filename = 'daily_sales_report.pdf';
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+      res.send(pdfBuffer);
+    } catch (err: any) {
+      console.error('[reports] generate PDF error:', err);
+      res.status(500).json({ error: err.message || 'Failed to generate sales report PDF' });
     }
   };
 

@@ -1,13 +1,21 @@
 import { useEffect, useState, useRef } from 'react';
-import { RefreshCw, Package, TrendingUp, DollarSign } from 'lucide-react';
+import { RefreshCw, Package, TrendingUp, DollarSign, FileText } from 'lucide-react';
 import { reportApi } from '@/lib/api';
-import type { ProductRecord, POSPatterns } from '@/lib/api';
+import type { ProductRecord, POSPatterns, User } from '@/lib/api';
+import { useNotification } from '@/context/NotificationContext';
 
-export default function ReportsPage() {
+interface ReportsPageProps {
+  currentUser: User | null;
+}
+
+export default function ReportsPage({ currentUser }: ReportsPageProps) {
+  const { toast } = useNotification();
   const [popularProducts, setPopularProducts] = useState<ProductRecord[]>([]);
   const [patterns, setPatterns] = useState<POSPatterns | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'popular' | 'patterns' | 'timeline'>('popular');
+  const [exporting, setExporting] = useState(false);
+  const [selectedReportType, setSelectedReportType] = useState<'summary' | 'category' | 'daily'>('summary');
 
   useEffect(() => {
     loadReports();
@@ -37,6 +45,54 @@ export default function ReportsPage() {
     }
   }
 
+  async function generatePdfReport() {
+    setExporting(true);
+    try {
+      const saved = localStorage.getItem('currentUser');
+      const headers: Record<string, string> = {};
+      let role = currentUser?.role || 'cashier';
+      if (saved) {
+        const user = JSON.parse(saved);
+        if (user?.id) headers['x-user-id'] = user.id;
+        if (user?.role) {
+          headers['x-user-role'] = user.role;
+          role = user.role;
+        }
+      }
+
+      const res = await fetch(`http://localhost:3000/api/reports/pdf?type=${selectedReportType}&role=${role}`, {
+        headers
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to generate sales report PDF');
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${selectedReportType}_sales_report_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Sales report PDF downloaded successfully!');
+    } catch (err: any) {
+      console.error('Fetch PDF failed, falling back to direct download:', err);
+      // Fallback for Electron environments
+      try {
+        const role = currentUser?.role || 'cashier';
+        window.open(`http://localhost:3000/api/reports/pdf?type=${selectedReportType}&role=${role}`);
+        toast.success('Sales report PDF generated successfully!');
+      } catch (fallbackErr: any) {
+        toast.error('Failed to generate PDF sales report.');
+      }
+    } finally {
+      setExporting(false);
+    }
+  }
+
   const tabs = [
     { key: 'popular' as const, label: 'Top Sold Items', icon: Package },
     { key: 'patterns' as const, label: 'Sales Patterns', icon: TrendingUp },
@@ -53,13 +109,38 @@ export default function ReportsPage() {
             Visual insights from Xona Point of Sale database
           </p>
         </div>
-        <button
-          onClick={loadReports}
-          className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-          title="Refresh"
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
+            <>
+              {/* Report Type Dropdown */}
+              <select
+                value={selectedReportType}
+                onChange={(e) => setSelectedReportType(e.target.value as any)}
+                className="bg-[#0d0e12] border border-border/50 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-primary text-foreground cursor-pointer"
+              >
+                <option value="summary">Overview Summary Report</option>
+                <option value="category">Category-wise Sales Report</option>
+                <option value="daily">Daily Sales Timeline Report</option>
+              </select>
+
+              <button
+                onClick={generatePdfReport}
+                disabled={exporting}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-xs shadow-md shadow-primary/20"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                {exporting ? 'Exporting...' : 'Export PDF Report'}
+              </button>
+            </>
+          )}
+          <button
+            onClick={loadReports}
+            className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            title="Refresh"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
