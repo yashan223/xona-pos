@@ -3,12 +3,12 @@ import { ShoppingCart, Search, Plus, Minus, Trash2, Tag, CreditCard, Sparkles, C
 import { productApi, transactionApi, customerApi, graphApi } from '@/lib/api';
 import type { ProductRecord, CustomerRecord, TransactionItem, User, GraphNode } from '@/lib/api';
 
-interface AddErrorPageProps {
+interface CheckoutPageProps {
   currentUser: User | null;
   onSuccess?: () => void;
 }
 
-export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
+export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
   const [catalog, setCatalog] = useState<ProductRecord[]>([]);
   const [filteredCatalog, setFilteredCatalog] = useState<ProductRecord[]>([]);
   const [customers, setCustomers] = useState<CustomerRecord[]>([]);
@@ -594,18 +594,19 @@ export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
         </div>
       )}
 
-      {/* Checkout Receipt Modal */}
+      {/* Checkout Receipt Modal (Fixed and Scrollable layout) */}
       {checkoutResult && (
-        <div className="fixed inset-0 bg-background/90 z-50 flex items-start justify-center p-4 overflow-y-auto md:py-12 animate-fade-in">
-          <div className="w-full max-w-sm bg-card border border-border rounded-2xl shadow-xl overflow-hidden p-6 text-foreground flex flex-col justify-between h-[520px] animate-scale-in">
-            <div className="text-center space-y-2 border-b border-border/40 pb-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card w-full max-w-sm max-h-[90vh] bg-card border border-border rounded-2xl shadow-xl flex flex-col overflow-hidden animate-scale-in">
+            {/* Header */}
+            <div className="text-center p-6 border-b border-border/40 flex-shrink-0 space-y-2">
               <CheckCircle2 className="w-12 h-12 text-success mx-auto" />
               <h2 className="text-lg font-bold">Transaction Complete</h2>
               <p className="text-xs text-muted-foreground">Receipt #{checkoutResult.id}</p>
             </div>
 
-            {/* Receipt details */}
-            <div className="flex-1 overflow-y-auto my-4 py-2 border-b border-border/40 border-dashed space-y-3 font-mono text-xs pr-1">
+            {/* Scrollable Receipt details */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-3 font-mono text-xs scrollbar-thin">
               <div className="flex justify-between">
                 <span>Date:</span>
                 <span>{new Date(checkoutResult.createdAt).toLocaleString()}</span>
@@ -656,8 +657,8 @@ export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex gap-2">
+            {/* Actions Footer */}
+            <div className="flex gap-2 p-6 border-t border-border/40 flex-shrink-0">
               {checkoutResult.pdfUrl ? (
                 <button
                   onClick={() => {

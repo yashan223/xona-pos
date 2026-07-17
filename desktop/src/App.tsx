@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import type { Page } from '@/components/Sidebar';
 import DashboardPage from '@/pages/DashboardPage';
-import ErrorsPage from '@/pages/ErrorsPage';
-import AddErrorPage from '@/pages/AddErrorPage';
+import ProductsPage from '@/pages/ProductsPage';
+import CheckoutPage from '@/pages/CheckoutPage';
 import SolutionsPage from '@/pages/SolutionsPage';
 import GraphPage from '@/pages/GraphPage';
 import ReportsPage from '@/pages/ReportsPage';
@@ -65,10 +65,10 @@ export default function App() {
       case 'dashboard':
         return <DashboardPage />;
       case 'products':
-        return <ErrorsPage currentUser={currentUser} />;
+        return <ProductsPage currentUser={currentUser} />;
       case 'checkout':
         if (currentUser?.role === 'admin') return <AdminPage />;
-        return <AddErrorPage currentUser={currentUser} onSuccess={() => {}} />;
+        return <CheckoutPage currentUser={currentUser} onSuccess={() => {}} />;
       case 'transactions':
         if (currentUser?.role === 'admin') return <AdminPage />;
         return <SolutionsPage currentUser={currentUser} />;

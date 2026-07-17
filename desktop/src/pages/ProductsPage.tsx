@@ -6,11 +6,11 @@ import type { ProductRecord, User } from '@/lib/api';
 
 let cachedProducts: ProductRecord[] | null = null;
 
-interface ErrorsPageProps {
+interface ProductsPageProps {
   currentUser: User | null;
 }
 
-export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
+export default function ProductsPage({ currentUser }: ProductsPageProps) {
   const [products, setProducts] = useState<ProductRecord[]>(cachedProducts || []);
   const [loading, setLoading] = useState(!cachedProducts);
   const [searchQuery, setSearchQuery] = useState('');
@@ -201,9 +201,10 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
 
       {/* Editor Modal / Inline Form */}
       {isEditing && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto md:py-12">
-          <div className="glass-card w-full max-w-lg bg-card border border-border rounded-2xl shadow-xl overflow-hidden p-6 animate-scale-in">
-            <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card w-full max-w-lg max-h-[90vh] bg-card border border-border rounded-2xl shadow-xl flex flex-col overflow-hidden animate-scale-in">
+            {/* Header */}
+            <div className="flex justify-between items-center p-6 border-b border-border/40 flex-shrink-0">
               <h3 className="text-lg font-bold">
                 {isEditing === 'new' ? 'Add New Product' : 'Edit Product'}
               </h3>
@@ -212,125 +213,129 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
               </button>
             </div>
             
-            <form onSubmit={saveProduct} className="space-y-4">
-              {formError && <p className="text-xs text-destructive bg-destructive/10 p-2.5 rounded-lg font-medium">{formError}</p>}
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Product Name *</label>
-                  <input
-                    type="text"
-                    value={formName}
-                    onChange={e => setFormName(e.target.value)}
-                    className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
-                    placeholder="e.g. iPad Air 256GB"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">SKU / Barcode *</label>
-                  <input
-                    type="text"
-                    value={formSku}
-                    onChange={e => setFormSku(e.target.value)}
-                    className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
-                    placeholder="e.g. SKU-E-IPAD"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Category</label>
-                  <input
-                    type="text"
-                    value={formCategory}
-                    onChange={e => setFormCategory(e.target.value)}
-                    className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
-                    placeholder="e.g. Electronics"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Price (LKR) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formPrice}
-                    onChange={e => setFormPrice(e.target.value)}
-                    className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
-                    placeholder="e.g. 599.99"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Cost (LKR)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formCost}
-                    onChange={e => setFormCost(e.target.value)}
-                    className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
-                    placeholder="e.g. 420.00"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="text-xs text-muted-foreground font-semibold">Stock Quantity</label>
-                    <label className="text-[10px] text-primary font-semibold flex items-center gap-1 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={formTrackStock}
-                        onChange={e => setFormTrackStock(e.target.checked)}
-                        className="rounded border-border text-primary focus:ring-primary/20"
-                      />
-                      Track Inventory
-                    </label>
-                  </div>
-                  <input
-                    type="number"
-                    value={formStock}
-                    onChange={e => setFormStock(e.target.value)}
-                    disabled={!formTrackStock}
-                    className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-40 transition-all"
-                    placeholder={formTrackStock ? "e.g. 10" : "Unlimited stock"}
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Image URL</label>
-                  <div className="flex gap-2">
+            {/* Scrollable Form Content */}
+            <form onSubmit={saveProduct} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin">
+                {formError && <p className="text-xs text-destructive bg-destructive/10 p-2.5 rounded-lg font-medium">{formError}</p>}
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground font-semibold mb-1 block">Product Name *</label>
                     <input
                       type="text"
-                      value={formImageUrl}
-                      onChange={e => setFormImageUrl(e.target.value)}
-                      className="flex-1 min-w-0 bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
-                      placeholder="https://..."
+                      value={formName}
+                      onChange={e => setFormName(e.target.value)}
+                      className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                      placeholder="e.g. iPad Air 256GB"
                     />
-                    <label className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors select-none flex-shrink-0">
-                      {uploading ? 'Uploading...' : 'Upload'}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                        disabled={uploading}
-                      />
-                    </label>
                   </div>
+
+                  <div>
+                    <label className="text-xs text-muted-foreground font-semibold mb-1 block">SKU / Barcode *</label>
+                    <input
+                      type="text"
+                      value={formSku}
+                      onChange={e => setFormSku(e.target.value)}
+                      className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                      placeholder="e.g. SKU-E-IPAD"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-muted-foreground font-semibold mb-1 block">Category</label>
+                    <input
+                      type="text"
+                      value={formCategory}
+                      onChange={e => setFormCategory(e.target.value)}
+                      className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                      placeholder="e.g. Electronics"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-muted-foreground font-semibold mb-1 block">Price (LKR) *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formPrice}
+                      onChange={e => setFormPrice(e.target.value)}
+                      className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                      placeholder="e.g. 599.99"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-muted-foreground font-semibold mb-1 block">Cost (LKR)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formCost}
+                      onChange={e => setFormCost(e.target.value)}
+                      className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                      placeholder="e.g. 420.00"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-xs text-muted-foreground font-semibold">Stock Quantity</label>
+                      <label className="text-[10px] text-primary font-semibold flex items-center gap-1 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={formTrackStock}
+                          onChange={e => setFormTrackStock(e.target.checked)}
+                          className="rounded border-border text-primary focus:ring-primary/20"
+                        />
+                        Track Inventory
+                      </label>
+                    </div>
+                    <input
+                      type="number"
+                      value={formStock}
+                      onChange={e => setFormStock(e.target.value)}
+                      disabled={!formTrackStock}
+                      className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-40 transition-all text-foreground"
+                      placeholder={formTrackStock ? "e.g. 10" : "Unlimited stock"}
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground font-semibold mb-1 block">Image URL</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={formImageUrl}
+                        onChange={e => setFormImageUrl(e.target.value)}
+                        className="flex-1 min-w-0 bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                        placeholder="https://..."
+                      />
+                      <label className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors select-none flex-shrink-0">
+                        {uploading ? 'Uploading...' : 'Upload'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                          disabled={uploading}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Description</label>
+                  <textarea
+                    value={formDescription}
+                    onChange={e => setFormDescription(e.target.value)}
+                    className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary h-20 resize-none text-foreground"
+                    placeholder="Product notes and specs..."
+                  />
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs text-muted-foreground font-semibold mb-1 block">Description</label>
-                <textarea
-                  value={formDescription}
-                  onChange={e => setFormDescription(e.target.value)}
-                  className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary h-20 resize-none"
-                  placeholder="Product notes and specs..."
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
+              {/* Fixed Footer Buttons */}
+              <div className="flex justify-end gap-3 p-6 border-t border-border/40 flex-shrink-0">
                 <button
                   type="button"
                   onClick={cancelEdit}
