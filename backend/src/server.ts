@@ -36,11 +36,17 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/graph', graphRoutes);
 app.use('/api/reports', reportRoutes);
 
+import http from 'http';
+import { initWebSocketServer } from './lib/websocket.js';
+
 // Health check
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Xona POS backend is running', status: 'ok' });
 });
 
-app.listen(PORT, () => {
+const server = http.createServer(app);
+initWebSocketServer(server);
+
+server.listen(PORT, () => {
   console.log(`🚀 Xona POS backend running on http://localhost:${PORT}`);
 });

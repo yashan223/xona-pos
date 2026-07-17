@@ -11,6 +11,14 @@ export default function ReportsPage() {
 
   useEffect(() => {
     loadReports();
+
+    const handleUpdate = () => {
+      loadReports();
+    };
+    window.addEventListener('transactions_updated', handleUpdate);
+    return () => {
+      window.removeEventListener('transactions_updated', handleUpdate);
+    };
   }, []);
 
   async function loadReports() {

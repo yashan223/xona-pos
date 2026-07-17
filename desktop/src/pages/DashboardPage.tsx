@@ -17,6 +17,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadData();
+
+    const handleUpdate = () => {
+      loadData();
+    };
+    window.addEventListener('transactions_updated', handleUpdate);
+    return () => {
+      window.removeEventListener('transactions_updated', handleUpdate);
+    };
   }, []);
 
   async function loadData() {

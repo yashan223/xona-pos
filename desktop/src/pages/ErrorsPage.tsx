@@ -31,6 +31,14 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
 
   useEffect(() => {
     loadProducts();
+
+    const handleUpdate = () => {
+      loadProducts();
+    };
+    window.addEventListener('products_updated', handleUpdate);
+    return () => {
+      window.removeEventListener('products_updated', handleUpdate);
+    };
   }, []);
 
   async function loadProducts() {

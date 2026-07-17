@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import productRepository from '../repositories/productRepository.js';
+import { broadcast } from '../lib/websocket.js';
 
 class ProductController {
   create = async (req: Request, res: Response) => {
@@ -21,6 +22,7 @@ class ProductController {
         imageUrl,
       });
 
+      broadcast('PRODUCTS_UPDATED');
       res.status(201).json(record);
     } catch (err) {
       console.error('[products] POST error:', err);
@@ -48,6 +50,7 @@ class ProductController {
         return res.status(404).json({ error: 'Product not found' });
       }
 
+      broadcast('PRODUCTS_UPDATED');
       res.json(record);
     } catch (err) {
       console.error('[products] PUT error:', err);
@@ -98,6 +101,7 @@ class ProductController {
       if (!success) {
         return res.status(404).json({ error: 'Product record not found' });
       }
+      broadcast('PRODUCTS_UPDATED');
       res.json({ message: 'Product record deleted' });
     } catch (err) {
       console.error('[products] DELETE error:', err);

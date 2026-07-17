@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ShoppingCart, Search, Plus, Minus, Trash2, Tag, CreditCard, Sparkles, CheckCircle2, UserPlus, RefreshCw, Printer } from 'lucide-react';
 import { productApi, transactionApi, customerApi, graphApi } from '@/lib/api';
 import type { ProductRecord, CustomerRecord, TransactionItem, User, GraphNode } from '@/lib/api';
@@ -36,8 +36,49 @@ export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
   // Derived categories list
   const categories = ['All', ...Array.from(new Set(catalog.map(p => p.category)))];
 
+  const filterRef = useRef({ searchQuery, selectedCategory });
+  useEffect(() => {
+    filterRef.current = { searchQuery, selectedCategory };
+  }, [searchQuery, selectedCategory]);
+
   useEffect(() => {
     loadData();
+
+    const handleProductsUpdate = async () => {
+      try {
+        const data = await productApi.getAll();
+        setCatalog(data);
+        const { searchQuery: q, selectedCategory: cat } = filterRef.current;
+        let list = [...data];
+        if (cat !== 'All') {
+          list = list.filter(p => p.category === cat);
+        }
+        if (q.trim()) {
+          const lower = q.toLowerCase();
+          list = list.filter(p => p.name.toLowerCase().includes(lower) || p.sku.toLowerCase().includes(lower));
+        }
+        setFilteredCatalog(list);
+      } catch (err) {
+        console.error('Failed to reload products:', err);
+      }
+    };
+
+    const handleCustomersUpdate = async () => {
+      try {
+        const data = await customerApi.getAll();
+        setCustomers(data);
+      } catch (err) {
+        console.error('Failed to reload customers:', err);
+      }
+    };
+
+    window.addEventListener('products_updated', handleProductsUpdate);
+    window.addEventListener('customers_updated', handleCustomersUpdate);
+
+    return () => {
+      window.removeEventListener('products_updated', handleProductsUpdate);
+      window.removeEventListener('customers_updated', handleCustomersUpdate);
+    };
   }, []);
 
   async function loadData() {

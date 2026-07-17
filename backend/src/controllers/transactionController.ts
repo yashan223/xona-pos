@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import transactionRepository from '../repositories/transactionRepository.js';
 import { generateReceiptPDF } from '../lib/pdfGenerator.js';
+import { broadcast } from '../lib/websocket.js';
 
 class TransactionController {
   create = async (req: Request, res: Response) => {
@@ -25,6 +26,11 @@ class TransactionController {
 
       // Generate the PDF receipt automatically on backend
       const pdfUrl = await generateReceiptPDF(tx);
+
+      // Broadcast real-time update notifications (transactions and product stock inventory changed)
+      broadcast('TRANSACTIONS_UPDATED', tx);
+      broadcast('PRODUCTS_UPDATED');
+      broadcast('CUSTOMERS_UPDATED'); // Loyalty points might have been added/deducted
 
       res.status(201).json({
         ...tx,
@@ -65,6 +71,12 @@ class TransactionController {
       if (!tx) {
         return res.status(404).json({ error: 'Transaction not found or already refunded' });
       }
+
+      // Broadcast changes on refund
+      broadcast('TRANSACTIONS_UPDATED', tx);
+      broadcast('PRODUCTS_UPDATED');
+      broadcast('CUSTOMERS_UPDATED');
+
       res.json({ message: 'Transaction refunded successfully', transaction: tx });
     } catch (err) {
       console.error('[transactions] POST refund error:', err);

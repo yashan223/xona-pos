@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import customerRepository from '../repositories/customerRepository.js';
+import { broadcast } from '../lib/websocket.js';
 
 class CustomerController {
   create = async (req: Request, res: Response) => {
@@ -17,6 +18,7 @@ class CustomerController {
         loyaltyPoints: 0,
       });
 
+      broadcast('CUSTOMERS_UPDATED');
       res.status(201).json(customer);
     } catch (err) {
       console.error('[customers] POST error:', err);
@@ -53,6 +55,7 @@ class CustomerController {
       if (!success) {
         return res.status(404).json({ error: 'Customer not found' });
       }
+      broadcast('CUSTOMERS_UPDATED');
       res.json({ message: 'Customer deleted successfully' });
     } catch (err) {
       console.error('[customers] DELETE error:', err);

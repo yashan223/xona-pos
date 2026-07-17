@@ -11,11 +11,19 @@ import LoginPage from '@/pages/LoginPage';
 import AdminPage from '@/pages/AdminPage';
 import type { User } from '@/lib/api';
 import DarkVeil from '@/components/DarkVeil';
+import { startWebSocketListener } from '@/lib/websocket';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+
+  useEffect(() => {
+    const stopWS = startWebSocketListener();
+    return () => {
+      stopWS();
+    };
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
