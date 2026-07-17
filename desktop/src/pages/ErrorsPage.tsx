@@ -174,7 +174,7 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
   };
 
   const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+    return `Rs. ${Number(val).toFixed(2)}`;
   };
 
   return (

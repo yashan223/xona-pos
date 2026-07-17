@@ -275,7 +275,7 @@ export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
   const cartTotal = parseFloat((cartSubtotal - discountAmount + cartTax).toFixed(2));
 
   const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+    return `Rs. ${Number(val).toFixed(2)}`;
   };
 
   return (

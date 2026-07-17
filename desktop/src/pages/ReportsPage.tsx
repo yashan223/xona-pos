@@ -153,7 +153,7 @@ function PopularProductsTab({ products }: { products: ProductRecord[] }) {
   }, [products]);
 
   const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+    return `Rs. ${Number(val).toFixed(2)}`;
   };
 
   if (products.length === 0) {
@@ -269,7 +269,7 @@ function PatternsTab({ patterns }: { patterns: POSPatterns | null }) {
 
 function TimelineTab({ timeline }: { timeline: { date: string; revenue: number }[] }) {
   const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+    return `Rs. ${Number(val).toFixed(2)}`;
   };
 
   if (timeline.length === 0) {

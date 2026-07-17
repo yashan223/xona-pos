@@ -51,8 +51,8 @@ export async function generateReceiptPDF(transaction: any): Promise<string> {
       for (const item of transaction.items) {
         const nameCol = item.name.substring(0, 20).padEnd(22);
         const qtyCol = String(item.quantity).padStart(3);
-        const priceCol = `$${Number(item.price).toFixed(2)}`.padStart(8);
-        const totalCol = `$${Number(item.subtotal).toFixed(2)}`.padStart(9);
+        const priceCol = `Rs.${Number(item.price).toFixed(2)}`.padStart(11);
+        const totalCol = `Rs.${Number(item.subtotal).toFixed(2)}`.padStart(12);
         doc.text(`${nameCol}${qtyCol}${priceCol}${totalCol}`);
       }
       
@@ -60,13 +60,13 @@ export async function generateReceiptPDF(transaction: any): Promise<string> {
       
       // Summary calculations
       doc.fontSize(6);
-      doc.text(`Subtotal:`.padEnd(28) + `$${Number(transaction.subtotal).toFixed(2)}`.padStart(15));
+      doc.text(`Subtotal:`.padEnd(28) + `Rs.${Number(transaction.subtotal).toFixed(2)}`.padStart(18));
       if (transaction.discount > 0) {
-        doc.text(`Discount:`.padEnd(28) + `-$${Number(transaction.discount).toFixed(2)}`.padStart(15));
+        doc.text(`Discount:`.padEnd(28) + `-Rs.${Number(transaction.discount).toFixed(2)}`.padStart(18));
       }
-      doc.text(`Tax (8%):`.padEnd(28) + `$${Number(transaction.tax).toFixed(2)}`.padStart(15));
+      doc.text(`Tax (8%):`.padEnd(28) + `Rs.${Number(transaction.tax).toFixed(2)}`.padStart(18));
       doc.font('Helvetica-Bold');
-      doc.fontSize(7).text(`Total:`.padEnd(28) + `$${Number(transaction.totalAmount).toFixed(2)}`.padStart(15));
+      doc.fontSize(7).text(`Total:`.padEnd(28) + `Rs.${Number(transaction.totalAmount).toFixed(2)}`.padStart(18));
       doc.font('Helvetica');
       
       doc.moveDown(0.5);
