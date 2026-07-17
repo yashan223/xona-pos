@@ -27,6 +27,7 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
   const [formImageUrl, setFormImageUrl] = useState('');
   const [formError, setFormError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [formTrackStock, setFormTrackStock] = useState(true);
 
   useEffect(() => {
     loadProducts();
@@ -82,7 +83,8 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
     setFormCategory(prod.category);
     setFormPrice(prod.price.toString());
     setFormCost(prod.cost.toString());
-    setFormStock(prod.stock.toString());
+    setFormTrackStock(prod.stock >= 0);
+    setFormStock(prod.stock >= 0 ? prod.stock.toString() : '');
     setFormDescription(prod.description || '');
     setFormImageUrl(prod.imageUrl || '');
     setFormError('');
@@ -95,6 +97,7 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
     setFormCategory('');
     setFormPrice('');
     setFormCost('');
+    setFormTrackStock(true);
     setFormStock('');
     setFormDescription('');
     setFormImageUrl('');
@@ -135,7 +138,7 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
       category: formCategory || 'General',
       price: parseFloat(formPrice),
       cost: parseFloat(formCost || '0'),
-      stock: parseInt(formStock || '0', 10),
+      stock: formTrackStock ? parseInt(formStock || '0', 10) : -1,
       description: formDescription,
       imageUrl: formImageUrl,
     };
@@ -263,13 +266,25 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
                 </div>
 
                 <div>
-                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Stock Quantity</label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-xs text-muted-foreground font-semibold">Stock Quantity</label>
+                    <label className="text-[10px] text-primary font-semibold flex items-center gap-1 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={formTrackStock}
+                        onChange={e => setFormTrackStock(e.target.checked)}
+                        className="rounded border-border text-primary focus:ring-primary/20"
+                      />
+                      Track Inventory
+                    </label>
+                  </div>
                   <input
                     type="number"
                     value={formStock}
                     onChange={e => setFormStock(e.target.value)}
-                    className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
-                    placeholder="e.g. 10"
+                    disabled={!formTrackStock}
+                    className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-40 transition-all"
+                    placeholder={formTrackStock ? "e.g. 10" : "Unlimited stock"}
                   />
                 </div>
 
@@ -383,8 +398,8 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
                   </div>
                   <div>
                     <p className="text-[10px] text-muted-foreground">Stock</p>
-                    <p className={`font-semibold text-sm ${prod.stock < 5 ? 'text-destructive font-bold animate-pulse' : 'text-foreground'}`}>
-                      {prod.stock} units
+                    <p className={`font-semibold text-sm ${prod.stock === -1 ? 'text-emerald-400' : (prod.stock < 5 ? 'text-destructive font-bold animate-pulse' : 'text-foreground')}`}>
+                      {prod.stock === -1 ? 'Unlimited' : `${prod.stock} units`}
                     </p>
                   </div>
                   {currentUser?.role === 'admin' && (

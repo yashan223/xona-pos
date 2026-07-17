@@ -82,7 +82,8 @@ export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
 
   // Add to cart
   const addToCart = (product: ProductRecord) => {
-    if (product.stock <= 0) {
+    const isUnlimited = product.stock === -1;
+    if (!isUnlimited && product.stock <= 0) {
       alert('Product is out of stock!');
       return;
     }
@@ -91,7 +92,7 @@ export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
       const existing = prev.find(item => item.productId === product.id);
       let updated;
       if (existing) {
-        if (existing.quantity >= product.stock) {
+        if (!isUnlimited && existing.quantity >= product.stock) {
           alert(`Cannot add more. Only ${product.stock} units available in inventory.`);
           return prev;
         }
@@ -124,7 +125,8 @@ export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
         if (item.productId !== productId) return item;
         const newQty = item.quantity + delta;
         if (newQty <= 0) return null;
-        if (newQty > item.product.stock) {
+        const isUnlimited = item.product.stock === -1;
+        if (!isUnlimited && newQty > item.product.stock) {
           alert(`Cannot add more. Only ${item.product.stock} units available.`);
           return item;
         }
@@ -295,9 +297,9 @@ export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
               <button
                 key={prod.id}
                 onClick={() => addToCart(prod)}
-                disabled={prod.stock <= 0}
+                disabled={prod.stock === 0}
                 className={`glass-card p-3 border border-border/30 rounded-xl bg-card/20 hover:bg-card/50 hover:border-primary/20 text-left transition-all flex flex-col justify-between h-36 ${
-                  prod.stock <= 0 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+                  prod.stock === 0 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
                 }`}
               >
                 <div>
@@ -306,9 +308,9 @@ export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
                       {prod.sku}
                     </span>
                     <span className={`text-[8px] font-bold px-1 py-0.25 rounded uppercase ${
-                      prod.stock < 5 ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'
+                      prod.stock === -1 ? 'bg-green-500/20 text-green-400' : (prod.stock < 5 ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400')
                     }`}>
-                      Stock: {prod.stock}
+                      Stock: {prod.stock === -1 ? 'Unlimited' : prod.stock}
                     </span>
                   </div>
                   <h4 className="font-semibold text-xs text-foreground mt-2 line-clamp-2">{prod.name}</h4>

@@ -43,14 +43,15 @@ class TransactionRepository {
     // 2. Process transaction items
     for (const item of record.items) {
       // Update inventory stock and sales counts in MongoDB
+      const prod = await ProductModel.findById(item.productId);
+      let updateObj: any = { $inc: { salesCount: item.quantity } };
+      if (prod && prod.stock >= 0) {
+        updateObj.$inc.stock = -item.quantity;
+      }
+
       const updatedProductDoc = await ProductModel.findByIdAndUpdate(
         item.productId,
-        {
-          $inc: {
-            stock: -item.quantity,      // Deduct inventory stock
-            salesCount: item.quantity,  // Increment sales count
-          }
-        },
+        updateObj,
         { new: true }
       ).lean() as any;
 
@@ -136,14 +137,15 @@ class TransactionRepository {
 
     // 2. Put stock items back into inventory
     for (const item of refundedDoc.items) {
+      const prod = await ProductModel.findById(item.productId);
+      let updateObj: any = { $inc: { salesCount: -item.quantity } };
+      if (prod && prod.stock >= 0) {
+        updateObj.$inc.stock = item.quantity;
+      }
+
       const updatedProdDoc = await ProductModel.findByIdAndUpdate(
         item.productId,
-        {
-          $inc: {
-            stock: item.quantity,       // Return stock
-            salesCount: -item.quantity, // Deduct salesCount
-          }
-        },
+        updateObj,
         { new: true }
       ).lean() as any;
 
