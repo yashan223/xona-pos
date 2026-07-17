@@ -7,7 +7,8 @@ export async function generateReceiptPDF(transaction: any): Promise<string> {
     try {
       // Get date string (YYYY-MM-DD)
       const dateStr = transaction.createdAt ? transaction.createdAt.split('T')[0] : new Date().toISOString().split('T')[0];
-      const directoryPath = path.join(process.cwd(), 'receipts', dateStr);
+      const backendDir = process.cwd().endsWith('backend') ? process.cwd() : path.join(process.cwd(), 'backend');
+      const directoryPath = path.join(backendDir, 'receipts', dateStr);
       
       // Ensure directory exists
       if (!fs.existsSync(directoryPath)) {

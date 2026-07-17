@@ -89,7 +89,8 @@ class ReportController {
       const pdfBuffer = await generateSalesReportPDF(stats, patterns, popularProducts, reportType, allProducts);
 
       // Ensure reports directory exists on server disk
-      const reportsDir = path.join(process.cwd(), 'reports');
+      const backendDir = process.cwd().endsWith('backend') ? process.cwd() : path.join(process.cwd(), 'backend');
+      const reportsDir = path.join(backendDir, 'reports');
       if (!fs.existsSync(reportsDir)) {
         fs.mkdirSync(reportsDir, { recursive: true });
       }
@@ -128,9 +129,10 @@ class ReportController {
       }
 
       const reports = await SavedReportModel.find({}).sort({ createdAt: -1 }).lean();
+      const backendDir = process.cwd().endsWith('backend') ? process.cwd() : path.join(process.cwd(), 'backend');
       const reportsWithLocalPath = reports.map((r: any) => ({
         ...r,
-        localPath: path.join(process.cwd(), 'reports', r.filename)
+        localPath: path.join(backendDir, 'reports', r.filename)
       }));
 
       res.json(reportsWithLocalPath);
@@ -157,7 +159,8 @@ class ReportController {
       }
 
       // Delete file from disk if it exists
-      const fullPath = path.join(process.cwd(), 'reports', report.filename);
+      const backendDir = process.cwd().endsWith('backend') ? process.cwd() : path.join(process.cwd(), 'backend');
+      const fullPath = path.join(backendDir, 'reports', report.filename);
       if (fs.existsSync(fullPath)) {
         fs.unlinkSync(fullPath);
       }

@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import path from 'path';
 import store from './persistence/store.js';
 import productRoutes from './routes/products.js';
 import transactionRoutes from './routes/transactions.js';
@@ -12,11 +13,13 @@ import authRoutes from './routes/auth.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const backendDir = process.cwd().endsWith('backend') ? process.cwd() : path.join(process.cwd(), 'backend');
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use('/uploads', express.static('uploads'));
-app.use('/receipts', express.static('receipts'));
-app.use('/reports', express.static('reports'));
+app.use('/uploads', express.static(path.join(backendDir, 'uploads')));
+app.use('/receipts', express.static(path.join(backendDir, 'receipts')));
+app.use('/reports', express.static(path.join(backendDir, 'reports')));
 
 // Global error boundary for malformed JSON requests
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
