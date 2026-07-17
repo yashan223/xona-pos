@@ -65,7 +65,7 @@ export const translations = {
     vatPercentageDesc: 'Specify the VAT tax rate applied to items during checkout.',
     appLanguage: 'Application Language',
     appLanguageDesc: 'Switch the POS system language between English and Sinhala.',
-    databaseMaintenance: 'Database Maintenance',
+    databaseMaintenance: 'DB Maintenance',
   },
   si: {
     dashboard: 'ප්‍රධාන පුවරුව',

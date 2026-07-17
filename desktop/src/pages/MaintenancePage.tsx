@@ -123,7 +123,7 @@ export default function MaintenancePage() {
           {t('databaseMaintenance')}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Perform administrative database actions, create backups, and restore snapshots
+          Perform administrative DB actions, create backups, and restore snapshots
         </p>
       </div>
 
@@ -144,7 +144,7 @@ export default function MaintenancePage() {
       <div className="glass-card p-5 space-y-4 bg-card/30 border border-border/40 rounded-2xl">
         <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2">
           <Database className="w-4 h-4 text-primary" />
-          Database Backup & Restore Manager
+          DB Backup & Restore Manager
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-4">
