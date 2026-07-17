@@ -596,7 +596,7 @@ export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
 
       {/* Checkout Receipt Modal */}
       {checkoutResult && (
-        <div className="fixed inset-0 bg-background/90 z-50 flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-background/90 z-50 flex items-start justify-center p-4 overflow-y-auto md:py-12 animate-fade-in">
           <div className="w-full max-w-sm bg-card border border-border rounded-2xl shadow-xl overflow-hidden p-6 text-foreground flex flex-col justify-between h-[520px] animate-scale-in">
             <div className="text-center space-y-2 border-b border-border/40 pb-4">
               <CheckCircle2 className="w-12 h-12 text-success mx-auto" />

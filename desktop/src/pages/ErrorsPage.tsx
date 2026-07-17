@@ -201,7 +201,7 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
 
       {/* Editor Modal / Inline Form */}
       {isEditing && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto md:py-12">
           <div className="glass-card w-full max-w-lg bg-card border border-border rounded-2xl shadow-xl overflow-hidden p-6 animate-scale-in">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold">
@@ -250,7 +250,7 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
                 </div>
 
                 <div>
-                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Price ($) *</label>
+                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Price (LKR) *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -262,7 +262,7 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
                 </div>
 
                 <div>
-                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Cost ($)</label>
+                  <label className="text-xs text-muted-foreground font-semibold mb-1 block">Cost (LKR)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -296,7 +296,7 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
                   />
                 </div>
 
-                <div>
+                <div className="col-span-2">
                   <label className="text-xs text-muted-foreground font-semibold mb-1 block">Image URL</label>
                   <div className="flex gap-2">
                     <input
@@ -306,7 +306,7 @@ export default function ErrorsPage({ currentUser }: ErrorsPageProps) {
                       className="flex-1 min-w-0 bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
                       placeholder="https://..."
                     />
-                    <label className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors select-none">
+                    <label className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors select-none flex-shrink-0">
                       {uploading ? 'Uploading...' : 'Upload'}
                       <input
                         type="file"
