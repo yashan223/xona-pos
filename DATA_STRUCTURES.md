@@ -1,35 +1,37 @@
-# Data Structures in Recall App
+# Custom Data Structures in Xona POS
 
-The Recall App combines **SQLite** for database durability with **custom in-memory data structures** for real-time querying, autocomplete, relationship tracing, and ranking.
+Xona POS combines **MongoDB** for database durability with **custom in-memory data structures** for real-time autocomplete queries, co-occurrence recommendation network traversals, and sales-popularity rankings.
 
 ---
 
-## 1. AVL Tree (Self-Balancing BST)
+## 🌳 1. AVL Tree (Self-Balancing Binary Search Tree)
 * **File:** [AVLTree.ts](./backend/src/data-structures/AVLTree.ts)
-* **Purpose:** Stores and sorts error logs (`ErrorRecord`) by message.
+* **Purpose:** Stores and sorts product catalog items (`ProductRecord`) alphabetically by name.
 * **Key Features:**
-  * **Search & Autocomplete:** $O(\log N)$ lookup and $O(\log N + K)$ prefix searching (`searchByPrefix`) for real-time suggestions.
-  * **Collated Duplicates:** Groups multiple instances of the same error under a single tree node.
-  * **ID Lookup:** $O(1)$ lookup via an internal ID-to-record map index.
+  * **Search & Autocomplete:** $O(\log N)$ search lookups and $O(\log N + K)$ prefix searching (`searchByPrefix`) to provide instant recommendations during checkout bar typing.
+  * **Balancing Operations:** Re-balances automatically using Left/Right rotations on insert/delete, guaranteeing $O(\log N)$ time complexity.
+  * **ID Lookup:** Fast $O(1)$ lookup via an internal ID-to-product mapping registry index.
 
 ---
 
-## 2. Graph (Adjacency-List)
+## 🕸️ 2. Graph (Adjacency List Network)
 * **File:** [Graph.ts](./backend/src/data-structures/Graph.ts)
-* **Purpose:** Maps bidirectional relations between entities (`error`, `solution`, `project`, `technology`).
+* **Purpose:** Maps relational connection pathways between catalog items.
+* **Nodes & Edges:**
+  * **Nodes:** Represent products or categories.
+  * **Edges:** Model category hierarchies (`BELONGS_TO`) and checkout co-occurrences (`BOUGHT_WITH`).
 * **Traversals:**
-  * **BFS (`bfs`):** Searches up to a maximum depth (hops) to find related logs/solutions.
-  * **DFS (`dfs`):** Traverses the full relationship chain to gather connected components.
-  * **Subgraph Extraction:** Extracts surrounding nodes and edges for client-side graph visualization.
+  * **BFS (`bfs`):** Explores neighbouring nodes in the purchase net up to a configurable search depth to supply real-time recommendations (i.e. finding products commonly bought with cart items).
+  * **DFS (`dfs`):** Compiles full relationship paths to identify connected sub-clusters.
+  * **Subgraph Extraction:** Extracts local node clusters and connected edges to populate interactive visual network canvases.
 
 ---
 
-## 3. Max Heap (Priority Queue)
+## 🥞 3. Max Heap (Priority Queue)
 * **File:** [MaxHeap.ts](./backend/src/data-structures/MaxHeap.ts)
-* **Purpose:** Ranks debugging solutions so the highest-quality solutions are suggested first.
-* **Scoring Formula:**
-  $$\text{Score} = (\text{successRate} \times 0.5) + (\text{normalizedUsage} \times 0.3) + \left(\frac{\text{avgRating}}{5} \times 0.2\right)$$
-  * *Note: Usage is normalized logarithmically: $\min\left(\frac{\log_{10}(\text{usageCount} + 1)}{3}, 1\right)$.*
+* **Purpose:** Ranks products based on unit sales counts, making it possible to instantly compile and list the best-selling items.
+* **Ranking Metrics:**
+  * Products are ordered by `salesCount` (units sold).
 * **Key Features:**
-  * **Top-K Retrieval:** Clones the heap and pops the top $K$ solutions in $O(K \log N)$ time.
-  * **Dynamic Updates:** $O(1)$ index lookup map handles $O(\log N)$ score updates and sift-up/down operations on rating changes.
+  * **Top-K Retrieval:** Clones the heap and pops the top $K$ products in $O(K \log N)$ time to populate best-seller dashboards.
+  * **Dynamic Score Updates:** Incorporates an internal $O(1)$ index lookup map to locate heap nodes, updating sales figures and executing heap sift-up/down bubble operations in $O(\log N)$ time on new checkouts or cashier refunds.
