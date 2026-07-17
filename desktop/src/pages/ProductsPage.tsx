@@ -391,7 +391,13 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredGridProducts.map(prod => (
-                <div key={prod.id} className="glass-card p-5 border border-border/40 rounded-2xl bg-card/30 flex flex-col justify-between hover:bg-card/60 transition-all hover:scale-[1.01] hover:border-primary/20">
+                <div
+                  key={prod.id}
+                  onClick={() => currentUser?.role === 'admin' && startEdit(prod)}
+                  className={`glass-card p-5 border border-border/40 rounded-2xl bg-card/30 flex flex-col justify-between hover:bg-card/60 transition-all hover:scale-[1.01] hover:border-primary/20 ${
+                    currentUser?.role === 'admin' ? 'cursor-pointer select-none' : ''
+                  }`}
+                >
                   <div className="flex gap-4">
                     {prod.imageUrl ? (
                       <img src={prod.imageUrl} alt={prod.name} className="w-16 h-16 rounded-xl object-cover border border-border/50 flex-shrink-0" />
@@ -437,14 +443,20 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                     {currentUser?.role === 'admin' && (
                       <div className="flex gap-2">
                         <button
-                          onClick={() => startEdit(prod)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEdit(prod);
+                          }}
                           className="p-2 rounded-lg bg-secondary/80 hover:bg-primary/20 hover:text-primary text-muted-foreground transition-all cursor-pointer"
                           title="Edit Product"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => handleDelete(prod.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(prod.id);
+                          }}
                           className="p-2 rounded-lg bg-secondary/80 hover:bg-destructive/20 hover:text-destructive text-muted-foreground transition-all cursor-pointer"
                           title="Delete Product"
                         >
@@ -486,7 +498,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                     value={formName}
                     onChange={e => setFormName(e.target.value)}
                     className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                    placeholder="e.g. iPad Air 256GB"
+                    placeholder="Product Name"
                   />
                 </div>
 
@@ -497,7 +509,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                     value={formSku}
                     onChange={e => setFormSku(e.target.value)}
                     className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                    placeholder="e.g. SKU-E-IPAD"
+                    placeholder="SKU-Code"
                   />
                 </div>
 
@@ -547,7 +559,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                     value={formPrice}
                     onChange={e => setFormPrice(e.target.value)}
                     className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                    placeholder="e.g. 599.99"
+                    placeholder="Price"
                   />
                 </div>
 
@@ -559,7 +571,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                     value={formCost}
                     onChange={e => setFormCost(e.target.value)}
                     className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                    placeholder="e.g. 420.00"
+                    placeholder="Cost"
                   />
                 </div>
 
@@ -582,7 +594,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                     onChange={e => setFormStock(e.target.value)}
                     disabled={!formTrackStock}
                     className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-40 transition-all text-foreground"
-                    placeholder={formTrackStock ? "e.g. 10" : "Unlimited stock"}
+                    placeholder={formTrackStock ? "Stock count" : "Unlimited stock"}
                   />
                 </div>
 
