@@ -2,16 +2,14 @@ import { useEffect, useState } from 'react';
 import { Package, ShoppingCart, DollarSign, GitBranch, Clock } from 'lucide-react';
 import StatsCard from '@/components/StatsCard';
 import { reportApi } from '@/lib/api';
-import type { SystemStats, ProductRecord, TransactionRecord } from '@/lib/api';
+import type { SystemStats, TransactionRecord } from '@/lib/api';
 
 // Module-level cache for Stale-While-Revalidate pattern to eliminate visual flickering
 let cachedStats: SystemStats | null = null;
-let cachedTopProducts: ProductRecord[] | null = null;
 let cachedTimeline: TransactionRecord[] | null = null;
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<SystemStats | null>(cachedStats);
-  const [topProducts, setTopProducts] = useState<ProductRecord[]>(cachedTopProducts || []);
   const [timeline, setTimeline] = useState<TransactionRecord[]>(cachedTimeline || []);
   const [loading, setLoading] = useState(!cachedStats);
 
@@ -32,16 +30,13 @@ export default function DashboardPage() {
       setLoading(true);
     }
     try {
-      const [statsData, productsData, timelineData] = await Promise.all([
+      const [statsData, timelineData] = await Promise.all([
         reportApi.stats(),
-        reportApi.effectiveProducts(),
         reportApi.timeline(),
       ]);
       setStats(statsData);
-      setTopProducts(productsData);
       setTimeline(timelineData);
       cachedStats = statsData;
-      cachedTopProducts = productsData;
       cachedTimeline = timelineData;
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
@@ -105,42 +100,8 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
-        {/* Top Selling Products */}
-        <div className="flex flex-col h-full overflow-hidden">
-          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 flex-shrink-0">
-            <Package className="w-5 h-5 text-success" />
-            Top Selling Products (Popularity Ranked)
-          </h2>
-          {topProducts.length > 0 ? (
-            <div className="flex-1 overflow-y-auto pr-2 space-y-3 min-h-0">
-              {topProducts.slice(0, 5).map((prod, i) => (
-                <div key={prod.id} className="glass-card p-4 flex items-center justify-between border border-border/40 rounded-xl bg-card/40 hover:bg-card/70 transition-all">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-bold text-primary">
-                      #{i + 1}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm">{prod.name}</h4>
-                      <p className="text-xs text-muted-foreground">{prod.category} | {prod.sku}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-sm">{formatCurrency(prod.price)}</p>
-                    <p className="text-xs text-emerald-400 font-medium">{prod.salesCount} sold</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="glass-card p-8 text-center text-muted-foreground">
-              <p className="text-sm">No sales recorded yet. Start checkouts in the Register!</p>
-            </div>
-          )}
-        </div>
-
-        {/* Timeline activity feed */}
+      {/* Single Column Layout for Recent Transactions */}
+      <div className="flex-1 min-h-0">
         <div className="flex flex-col h-full overflow-hidden">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 flex-shrink-0">
             <Clock className="w-5 h-5 text-primary" />
