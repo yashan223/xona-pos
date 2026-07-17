@@ -87,11 +87,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const getToastStyles = (type: Toast['type']) => {
     switch (type) {
       case 'success':
-        return 'border-success/30 bg-success/10 text-success-foreground';
+        return 'border-success/30 bg-success/10 text-success';
       case 'error':
-        return 'border-destructive/30 bg-destructive/10 text-destructive-foreground';
+        return 'border-destructive/30 bg-destructive/10 text-destructive';
       case 'warning':
-        return 'border-warning/30 bg-warning/10 text-warning-foreground';
+        return 'border-warning/30 bg-warning/10 text-warning';
       case 'info':
       default:
         return 'border-primary/30 bg-primary/10 text-primary';
