@@ -75,6 +75,7 @@ export interface TransactionRecord {
   paymentMethod: 'cash' | 'card' | 'mobile';
   paymentStatus: 'paid' | 'refunded' | 'voided';
   createdAt: string;
+  pdfUrl?: string;
 }
 
 export interface CustomerRecord {

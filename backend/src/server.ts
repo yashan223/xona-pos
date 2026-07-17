@@ -15,6 +15,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static('uploads'));
+app.use('/receipts', express.static('receipts'));
 
 // Global error boundary for malformed JSON requests
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

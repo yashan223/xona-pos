@@ -615,15 +615,28 @@ export default function AddErrorPage({ currentUser }: AddErrorPageProps) {
 
             {/* Actions */}
             <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  window.print();
-                }}
-                className="flex-1 py-2 rounded-lg bg-secondary text-foreground text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                Print Receipt
-              </button>
+              {checkoutResult.pdfUrl ? (
+                <button
+                  onClick={() => {
+                    const fullUrl = `http://localhost:3000${checkoutResult.pdfUrl}`;
+                    window.open(fullUrl, '_blank');
+                  }}
+                  className="flex-1 py-2 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  View PDF Bill
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    window.print();
+                  }}
+                  className="flex-1 py-2 rounded-lg bg-secondary text-foreground text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Print Receipt
+                </button>
+              )}
               <button
                 onClick={() => setCheckoutResult(null)}
                 className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-bold transition-all cursor-pointer"

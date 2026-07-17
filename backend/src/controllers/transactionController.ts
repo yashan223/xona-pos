@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import transactionRepository from '../repositories/transactionRepository.js';
+import { generateReceiptPDF } from '../lib/pdfGenerator.js';
 
 class TransactionController {
   create = async (req: Request, res: Response) => {
@@ -22,7 +23,13 @@ class TransactionController {
         paymentStatus: 'paid',
       });
 
-      res.status(201).json(tx);
+      // Generate the PDF receipt automatically on backend
+      const pdfUrl = await generateReceiptPDF(tx);
+
+      res.status(201).json({
+        ...tx,
+        pdfUrl
+      });
     } catch (err) {
       console.error('[transactions] POST error:', err);
       res.status(500).json({ error: 'Failed to record transaction' });
