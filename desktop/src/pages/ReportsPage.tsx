@@ -76,6 +76,7 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
       }
 
       toast.success('Sales report PDF generated and saved to HDD successfully!');
+      setActiveTab('saved');
       loadReports();
     } catch (err: any) {
       console.error('Failed to generate report silently:', err);
