@@ -1,0 +1,35 @@
+# Global dependencies
+node_modules/
+
+# Build and distribution directories
+dist/
+out/
+.vite/
+
+# TypeScript build info cache
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files
+.env
+.env.*.local
+
+# Databases and Local Storage uploads
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+/backend/uploads/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Backend Environment Files
+backend/.env
+backend/.env.local
+backend/.env.development
+backend/.env.production

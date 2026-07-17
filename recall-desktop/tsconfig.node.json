@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2020",
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true,
+    "strict": true,
+    "noEmit": true
+  },
+  "files": [
+    "./vite.main.config.mjs",
+    "./vite.preload.config.mjs",
+    "./vite.renderer.config.mjs"
+  ]
+}
