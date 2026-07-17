@@ -21,20 +21,34 @@ export { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeMode
 
 async function initAdmin() {
   try {
-    const adminCheck = await UserModel.findOne({ username: 'admin' });
+    const adminUsername = process.env.ADMIN_USERNAME;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminUsername || !adminPassword) {
+      console.log('[Database Info] ADMIN_USERNAME or ADMIN_PASSWORD not specified in environment. Admin seeding skipped.');
+      return;
+    }
+
+    const adminCheck = await UserModel.findOne({ username: adminUsername });
+    const adminPwHash = hashPassword(adminPassword); // Sync admin password
     if (!adminCheck) {
       const adminId = 'admin-user-id';
-      const adminPwHash = hashPassword('admin123'); // Default password
       const now = new Date().toISOString();
       await UserModel.create({
         _id: adminId,
-        username: 'admin',
+        username: adminUsername,
         passwordHash: adminPwHash,
         email: 'admin@xona-pos.dev',
         createdAt: now,
         role: 'admin',
       });
-      console.log('[Database] Seeded default admin user: admin / admin123');
+      console.log(`[Database] Seeded default admin user: ${adminUsername}`);
+    } else {
+      await UserModel.updateOne(
+        { username: adminUsername },
+        { $set: { passwordHash: adminPwHash } }
+      );
+      console.log(`[Database] Synced admin user password: ${adminUsername}`);
     }
   } catch (err) {
     console.error('[Database] Failed to seed admin user:', err);
