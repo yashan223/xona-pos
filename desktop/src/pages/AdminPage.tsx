@@ -13,8 +13,10 @@ import {
 } from 'lucide-react';
 import { authApi, productApi, reportApi } from '@/lib/api';
 import type { User, ProductRecord, SystemStats } from '@/lib/api';
+import { useTranslation } from '@/lib/translations';
 
 export default function AdminPage() {
+  const { t, lang, setLanguage } = useTranslation();
   const [activeTab, setActiveTab] = useState<'users' | 'records' | 'maintenance' | 'settings'>('users');
   
   // States
@@ -529,6 +531,32 @@ export default function AdminPage() {
                         className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-primary disabled:opacity-40 transition-all text-foreground"
                       />
                       <span className="text-sm font-bold text-foreground">%</span>
+                    </div>
+                  </div>
+
+                  {/* Language Settings */}
+                  <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
+                    <div>
+                      <h4 className="text-sm font-semibold text-left">{t('appLanguage')}</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5 text-left">
+                        {t('appLanguageDesc')}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      {(['en', 'si'] as const).map((l) => (
+                        <button
+                          key={l}
+                          type="button"
+                          onClick={() => setLanguage(l)}
+                          className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase transition-all cursor-pointer border ${
+                            lang === l
+                              ? 'bg-primary border-primary text-primary-foreground shadow-sm'
+                              : 'bg-secondary/40 border-border/50 text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          {l === 'en' ? 'English' : 'සිංහල (Sinhala)'}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>

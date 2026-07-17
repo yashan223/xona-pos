@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import type { User } from '@/lib/api';
 import Logo from './Logo';
+import { useTranslation } from '@/lib/translations';
 
 export type Page = 'dashboard' | 'products' | 'checkout' | 'transactions' | 'graph' | 'reports' | 'admin';
 
@@ -34,7 +35,21 @@ const navItems: { page: Page; label: string; icon: React.ElementType; role?: 'ad
 ];
 
 export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout }: SidebarProps) {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
+
+  const getNavLabel = (page: Page) => {
+    switch (page) {
+      case 'dashboard': return t('dashboard');
+      case 'admin': return t('userPanel');
+      case 'products': return t('productsCatalog');
+      case 'checkout': return t('checkoutRegister');
+      case 'transactions': return t('transactionsLog');
+      case 'graph': return t('recommendationNet');
+      case 'reports': return t('salesReports');
+      default: return page;
+    }
+  };
 
   const filteredNav = navItems.filter((item) => {
     if (!item.role) return true;
@@ -79,10 +94,10 @@ export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
                 }
               `}
-              title={collapsed ? item.label : undefined}
+              title={collapsed ? getNavLabel(item.page) : undefined}
             >
               <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
-              {!collapsed && <span>{item.label}</span>}
+              {!collapsed && <span>{getNavLabel(item.page)}</span>}
             </button>
           );
         })}
@@ -100,7 +115,7 @@ export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-foreground truncate leading-none mb-0.5">{currentUser.username}</p>
                   <p className="text-[9px] text-muted-foreground truncate leading-none">
-                    {currentUser.role === 'admin' ? 'System Admin' : 'Cashier'}
+                    {currentUser.role === 'admin' ? t('systemAdmin') : t('cashier')}
                   </p>
                 </div>
               )}
@@ -109,7 +124,7 @@ export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout
               <button
                 onClick={onLogout}
                 className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer flex-shrink-0"
-                title="Log Out"
+                title={t('logout')}
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
@@ -119,7 +134,7 @@ export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout
             <button
               onClick={onLogout}
               className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-              title="Log Out"
+              title={t('logout')}
             >
               <LogOut className="w-4 h-4" />
             </button>
