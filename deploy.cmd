@@ -21,7 +21,7 @@ if %errorlevel% neq 0 (
 echo.
 
 echo [2/3] Building Desktop Client...
-cd /d "%ROOT_DIR%\xona-pos-desktop"
+cd /d "%ROOT_DIR%\desktop"
 echo Installing frontend dependencies...
 call npm install
 echo Packaging/Making desktop installers...
@@ -43,7 +43,7 @@ echo Backend build location:
 echo   %ROOT_DIR%\backend\dist
 echo.
 echo Frontend installer locations:
-echo   %ROOT_DIR%\xona-pos-desktop\out\make
+echo   %ROOT_DIR%\desktop\out\make
 echo.
 goto end
 
