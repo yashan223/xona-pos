@@ -20,62 +20,66 @@ export async function generateReceiptPDF(transaction: any): Promise<string> {
       
       const doc = new PDFDocument({ 
         size: 'A6', 
-        margins: { top: 12, bottom: 12, left: 12, right: 12 } 
+        margins: { top: 20, bottom: 20, left: 36, right: 36 } 
       });
       const stream = fs.createWriteStream(filePath);
       
       doc.pipe(stream);
       
+      // Use Courier for monospaced thermal receipt look & feel
+      doc.font('Courier');
+      
       // Header branding
-      doc.fontSize(14).text('XONA POS', { align: 'center', underline: false });
-      doc.fontSize(7).text('123 Retail Business Way, City', { align: 'center' });
+      doc.font('Courier-Bold').fontSize(12).text('XONA POS', { align: 'center' });
+      doc.font('Courier').fontSize(7).text('123 Retail Business Way, City', { align: 'center' });
       doc.text('Tel: (555) 123-4567', { align: 'center' });
       doc.moveDown(0.5);
       
       // Receipt metadata
-      doc.fontSize(6);
-      doc.text(`Receipt ID: ${transaction.id || transaction._id}`);
-      doc.text(`Date: ${new Date(transaction.createdAt || new Date()).toLocaleString()}`);
-      doc.text(`Cashier ID: ${transaction.cashierId}`);
+      doc.fontSize(7);
+      doc.text(`Receipt ID:  ${transaction.id || transaction._id}`);
+      doc.text(`Date:        ${new Date(transaction.createdAt || new Date()).toLocaleString()}`);
+      doc.text(`Cashier ID:  ${transaction.cashierId}`);
       if (transaction.customerId) {
         doc.text(`Customer ID: ${transaction.customerId}`);
       }
       doc.moveDown(0.5);
       
       // Items list table
-      doc.fontSize(7).text('----------------------------------------------------');
-      doc.text('Item                   Qty   Price     Total');
-      doc.text('----------------------------------------------------');
+      doc.text('-------------------------------------------------');
+      doc.font('Courier-Bold').text('Item                  Qty       Price       Total');
+      doc.font('Courier').text('-------------------------------------------------');
       
       // Items rendering
-      doc.fontSize(6);
       for (const item of transaction.items) {
         const nameCol = item.name.substring(0, 20).padEnd(22);
         const qtyCol = String(item.quantity).padStart(3);
-        const priceCol = `Rs.${Number(item.price).toFixed(2)}`.padStart(11);
+        const priceCol = `Rs.${Number(item.price).toFixed(2)}`.padStart(12);
         const totalCol = `Rs.${Number(item.subtotal).toFixed(2)}`.padStart(12);
         doc.text(`${nameCol}${qtyCol}${priceCol}${totalCol}`);
       }
       
-      doc.fontSize(7).text('----------------------------------------------------');
+      doc.text('-------------------------------------------------');
       
       // Summary calculations
-      doc.fontSize(6);
-      doc.text(`Subtotal:`.padEnd(28) + `Rs.${Number(transaction.subtotal).toFixed(2)}`.padStart(18));
+      doc.text(`Subtotal:`.padEnd(28) + `Rs.${Number(transaction.subtotal).toFixed(2)}`.padStart(21));
       if (transaction.discount > 0) {
-        doc.text(`Discount:`.padEnd(28) + `-Rs.${Number(transaction.discount).toFixed(2)}`.padStart(18));
+        doc.text(`Discount:`.padEnd(28) + `-Rs.${Number(transaction.discount).toFixed(2)}`.padStart(21));
       }
-      doc.text(`VAT:`.padEnd(28) + `Rs.${Number(transaction.tax).toFixed(2)}`.padStart(18));
-      doc.font('Helvetica-Bold');
-      doc.fontSize(7).text(`Total:`.padEnd(28) + `Rs.${Number(transaction.totalAmount).toFixed(2)}`.padStart(18));
-      doc.font('Helvetica');
+      doc.text(`VAT:`.padEnd(28) + `Rs.${Number(transaction.tax).toFixed(2)}`.padStart(21));
+      doc.font('Courier-Bold');
+      doc.text(`Total:`.padEnd(28) + `Rs.${Number(transaction.totalAmount).toFixed(2)}`.padStart(21));
+      doc.font('Courier');
       
       doc.moveDown(0.5);
       doc.text('Payment: ' + String(transaction.paymentMethod).toUpperCase(), { align: 'center' });
       doc.text('Status: ' + String(transaction.paymentStatus).toUpperCase(), { align: 'center' });
       
-      doc.moveDown(0.5);
-      doc.fontSize(6).text('Thank you for shopping with us!', { align: 'center' });
+      doc.moveDown(0.8);
+      doc.font('Courier-Bold').text('Thank you for shopping with us!', { align: 'center' });
+      
+      doc.moveDown(0.8);
+      doc.font('Courier').fontSize(6).text('Developed by xoxod33p', { align: 'center' });
       
       doc.end();
       
