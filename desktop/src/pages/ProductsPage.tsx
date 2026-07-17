@@ -347,7 +347,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="e.g. Bakery"
+                    placeholder="Category Name"
                     value={newCategoryName}
                     onChange={e => setNewCategoryName(e.target.value)}
                     className="flex-1 bg-secondary/40 border border-border/50 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-primary text-foreground"
