@@ -121,7 +121,7 @@ export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-foreground truncate leading-none mb-0.5">{currentUser.username}</p>
                   <p className="text-[9px] text-muted-foreground truncate leading-none">
-                    {currentUser.role === 'admin' ? t('systemAdmin') : t('cashier')}
+                    {currentUser.role === 'admin' ? t('systemAdmin') : (currentUser.role === 'owner' ? t('owner') : t('cashier'))}
                   </p>
                 </div>
               )}

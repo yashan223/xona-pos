@@ -29,6 +29,7 @@ const MOCK_CUSTOMERS = [
 const MOCK_CASHIERS = [
   { id: 'cashier-1', username: 'cashier1', password: 'cashier123', email: 'cashier1@xona-pos.dev', role: 'cashier' },
   { id: 'cashier-2', username: 'cashier2', password: 'cashier123', email: 'cashier2@xona-pos.dev', role: 'cashier' },
+  { id: 'owner-1', username: 'owner', password: 'owner123', email: 'owner@xona-pos.dev', role: 'owner' },
 ];
 
 // Helper to get past dates

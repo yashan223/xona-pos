@@ -96,12 +96,12 @@ export default function DashboardPage() {
           delay={200}
         />
         <StatsCard
-          title="Association Nodes"
+          title="Product Associations"
           value={stats?.graph.nodeCount ?? 0}
           icon={GitBranch}
           color="violet"
           delay={300}
-          suffix={`(${stats?.graph.edgeCount ?? 0} relations)`}
+          suffix={`(${stats?.graph.edgeCount ?? 0} connections)`}
         />
       </div>
 
@@ -111,7 +111,7 @@ export default function DashboardPage() {
         <div>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Package className="w-5 h-5 text-success" />
-            Top Selling Products (Max-Heap Ranked)
+            Top Selling Products (Popularity Ranked)
           </h2>
           {topProducts.length > 0 ? (
             <div className="max-h-[500px] overflow-y-auto pr-2 space-y-3">

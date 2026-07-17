@@ -14,6 +14,7 @@ export const translations = {
     logout: 'Log Out',
     systemAdmin: 'System Admin',
     cashier: 'Cashier',
+    owner: 'Owner',
     
     // Dashboard
     revenue: 'Revenue',
@@ -78,6 +79,7 @@ export const translations = {
     logout: 'නික්ම යන්න',
     systemAdmin: 'පද්ධති පරිපාලක',
     cashier: 'කැෂියර්',
+    owner: 'අයිතිකරු',
     
     // Dashboard
     revenue: 'ආදායම',

@@ -177,7 +177,7 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
                     <Printer className="w-3.5 h-3.5" />
                     Print
                   </button>
-                  {currentUser?.role === 'admin' && tx.paymentStatus !== 'refunded' && (
+                  {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && tx.paymentStatus !== 'refunded' && (
                     <button
                       onClick={() => handleRefund(tx.id)}
                       className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-destructive/15 border border-destructive/20 text-destructive text-xs font-semibold hover:bg-destructive/25 transition-colors cursor-pointer"

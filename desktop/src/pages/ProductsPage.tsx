@@ -265,11 +265,11 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Products Catalog</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {products.length} product{products.length !== 1 ? 's' : ''} stored in AVL Tree
+            {products.length} product{products.length !== 1 ? 's' : ''} registered
             {searchQuery && ` · searching "${searchQuery}"`}
           </p>
         </div>
-        {currentUser?.role === 'admin' && (
+        {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
           <button
             onClick={startAddNew}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors cursor-pointer text-sm shadow-md shadow-primary/20"
@@ -325,7 +325,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                       <span className="bg-secondary/60 text-[9px] px-1.5 py-0.5 rounded font-mono text-muted-foreground">
                         {count}
                       </span>
-                      {currentUser?.role === 'admin' && (
+                      {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
                         <button
                           onClick={() => handleDeleteCategory(cat)}
                           className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-all cursor-pointer rounded"
@@ -341,7 +341,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
             </div>
 
             {/* Admin add category form */}
-            {currentUser?.role === 'admin' && (
+            {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
               <form onSubmit={handleAddCategory} className="pt-3 border-t border-border/20 space-y-2">
                 <label className="text-[10px] text-muted-foreground font-semibold block">Create Category</label>
                 <div className="flex gap-2">
@@ -369,7 +369,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
         <div className="flex-1 space-y-4 w-full">
           {/* Search Bar */}
           <SearchBar
-            placeholder="Search product catalog by prefix (O(log N) AVL Tree lookup)..."
+            placeholder="Search product catalog by name or prefix..."
             onSearch={handleSearch}
           />
 
@@ -393,9 +393,9 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
               {filteredGridProducts.map(prod => (
                 <div
                   key={prod.id}
-                  onClick={() => currentUser?.role === 'admin' && startEdit(prod)}
+                  onClick={() => (currentUser?.role === 'admin' || currentUser?.role === 'owner') && startEdit(prod)}
                   className={`glass-card p-5 border border-border/40 rounded-2xl bg-card/30 flex flex-col justify-between hover:bg-card/60 transition-all hover:scale-[1.01] hover:border-primary/20 ${
-                    currentUser?.role === 'admin' ? 'cursor-pointer select-none' : ''
+                    (currentUser?.role === 'admin' || currentUser?.role === 'owner') ? 'cursor-pointer select-none' : ''
                   }`}
                 >
                   <div className="flex gap-4">
@@ -432,7 +432,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                           {prod.stock === -1 ? 'Unlimited' : `${prod.stock} units`}
                         </p>
                       </div>
-                      {currentUser?.role === 'admin' && (
+                      {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
                         <div>
                           <p className="text-[10px] text-muted-foreground">Cost</p>
                           <p className="font-medium text-sm text-muted-foreground">{formatCurrency(prod.cost)}</p>
@@ -440,7 +440,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                       )}
                     </div>
 
-                    {currentUser?.role === 'admin' && (
+                    {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
                       <div className="flex gap-2">
                         <button
                           onClick={(e) => {
@@ -571,7 +571,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                       {categories.map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
-                      {currentUser?.role === 'admin' && (
+                      {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
                         <option value="__new__" className="text-primary font-semibold">+ Create New...</option>
                       )}
                     </select>

@@ -86,6 +86,7 @@ export default function App() {
         if (currentUser?.role !== 'admin') return <DashboardPage />;
         return <MaintenancePage />;
       case 'admin':
+        if (currentUser?.role !== 'admin') return <DashboardPage />;
         return <AdminPage />;
       default:
         return <DashboardPage />;

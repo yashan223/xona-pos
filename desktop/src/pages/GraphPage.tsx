@@ -55,7 +55,7 @@ export default function GraphPage() {
           <h1 className="text-2xl font-bold tracking-tight">Recommendation Net</h1>
           <p className="text-sm text-muted-foreground mt-1 text-primary/80">
             Visualizing Product → Category and Co-occurrence (Bought-Together) relationships
-            {stats && ` · ${stats.nodeCount} nodes, ${stats.edgeCount} edges`}
+            {stats && ` · ${stats.nodeCount} items, ${stats.edgeCount} connections`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -90,7 +90,7 @@ export default function GraphPage() {
           <span className="text-sm font-semibold text-foreground">{selectedNode.label}</span>
           <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full capitalize">{selectedNode.type}</span>
           <span className="text-xs text-muted-foreground ml-auto font-medium">
-            Showing 2-hop neighborhood (BFS)
+            Showing related connections
           </span>
         </div>
       )}

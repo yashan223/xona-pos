@@ -6,7 +6,7 @@ const UserSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   email: { type: String, required: true },
   createdAt: { type: String, required: true },
-  role: { type: String, default: 'cashier' }, // 'admin' | 'cashier'
+  role: { type: String, default: 'cashier' }, // 'admin' | 'cashier' | 'owner'
 });
 
 export const UserModel = mongoose.model('User', UserSchema);

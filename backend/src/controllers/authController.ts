@@ -109,7 +109,7 @@ class AuthController {
     try {
       const id = req.params.id as string;
       const { role } = req.body;
-      if (role !== 'admin' && role !== 'cashier') {
+      if (role !== 'admin' && role !== 'cashier' && role !== 'owner') {
         return res.status(400).json({ error: 'Invalid role' });
       }
       const success = await userRepository.updateUserRole(id, role);

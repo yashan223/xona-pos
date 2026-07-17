@@ -61,7 +61,14 @@ export default function AdminPage() {
       return;
     }
 
-    const nextRole = currentRole === 'admin' ? 'cashier' : 'admin';
+    let nextRole = 'cashier';
+    if (currentRole === 'cashier') {
+      nextRole = 'owner';
+    } else if (currentRole === 'owner') {
+      nextRole = 'admin';
+    } else {
+      nextRole = 'cashier';
+    }
     try {
       await authApi.updateRole(userId, nextRole);
       showFeedback('success', `Successfully updated role for ${targetUser?.username} to ${nextRole}`);
@@ -172,7 +179,7 @@ export default function AdminPage() {
                     <td className="p-4">
                       <span
                         className={`badge text-[10px] uppercase font-semibold ${
-                          u.role === 'admin' ? 'badge-teal' : 'badge-amber'
+                          u.role === 'admin' ? 'badge-teal' : (u.role === 'owner' ? 'badge-violet' : 'badge-amber')
                         }`}
                       >
                         {u.role || 'cashier'}
@@ -185,7 +192,7 @@ export default function AdminPage() {
                             <button
                               onClick={() => handleToggleRole(u.id, u.role)}
                               className="p-1.5 rounded bg-secondary hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                              title={u.role === 'admin' ? 'Demote to Cashier' : 'Promote to Admin'}
+                              title="Cycle User Role"
                             >
                               {u.role === 'admin' ? (
                                 <UserX className="w-4 h-4" />
