@@ -9,6 +9,8 @@ import GraphPage from '@/pages/GraphPage';
 import ReportsPage from '@/pages/ReportsPage';
 import LoginPage from '@/pages/LoginPage';
 import AdminPage from '@/pages/AdminPage';
+import SettingsPage from '@/pages/SettingsPage';
+import MaintenancePage from '@/pages/MaintenancePage';
 import type { User } from '@/lib/api';
 import DarkVeil from '@/components/DarkVeil';
 import { startWebSocketListener } from '@/lib/websocket';
@@ -77,6 +79,12 @@ export default function App() {
         return <GraphPage />;
       case 'reports':
         return <ReportsPage />;
+      case 'settings':
+        if (currentUser?.role !== 'admin') return <DashboardPage />;
+        return <SettingsPage />;
+      case 'maintenance':
+        if (currentUser?.role !== 'admin') return <DashboardPage />;
+        return <MaintenancePage />;
       case 'admin':
         return <AdminPage />;
       default:

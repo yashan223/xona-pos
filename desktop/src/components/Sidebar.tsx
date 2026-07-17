@@ -10,12 +10,14 @@ import {
   ChevronRight,
   LogOut,
   Shield,
+  Settings,
+  Database,
 } from 'lucide-react';
 import type { User } from '@/lib/api';
 import Logo from './Logo';
 import { useTranslation } from '@/lib/translations';
 
-export type Page = 'dashboard' | 'products' | 'checkout' | 'transactions' | 'graph' | 'reports' | 'admin';
+export type Page = 'dashboard' | 'products' | 'checkout' | 'transactions' | 'graph' | 'reports' | 'admin' | 'settings' | 'maintenance';
 
 interface SidebarProps {
   currentPage: Page;
@@ -32,6 +34,8 @@ const navItems: { page: Page; label: string; icon: React.ElementType; role?: 'ad
   { page: 'transactions', label: 'Transactions Log', icon: Receipt, role: 'user' },
   { page: 'graph', label: 'Recommendation Net', icon: GitBranch, role: 'user' },
   { page: 'reports', label: 'Sales Reports', icon: BarChart3 },
+  { page: 'settings', label: 'System Settings', icon: Settings, role: 'admin' },
+  { page: 'maintenance', label: 'Database Maintenance', icon: Database, role: 'admin' },
 ];
 
 export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout }: SidebarProps) {
@@ -47,6 +51,8 @@ export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout
       case 'transactions': return t('transactionsLog');
       case 'graph': return t('recommendationNet');
       case 'reports': return t('salesReports');
+      case 'settings': return t('systemSettings');
+      case 'maintenance': return t('databaseMaintenance');
       default: return page;
     }
   };
