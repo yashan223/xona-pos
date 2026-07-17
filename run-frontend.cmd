@@ -1,6 +1,6 @@
 @echo off
-title Recall Desktop Frontend
-cd /d "%~dp0\recall-desktop"
-echo Starting Recall Desktop Frontend...
+title Xona POS Desktop Frontend
+cd /d "%~dp0\xona-pos-desktop"
+echo Starting Xona POS Desktop Frontend...
 npm start
 pause

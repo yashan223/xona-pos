@@ -1,5 +1,5 @@
 {
-  "name": "recall-backend",
+  "name": "xona-pos-backend",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/server.js",

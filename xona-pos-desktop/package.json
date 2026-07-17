@@ -1,6 +1,6 @@
 {
-  "name": "recall-desktop",
-  "productName": "recall-desktop",
+  "name": "xona-pos-desktop",
+  "productName": "xona-pos-desktop",
   "version": "1.0.0",
   "description": "My Electron application description",
   "main": ".vite/build/main.js",
