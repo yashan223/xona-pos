@@ -75,28 +75,11 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
         throw new Error('Failed to generate sales report PDF');
       }
 
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${selectedReportType}_sales_report_${new Date().toISOString().split('T')[0]}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      toast.success('Sales report PDF downloaded successfully!');
+      toast.success('Sales report PDF generated and saved to HDD successfully!');
       loadReports();
     } catch (err: any) {
-      console.error('Fetch PDF failed, falling back to direct download:', err);
-      // Fallback for Electron environments
-      try {
-        const role = currentUser?.role || 'cashier';
-        window.open(`http://localhost:3000/api/reports/pdf?type=${selectedReportType}&role=${role}`);
-        toast.success('Sales report PDF generated successfully!');
-        loadReports();
-      } catch (fallbackErr: any) {
-        toast.error('Failed to generate PDF sales report.');
-      }
+      console.error('Failed to generate report silently:', err);
+      toast.error('Failed to generate PDF sales report.');
     } finally {
       setExporting(false);
     }
