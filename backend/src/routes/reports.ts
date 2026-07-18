@@ -27,7 +27,7 @@ router.get('/saved', reportController.listSavedReports);
 // DELETE /api/reports/saved/:id — Delete a saved PDF report
 router.delete('/saved/:id', reportController.deleteSavedReport);
 
-// POST /api/reports/reset — Reset and seed POS database
+// POST /api/reports/reset — Reset POS database
 router.post('/reset', reportController.resetDatabase);
 
 // POST /api/reports/clear — Clear database (admin user retained)

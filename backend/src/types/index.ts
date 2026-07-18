@@ -40,7 +40,6 @@ export interface CustomerRecord {
   name: string;
   phone: string;
   email: string;
-  loyaltyPoints: number;
   createdAt: string;
 }
 

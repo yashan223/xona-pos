@@ -5,7 +5,6 @@ const CustomerSchema = new mongoose.Schema({
   name: { type: String, required: true },
   phone: { type: String, default: '' },
   email: { type: String, default: '' },
-  loyaltyPoints: { type: Number, default: 0 },
   createdAt: { type: String, required: true },
 });
 

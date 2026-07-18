@@ -15,7 +15,6 @@ class CustomerController {
         name,
         phone,
         email,
-        loyaltyPoints: 0,
       });
 
       broadcast('CUSTOMERS_UPDATED');

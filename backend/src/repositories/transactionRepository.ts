@@ -1,4 +1,4 @@
-import { TransactionModel, ProductModel, CustomerModel, GraphEdgeModel } from '../persistence/database.js';
+import { TransactionModel, ProductModel, GraphEdgeModel } from '../persistence/database.js';
 import { TransactionRecord } from '../types/index.js';
 
 class TransactionRepository {
@@ -55,16 +55,7 @@ class TransactionRepository {
       );
     }
 
-    // 3. Update customer loyalty points (e.g. 1 point per $10 spent)
-    if (record.customerId && record.totalAmount > 0) {
-      const earnedPoints = Math.floor(record.totalAmount / 10);
-      if (earnedPoints > 0) {
-        await CustomerModel.findByIdAndUpdate(
-          record.customerId,
-          { $inc: { loyaltyPoints: earnedPoints } }
-        );
-      }
-    }
+
 
     // 4. Update Co-occurrence Graph (Bought Together)
     // Create edges between every pair of items in the cart
@@ -136,16 +127,7 @@ class TransactionRepository {
       );
     }
 
-    // 3. Deduct loyalty points from customer
-    if (refundedDoc.customerId && refundedDoc.totalAmount > 0) {
-      const pointsToDeduct = Math.floor(refundedDoc.totalAmount / 10);
-      if (pointsToDeduct > 0) {
-        await CustomerModel.findByIdAndUpdate(
-          refundedDoc.customerId,
-          { $inc: { loyaltyPoints: -pointsToDeduct } }
-        );
-      }
-    }
+
 
     return this.docToTransaction(refundedDoc);
   }

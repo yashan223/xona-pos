@@ -30,7 +30,6 @@ class TransactionController {
       // Broadcast real-time update notifications (transactions and product stock inventory changed)
       broadcast('TRANSACTIONS_UPDATED', tx);
       broadcast('PRODUCTS_UPDATED');
-      broadcast('CUSTOMERS_UPDATED'); // Loyalty points might have been added/deducted
 
       res.status(201).json({
         ...tx,

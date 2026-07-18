@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import reportRepository from '../repositories/reportRepository.js';
 import { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeModel, GraphEdgeModel, SavedReportModel } from '../persistence/database.js';
-import { runSeed } from '../seed.js';
 import fs from 'fs';
 import path from 'path';
 import { generateSalesReportPDF } from '../lib/reportPdfGenerator.js';
@@ -203,10 +202,7 @@ class ReportController {
       await GraphNodeModel.deleteMany({});
       await GraphEdgeModel.deleteMany({});
 
-      // 2. Run seed logic
-      await runSeed();
-
-      res.json({ message: 'Database reset and seeded successfully' });
+      res.json({ message: 'Database reset successfully' });
     } catch (err) {
       console.error('[reports] reset database error:', err);
       res.status(500).json({ error: 'Failed to reset database' });

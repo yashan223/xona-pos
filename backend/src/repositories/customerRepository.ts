@@ -15,7 +15,6 @@ class CustomerRepository {
       name: customerData.name || '',
       phone: customerData.phone || '',
       email: customerData.email || '',
-      loyaltyPoints: customerData.loyaltyPoints || 0,
       createdAt: now,
     };
 
@@ -24,7 +23,6 @@ class CustomerRepository {
       name: record.name,
       phone: record.phone,
       email: record.email,
-      loyaltyPoints: record.loyaltyPoints,
       createdAt: record.createdAt,
     });
 
@@ -53,7 +51,6 @@ class CustomerRepository {
       name: doc.name,
       phone: doc.phone || '',
       email: doc.email || '',
-      loyaltyPoints: doc.loyaltyPoints || 0,
       createdAt: doc.createdAt,
     };
   }

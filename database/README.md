@@ -42,8 +42,8 @@ Stores product item details, pricing records, cost, stocks, and sales popularity
 
 ---
 
-### 3. `customers` (CRM & Loyalty Points)
-Maintains loyalty registry files and rewards counters for customer relationship management.
+### 3. `customers` (CRM)
+Maintains customer profile records for customer relationship management.
 
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
@@ -51,7 +51,6 @@ Maintains loyalty registry files and rewards counters for customer relationship 
 | `name` | `String` | Yes | Full name. |
 | `phone` | `String` | No | Phone contact index number. |
 | `email` | `String` | No | Email contact address. |
-| `loyaltyPoints` | `Number` | Yes | Accrued point balance (accrues $1$ point per $\$10$ checkout spent). |
 | `createdAt` | `String` | Yes | ISO datetime of customer profile creation. |
 
 ---

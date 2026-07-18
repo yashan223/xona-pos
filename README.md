@@ -1,59 +1,72 @@
 # Xona POS System
 
-Xona POS is a feature-rich, high-performance Point of Sale (POS) system designed for retail transactions, checkout registers, inventory control, and analytical reports. It utilizes **MongoDB** as its primary persistent database and implements custom **in-memory data structures** (AVL Tree, Max Heap, Graph) for sub-millisecond prefix searches, popularity rankings, and co-occurrence product recommendations.
+Xona POS is a modern, high-performance Point of Sale (POS) system built for retail management, checkout registers, inventory control, customer CRM, and analytical business reports. It utilizes **MongoDB** as its primary persistent database and provides a sleek desktop interface built with **React**, **TypeScript**, **Vite**, and **Tailwind CSS**.
 
 ---
 
 ## 📂 Repository Structure
 
-* [backend/](./backend) — Express.js API server configured with Mongoose models, data loading pipelines, and seeding scripts.
-* [recall-desktop/](./recall-desktop) — Electron desktop client built with React, Vite, and custom analytical interfaces.
+* [backend/](./backend) — Node.js & Express.js REST API server powered by Mongoose for data persistence, PDF reporting, and graph relationship traversals.
+* [desktop/](./desktop) — React + Vite desktop client featuring interactive POS registers, product management, analytics, and data visualization.
 
 ---
 
-## ⚡ Core Features & Data Structures
+## ⚡ Key Features
 
-For a comprehensive explanation of our custom algorithm implementations and complexity analyses, refer to the [DATA_STRUCTURES.md](./DATA_STRUCTURES.md) documentation.
-
-* **AVL Tree:** Indexes the product catalog alphabetically by name to power $O(\log N)$ real-time prefix-matching search queries during product scanning.
-* **Max Heap:** Priority queue ranking products dynamically based on unit sales count (`salesCount`), listing best-selling items instantly.
-* **Graph:** Captures relations between item categories (`BELONGS_TO`) and tracks items frequently purchased in the same carts (`BOUGHT_WITH` co-occurrence edges) to supply real-time cashier recommendation panels.
+* **🛒 POS Checkout Register:** Fast product lookup, customer association, instant discount calculations, tax handling, multi-payment methods (Cash, Card, Mobile), and real-time inventory updates.
+* **📦 Catalog Management:** Full inventory CRUD controls, SKU management, stock tracking, price/cost adjustments, and product image uploads.
+* **👥 Customer CRM:** Customer profile management and transaction association.
+* **🕸️ Product Co-Occurrence Net:** Graph relationship visualization (powered by ECharts) highlighting items frequently purchased together using BFS & DFS graph algorithms.
+* **🧾 Transaction & Audit Logs:** Detailed transaction history, line-item audit views, and instant refund processing with inventory reversal.
+* **📊 Analytics & PDF Reports:** Comprehensive sales charts, payment method distribution, top-selling product metrics, downloadable PDF sales reports, and database backup/restore capabilities.
 
 ---
 
 ## ⚙️ Configuration & Quick Start
 
-Ensure you have **Node.js** and **MongoDB** installed on your system.
+Ensure you have **Node.js** (v18+) and **MongoDB** installed and running on your system.
 
-### 1. Configure Environment Variables
-Inside the `backend/` folder, create a `.env` file (a default one has been pre-configured for you):
+### 1. Backend Environment Setup
+Inside the `backend/` directory, configure your `.env` file (or use the pre-configured default):
+
 ```env
 PORT=3000
 MONGO_URI=mongodb://127.0.0.1:27017/xona-pos
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your_secure_password
 ```
-*Modify `MONGO_URI` to connect to your hosted MongoDB instance or database cluster.*
 
 ### 2. Launch the Backend
-Execute the helper script in the project root:
+Run the root helper command:
 ```powershell
 .\run-backend.cmd
 ```
-*Or manually: `cd backend && npm install && npm run dev`*
-*To seed the database with mock catalog items, CRM loyalty customers, and 30-day sales history, run: `cd backend && npm run seed`*
+*Or manually:*
+```bash
+cd backend
+npm install
+npm run dev
+```
 
 ### 3. Launch the Desktop Client
-Execute the helper script in the project root:
+Run the root helper command:
 ```powershell
 .\run-frontend.cmd
 ```
-*Or manually: `cd recall-desktop && npm install && npm start`*
+*Or manually:*
+```bash
+cd desktop
+npm install
+npm run dev
+```
 
 ---
 
-## 🖥️ Screen Layouts
-* **Dashboard Page:** Metrics showing gross sales revenues, best-selling product charts, and cashier checkout logs.
-* **Checkout Register:** Cashier grid layout supporting loyalty customer selection, discount rates, receipt printing simulation, and bought-together recommendation side panels.
-* **Catalog Manager:** Inventory catalog editor supporting real-time addition, stock adjustments, pricing controls, and metadata setup.
-* **Transactions Log:** Receipt lists for searching past invoices, processing refunds, and auditing details.
-* **Recommendation Net:** Interactive node canvas (rendered via ECharts) mapping out item-bought co-occurrences.
-* **Analytics Reports:** Category breakdowns, cash vs card payment ratios, and revenue timelines.
+## 🖥️ Application Modules
+
+* **Dashboard:** Real-time revenue metrics, transaction counts, graph connection metrics, and top-selling product lists.
+* **Checkout Register:** Cashier terminal with category filtering, instant cart calculations, customer selector, and product co-occurrence recommendation panel.
+* **Products Catalog:** Inventory catalog manager supporting live search, price/stock updates, and image asset uploads.
+* **Transactions:** Complete history log with search filters, transaction status badges, and one-click refund capabilities.
+* **Co-Occurrence Net:** Interactive visual graph mapping connections between categories and items commonly purchased in single checkouts.
+* **Reports & Backups:** Detailed sales distribution charts, PDF invoice exports, and JSON database backup/restore tools.
