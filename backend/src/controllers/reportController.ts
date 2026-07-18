@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import store from '../persistence/store.js';
 import reportRepository from '../repositories/reportRepository.js';
 import { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeModel, GraphEdgeModel, SavedReportModel } from '../persistence/database.js';
 import { runSeed } from '../seed.js';
@@ -186,9 +185,6 @@ class ReportController {
       await GraphNodeModel.deleteMany({});
       await GraphEdgeModel.deleteMany({});
 
-      // 2. Reload in-memory structures (which will clear them)
-      await store.loadAll();
-
       res.json({ message: 'Database cleared successfully (admin user retained)' });
     } catch (err) {
       console.error('[reports] clear database error:', err);
@@ -209,9 +205,6 @@ class ReportController {
 
       // 2. Run seed logic
       await runSeed();
-
-      // 3. Reload in-memory structures from the newly seeded database
-      await store.loadAll();
 
       res.json({ message: 'Database reset and seeded successfully' });
     } catch (err) {
@@ -369,8 +362,7 @@ class ReportController {
     if (graphNodes && graphNodes.length > 0) await GraphNodeModel.insertMany(graphNodes);
     if (graphEdges && graphEdges.length > 0) await GraphEdgeModel.insertMany(graphEdges);
 
-    // Reload in-memory structures
-    await store.loadAll();
+    // Done
   };
 }
 

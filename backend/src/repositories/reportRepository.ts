@@ -1,4 +1,4 @@
-import { ProductModel, TransactionModel } from '../persistence/database.js';
+import { ProductModel, TransactionModel, GraphNodeModel, GraphEdgeModel } from '../persistence/database.js';
 import store from '../persistence/store.js';
 import { ProductRecord, TransactionRecord } from '../types/index.js';
 
@@ -9,8 +9,9 @@ class ReportRepository {
     return popular.map((p: any) => store.docToProduct(p));
   }
 
-  getEffectiveProducts(k: number = 20): ProductRecord[] {
-    return store.maxHeap.getTopK(k);
+  async getEffectiveProducts(k: number = 20): Promise<ProductRecord[]> {
+    const docs = await ProductModel.find().sort({ salesCount: -1 }).limit(k).lean();
+    return docs.map((doc: any) => store.docToProduct(doc));
   }
 
   async getPOSPatterns(): Promise<any> {
@@ -65,23 +66,32 @@ class ReportRepository {
     ]);
     const totalRevenue = revenueSum[0]?.total || 0;
 
-    const avlStats = store.avlTree.getStats();
-    const graphStats = store.graph.getStats();
+    const nodeCount = await GraphNodeModel.countDocuments();
+    const edgeCount = await GraphEdgeModel.countDocuments();
+    const nodeTypesAggregate = await GraphNodeModel.aggregate([
+      { $group: { _id: '$type', count: { $sum: 1 } } }
+    ]);
+    const nodeTypes: Record<string, number> = {};
+    for (const item of nodeTypesAggregate) {
+      if (item._id) {
+        nodeTypes[item._id] = item.count;
+      }
+    }
 
     return {
       products: {
         total: productsCount,
-        treeHeight: avlStats.height,
-        isBalanced: avlStats.isBalanced
+        treeHeight: 0,
+        isBalanced: true
       },
       transactions: {
         total: transactionsCount,
         totalRevenue: totalRevenue
       },
       graph: {
-        nodeCount: graphStats.nodeCount,
-        edgeCount: graphStats.edgeCount,
-        nodeTypes: graphStats.nodeTypes
+        nodeCount: nodeCount,
+        edgeCount: edgeCount,
+        nodeTypes: nodeTypes
       }
     };
   }

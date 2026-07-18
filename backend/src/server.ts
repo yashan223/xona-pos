@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
-import store from './persistence/store.js';
 import productRoutes from './routes/products.js';
 import transactionRoutes from './routes/transactions.js';
 import customerRoutes from './routes/customers.js';
@@ -29,8 +28,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   next(err);
 });
 
-// Initialize data structures from MongoDB
-store.loadAll();
+
 
 // Mount API routes
 app.use('/api/auth', authRoutes);
@@ -54,3 +52,5 @@ initWebSocketServer(server);
 server.listen(PORT, () => {
   console.log(`🚀 Xona POS backend running on http://localhost:${PORT}`);
 });
+// Trigger reload
+

@@ -41,12 +41,7 @@ class ProductRepository {
       updatedAt: record.updatedAt,
     });
 
-    // 2. Insert into in-memory structures (AVL Tree & Heap)
-    store.avlTree.insert(record);
-    store.maxHeap.insert(record);
-
-    // 3. Add to Graph Nodes and Edges
-    store.graph.addNode(record.id, 'product', record.name);
+    // 2. Add to Graph Nodes and Edges
     await GraphNodeModel.findOneAndUpdate(
       { _id: record.id },
       { type: 'product', label: record.name },
@@ -55,14 +50,12 @@ class ProductRepository {
 
     if (record.category) {
       const categoryId = `cat:${record.category.toLowerCase().replace(/\s+/g, '-')}`;
-      store.graph.addNode(categoryId, 'category', record.category);
       await GraphNodeModel.findOneAndUpdate(
         { _id: categoryId },
         { type: 'category', label: record.category },
         { upsert: true }
       );
 
-      store.graph.addEdge(record.id, categoryId, 'BELONGS_TO');
       await GraphEdgeModel.findOneAndUpdate(
         { source: record.id, target: categoryId, type: 'BELONGS_TO' },
         {},
@@ -74,7 +67,7 @@ class ProductRepository {
   }
 
   async updateProduct(id: string, productData: Partial<ProductRecord>): Promise<ProductRecord | null> {
-    const existing = store.avlTree.searchById(id);
+    const existing = await this.getProduct(id);
     if (!existing) return null;
 
     const now = new Date().toISOString();
@@ -82,9 +75,6 @@ class ProductRepository {
       ...productData,
       updatedAt: now,
     };
-
-    // Remove from in-memory AVL to re-sort (in case name changed)
-    store.avlTree.delete(id);
 
     // 1. Update in MongoDB
     const updatedDoc = await ProductModel.findByIdAndUpdate(
@@ -97,35 +87,23 @@ class ProductRepository {
 
     const updatedRecord = store.docToProduct(updatedDoc);
 
-    // 2. Insert back into AVL tree and update heap entry
-    store.avlTree.insert(updatedRecord);
-    store.maxHeap.remove(id);
-    store.maxHeap.insert(updatedRecord);
-
-    // 3. Update Graph Node label
-    const node = store.graph.getNode(id);
-    if (node) {
-      node.label = updatedRecord.name;
-    }
+    // 2. Update Graph Node label
     await GraphNodeModel.updateOne({ _id: id }, { label: updatedRecord.name });
 
     // Handle category change if applicable
     if (productData.category && productData.category !== existing.category) {
       // Remove old category edge
       const oldCatId = `cat:${existing.category.toLowerCase().replace(/\s+/g, '-')}`;
-      store.graph.removeEdge(id, oldCatId, 'BELONGS_TO');
       await GraphEdgeModel.deleteOne({ source: id, target: oldCatId, type: 'BELONGS_TO' });
 
       // Add new category edge
       const newCatId = `cat:${productData.category.toLowerCase().replace(/\s+/g, '-')}`;
-      store.graph.addNode(newCatId, 'category', productData.category);
       await GraphNodeModel.findOneAndUpdate(
         { _id: newCatId },
         { type: 'category', label: productData.category },
         { upsert: true }
       );
 
-      store.graph.addEdge(id, newCatId, 'BELONGS_TO');
       await GraphEdgeModel.findOneAndUpdate(
         { source: id, target: newCatId, type: 'BELONGS_TO' },
         {},
@@ -137,7 +115,7 @@ class ProductRepository {
   }
 
   async deleteProduct(id: string): Promise<boolean> {
-    const existing = store.avlTree.searchById(id);
+    const existing = await this.getProduct(id);
     if (!existing) return false;
 
     // 1. Delete from MongoDB
@@ -145,24 +123,23 @@ class ProductRepository {
     await GraphNodeModel.deleteOne({ _id: id });
     await GraphEdgeModel.deleteMany({ $or: [{ source: id }, { target: id }] });
 
-    // 2. Delete from in-memory structures
-    store.avlTree.delete(id);
-    store.maxHeap.remove(id);
-    store.graph.removeNode(id);
-
     return true;
   }
 
-  getProduct(id: string): ProductRecord | null {
-    return store.avlTree.searchById(id);
+  async getProduct(id: string): Promise<ProductRecord | null> {
+    const doc = await ProductModel.findById(id).lean();
+    return doc ? store.docToProduct(doc) : null;
   }
 
-  getAllProducts(): ProductRecord[] {
-    return store.avlTree.getAll();
+  async getAllProducts(): Promise<ProductRecord[]> {
+    const docs = await ProductModel.find().sort({ name: 1 }).lean();
+    return docs.map((doc: any) => store.docToProduct(doc));
   }
 
-  searchProducts(query: string): ProductRecord[] {
-    return store.avlTree.searchByPrefix(query.toLowerCase());
+  async searchProducts(query: string): Promise<ProductRecord[]> {
+    const regex = new RegExp('^' + query, 'i');
+    const docs = await ProductModel.find({ name: regex }).sort({ name: 1 }).lean();
+    return docs.map((doc: any) => store.docToProduct(doc));
   }
 }
 

@@ -60,7 +60,7 @@ class ProductController {
 
   getAll = async (req: Request, res: Response) => {
     try {
-      const products = productRepository.getAllProducts();
+      const products = await productRepository.getAllProducts();
       res.json(products);
     } catch (err) {
       console.error('[products] GET all error:', err);
@@ -74,7 +74,7 @@ class ProductController {
       if (!query) {
         return res.json([]);
       }
-      const results = productRepository.searchProducts(query);
+      const results = await productRepository.searchProducts(query);
       res.json(results);
     } catch (err) {
       console.error('[products] search error:', err);
@@ -84,7 +84,7 @@ class ProductController {
 
   getById = async (req: Request, res: Response) => {
     try {
-      const product = productRepository.getProduct(req.params.id as string);
+      const product = await productRepository.getProduct(req.params.id as string);
       if (!product) {
         return res.status(404).json({ error: 'Product record not found' });
       }

@@ -1,5 +1,4 @@
 import { TransactionModel, ProductModel, CustomerModel, GraphEdgeModel } from '../persistence/database.js';
-import store from '../persistence/store.js';
 import { TransactionRecord } from '../types/index.js';
 
 class TransactionRepository {
@@ -49,21 +48,11 @@ class TransactionRepository {
         updateObj.$inc.stock = -item.quantity;
       }
 
-      const updatedProductDoc = await ProductModel.findByIdAndUpdate(
+      await ProductModel.findByIdAndUpdate(
         item.productId,
         updateObj,
         { new: true }
-      ).lean() as any;
-
-      if (updatedProductDoc) {
-        const prodRecord = store.docToProduct(updatedProductDoc);
-        
-        // Update in-memory AVLTree and MaxHeap
-        store.avlTree.delete(item.productId);
-        store.avlTree.insert(prodRecord);
-        store.maxHeap.remove(item.productId);
-        store.maxHeap.insert(prodRecord);
-      }
+      );
     }
 
     // 3. Update customer loyalty points (e.g. 1 point per $10 spent)
@@ -87,9 +76,6 @@ class TransactionRepository {
 
         // Sort IDs to maintain alphabetical ordering of edges and prevent duplicate pairs
         const [source, target] = [prodA, prodB].sort();
-
-        // Update in-memory Graph
-        store.graph.addEdge(source, target, 'BOUGHT_WITH', { weight: 1 });
 
         // Update in MongoDB GraphEdge collection
         const existingEdge = await GraphEdgeModel.findOne({ source, target, type: 'BOUGHT_WITH' });
@@ -143,19 +129,11 @@ class TransactionRepository {
         updateObj.$inc.stock = item.quantity;
       }
 
-      const updatedProdDoc = await ProductModel.findByIdAndUpdate(
+      await ProductModel.findByIdAndUpdate(
         item.productId,
         updateObj,
         { new: true }
-      ).lean() as any;
-
-      if (updatedProdDoc) {
-        const prodRecord = store.docToProduct(updatedProdDoc);
-        store.avlTree.delete(item.productId);
-        store.avlTree.insert(prodRecord);
-        store.maxHeap.remove(item.productId);
-        store.maxHeap.insert(prodRecord);
-      }
+      );
     }
 
     // 3. Deduct loyalty points from customer
