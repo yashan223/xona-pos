@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Package, ShoppingCart, DollarSign, GitBranch, Clock } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, TrendingUp, Clock } from 'lucide-react';
 import StatsCard from '@/components/StatsCard';
 import { reportApi } from '@/lib/api';
 import type { SystemStats, TransactionRecord } from '@/lib/api';
@@ -60,6 +60,10 @@ export default function DashboardPage() {
     return `Rs. ${Number(val).toFixed(2)}`;
   };
 
+  const avgOrderValue = (stats?.transactions.total ?? 0) > 0
+    ? (stats?.transactions.totalRevenue ?? 0) / stats!.transactions.total
+    : 0;
+
   return (
     <div className="p-6 h-full flex flex-col space-y-6 max-w-6xl mx-auto overflow-hidden animate-fade-in text-left">
       {/* Header */}
@@ -94,12 +98,11 @@ export default function DashboardPage() {
           delay={200}
         />
         <StatsCard
-          title={t('recommendationNet')}
-          value={stats?.graph.nodeCount ?? 0}
-          icon={GitBranch}
+          title={t('avgOrderValue')}
+          value={formatCurrency(avgOrderValue)}
+          icon={TrendingUp}
           color="violet"
           delay={300}
-          suffix={`(${stats?.graph.edgeCount ?? 0})`}
         />
       </div>
 
