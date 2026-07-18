@@ -6,6 +6,9 @@ import {
   saveCachedProducts,
   getCachedProducts,
   queueOfflineProduct,
+  updateOfflineProduct,
+  deleteOfflineProduct,
+  uploadOfflineImage,
   saveCachedCustomers,
   getCachedCustomers,
   queueOfflineCustomer,
@@ -17,6 +20,9 @@ import {
   getOfflineUser,
   saveCachedUsersList,
   getCachedUsersList,
+  queueOfflineUser,
+  updateOfflineUser,
+  deleteOfflineUser,
 } from './offlineStore';
 
 /** Single source of truth — change the URL in desktop/.env (VITE_API_BASE_URL) */
@@ -181,9 +187,7 @@ export const productApi = {
       return products;
     } catch (err) {
       console.warn('[API Client] Cloud Backend unreachable. Serving local cached products:', err);
-      const cached = getCachedProducts();
-      if (cached.length > 0) return cached;
-      throw err;
+      return getCachedProducts();
     }
   },
 
@@ -204,18 +208,51 @@ export const productApi = {
 
   getById: (id: string) => request<ProductRecord>(`/products/${id}`),
 
-  update: (id: string, data: Partial<ProductRecord>) =>
-    request<ProductRecord>(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  update: async (id: string, data: Partial<ProductRecord>): Promise<ProductRecord> => {
+    if (isForceOfflineEnabled()) {
+      return updateOfflineProduct(id, data);
+    }
+    try {
+      const updated = await request<ProductRecord>(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+      saveCachedProducts([...getCachedProducts().filter((p) => p.id !== id), updated]);
+      return updated;
+    } catch (err) {
+      console.warn('[API Client] Cloud Backend unreachable. Updating product locally:', err);
+      return updateOfflineProduct(id, data);
+    }
+  },
 
-  delete: (id: string) => request<{ message: string }>(`/products/${id}`, { method: 'DELETE' }),
+  delete: async (id: string): Promise<{ message: string }> => {
+    if (isForceOfflineEnabled()) {
+      deleteOfflineProduct(id);
+      return { message: 'Product deleted locally' };
+    }
+    try {
+      const res = await request<{ message: string }>(`/products/${id}`, { method: 'DELETE' });
+      deleteOfflineProduct(id);
+      return res;
+    } catch (err) {
+      console.warn('[API Client] Cloud Backend unreachable. Deleting product locally:', err);
+      deleteOfflineProduct(id);
+      return { message: 'Product deleted locally' };
+    }
+  },
 
-  uploadImage: (file: File) => {
-    const formData = new FormData();
-    formData.append('image', file);
-    return request<{ imageUrl: string }>('/products/upload', {
-      method: 'POST',
-      body: formData,
-    });
+  uploadImage: async (file: File): Promise<{ imageUrl: string }> => {
+    if (isForceOfflineEnabled()) {
+      return uploadOfflineImage(file);
+    }
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      return await request<{ imageUrl: string }>('/products/upload', {
+        method: 'POST',
+        body: formData,
+      });
+    } catch (err) {
+      console.warn('[API Client] Cloud Backend unreachable. Uploading image locally as base64:', err);
+      return uploadOfflineImage(file);
+    }
   },
 };
 
@@ -369,8 +406,19 @@ export interface User {
 }
 
 export const authApi = {
-  register: (data: { username: string; password?: string; email?: string; role?: string }) =>
-    request<{ message: string; user: User }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+  register: async (data: { username: string; password?: string; email?: string; role?: string }): Promise<{ message: string; user: User }> => {
+    if (isForceOfflineEnabled()) {
+      return queueOfflineUser(data);
+    }
+    try {
+      const res = await request<{ message: string; user: User }>('/auth/register', { method: 'POST', body: JSON.stringify(data) });
+      saveCachedUsersList([...getCachedUsersList().filter((u) => u.id !== res.user.id), res.user]);
+      return res;
+    } catch (err) {
+      console.warn('[API Client] Cloud Backend unreachable. Registering user locally:', err);
+      return queueOfflineUser(data);
+    }
+  },
 
   login: async (data: { username: string; password?: string }): Promise<{ message: string; user: User }> => {
     if (isForceOfflineEnabled()) {
@@ -397,7 +445,7 @@ export const authApi = {
       saveOfflineUser(res.user);
       return res;
     } catch (err) {
-      console.warn('[API Client] Cloud Backend login failed due to network. Operating in offline login mode:', err);
+      console.warn('[API Client] Cloud Backend unreachable. Operating in offline login mode:', err);
       const offlineUser = getOfflineUser();
       if (offlineUser && offlineUser.username.toLowerCase() === data.username.toLowerCase()) {
         return { message: 'Logged in offline successfully', user: offlineUser };
@@ -435,12 +483,50 @@ export const authApi = {
     }
   },
 
-  delete: (id: string) => request<{ message: string }>(`/auth/users/${id}`, { method: 'DELETE' }),
+  delete: async (id: string): Promise<{ message: string }> => {
+    if (isForceOfflineEnabled()) {
+      deleteOfflineUser(id);
+      return { message: 'User deleted locally' };
+    }
+    try {
+      const res = await request<{ message: string }>(`/auth/users/${id}`, { method: 'DELETE' });
+      deleteOfflineUser(id);
+      return res;
+    } catch (err) {
+      deleteOfflineUser(id);
+      return { message: 'User deleted locally' };
+    }
+  },
 
-  updateRole: (id: string, role: string) => request<{ message: string }>(`/auth/users/${id}/role`, { method: 'POST', body: JSON.stringify({ role }) }),
+  updateRole: async (id: string, role: string): Promise<{ message: string }> => {
+    if (isForceOfflineEnabled()) {
+      updateOfflineUser(id, { role });
+      return { message: 'Role updated locally' };
+    }
+    try {
+      const res = await request<{ message: string }>(`/auth/users/${id}/role`, { method: 'POST', body: JSON.stringify({ role }) });
+      updateOfflineUser(id, { role });
+      return res;
+    } catch (err) {
+      updateOfflineUser(id, { role });
+      return { message: 'Role updated locally' };
+    }
+  },
 
-  update: (id: string, data: { username?: string; password?: string; email?: string; role?: string }) =>
-    request<{ message: string }>(`/auth/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  update: async (id: string, data: { username?: string; password?: string; email?: string; role?: string }): Promise<{ message: string }> => {
+    if (isForceOfflineEnabled()) {
+      updateOfflineUser(id, data);
+      return { message: 'User updated locally' };
+    }
+    try {
+      const res = await request<{ message: string }>(`/auth/users/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+      updateOfflineUser(id, data);
+      return res;
+    } catch (err) {
+      updateOfflineUser(id, data);
+      return { message: 'User updated locally' };
+    }
+  },
 };
 
 export interface SyncStatus {
@@ -463,6 +549,7 @@ export const syncApi = {
           createCustomer: (data) => request<CustomerRecord>('/customers', { method: 'POST', body: JSON.stringify(data) }),
           createProduct: (data) => request<ProductRecord>('/products', { method: 'POST', body: JSON.stringify(data) }),
           createTransaction: (data) => request<TransactionRecord>('/transactions', { method: 'POST', body: JSON.stringify(data) }),
+          registerUser: (data) => request<{ message: string; user: User }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
         });
       }
       return { ...status, pendingCount: status.pendingCount + pendingOffline };
@@ -484,6 +571,7 @@ export const syncApi = {
         createCustomer: (data) => request<CustomerRecord>('/customers', { method: 'POST', body: JSON.stringify(data) }),
         createProduct: (data) => request<ProductRecord>('/products', { method: 'POST', body: JSON.stringify(data) }),
         createTransaction: (data) => request<TransactionRecord>('/transactions', { method: 'POST', body: JSON.stringify(data) }),
+        registerUser: (data) => request<{ message: string; user: User }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
       });
     }
     try {

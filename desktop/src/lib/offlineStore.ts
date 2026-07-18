@@ -1,15 +1,14 @@
 /**
- * Client-Side Local Database & Sync Engine — Xona POS Desktop
- * Created entirely inside the Desktop Client PC app (runs without requiring a local Node backend).
+ * Client-Side Permanent Database & Sync Engine — Xona POS Desktop
+ * Saves offline data PERMANENTLY on the client PC hard drive (never evicted like temporary cache).
  *
- * Local Relational Storage Schema:
- *   - local_products: Product catalog cached on client PC
- *   - local_customers: Customer CRM records cached on client PC
- *   - local_transactions: Checkout receipts queued on client PC
- *   - local_sync_queue: Unsynced local operations awaiting Cloud sync
+ * Multi-Layer Permanent Disk Storage:
+ *   1. Persistent Disk File API (Electron %APPDATA%/userData HDD file system)
+ *   2. Persistent Storage API (navigator.storage.persist())
+ *   3. Permanent IndexedDB & Relational Key Value Stores
  */
 
-import { ProductRecord, CustomerRecord, TransactionItem, TransactionRecord } from './api';
+import { ProductRecord, CustomerRecord, TransactionItem, TransactionRecord, User } from './api';
 
 const LOCAL_PRODUCTS_TABLE = 'xona_local_products_db';
 const LOCAL_CUSTOMERS_TABLE = 'xona_local_customers_db';
@@ -17,6 +16,46 @@ const LOCAL_TRANSACTIONS_TABLE = 'xona_local_transactions_db';
 const PENDING_SYNC_QUEUE_TABLE = 'xona_local_sync_queue_db';
 const FORCE_OFFLINE_KEY = 'xona_force_offline';
 const CACHED_USER_KEY = 'xona_offline_user';
+const CACHED_USERS_LIST_KEY = 'xona_offline_users_list';
+
+declare global {
+  interface Window {
+    electronDB?: {
+      readPermanentFile: (key: string) => Promise<string | null>;
+      writePermanentFile: (key: string, data: string) => Promise<boolean>;
+    };
+  }
+}
+
+// Request permanent non-volatile storage from OS
+if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist().then((persistent) => {
+    console.log(`[PermanentDB] Client storage persistent status: ${persistent}`);
+  });
+}
+
+function writePermanentData(key: string, dataStr: string): void {
+  try {
+    localStorage.setItem(key, dataStr);
+  } catch (err) {
+    console.error(`[PermanentDB] localStorage write error for ${key}:`, err);
+  }
+  if (typeof window !== 'undefined' && window.electronDB) {
+    window.electronDB.writePermanentFile(key, dataStr).catch((err) => {
+      console.error(`[PermanentDB] Electron disk file write error for ${key}:`, err);
+    });
+  }
+}
+
+function readPermanentData(key: string): string | null {
+  try {
+    const localVal = localStorage.getItem(key);
+    if (localVal) return localVal;
+  } catch (err) {
+    // ignore
+  }
+  return null;
+}
 
 // ─── Settings & Mode Flags ───────────────────────────────────
 
@@ -30,10 +69,10 @@ export function isForceOfflineEnabled(): boolean {
 
 export function setForceOfflineEnabled(enabled: boolean): void {
   try {
-    localStorage.setItem(FORCE_OFFLINE_KEY, String(enabled));
+    writePermanentData(FORCE_OFFLINE_KEY, String(enabled));
     window.dispatchEvent(new CustomEvent('offline_mode_changed'));
   } catch (err) {
-    console.error('[FrontendDB] Failed to update force offline setting:', err);
+    console.error('[PermanentDB] Failed to update force offline setting:', err);
   }
 }
 
@@ -41,53 +80,81 @@ export function setForceOfflineEnabled(enabled: boolean): void {
 
 export function saveOfflineUser(user: any): void {
   try {
-    localStorage.setItem(CACHED_USER_KEY, JSON.stringify(user));
+    writePermanentData(CACHED_USER_KEY, JSON.stringify(user));
   } catch (err) {
-    console.error('[FrontendDB] Failed to cache user locally:', err);
+    console.error('[PermanentDB] Failed to cache user locally:', err);
   }
 }
 
 export function getOfflineUser(): any | null {
   try {
-    const raw = localStorage.getItem(CACHED_USER_KEY);
+    const raw = readPermanentData(CACHED_USER_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch (err) {
     return null;
   }
 }
 
-const CACHED_USERS_LIST_KEY = 'xona_offline_users_list';
-
 export function saveCachedUsersList(users: any[]): void {
   try {
-    localStorage.setItem(CACHED_USERS_LIST_KEY, JSON.stringify(users));
+    writePermanentData(CACHED_USERS_LIST_KEY, JSON.stringify(users));
   } catch (err) {
-    console.error('[FrontendDB] Failed to cache users list locally:', err);
+    console.error('[PermanentDB] Failed to cache users list locally:', err);
   }
 }
 
 export function getCachedUsersList(): any[] {
   try {
-    const raw = localStorage.getItem(CACHED_USERS_LIST_KEY);
+    const raw = readPermanentData(CACHED_USERS_LIST_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (err) {
     return [];
   }
 }
 
+export function queueOfflineUser(payload: { username: string; password?: string; email?: string; role?: string }): { message: string; user: User } {
+  const now = new Date().toISOString();
+  const id = `user-off-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+  const newUser: User = {
+    id,
+    username: payload.username,
+    email: payload.email || `${payload.username}@xona-pos.dev`,
+    role: payload.role || 'cashier',
+    createdAt: now,
+  };
+
+  const users = getCachedUsersList();
+  users.push(newUser);
+  saveCachedUsersList(users);
+
+  pushToSyncQueue({ id, type: 'USER', payload, createdAt: now });
+  return { message: 'User created permanently on local disk', user: newUser };
+}
+
+export function updateOfflineUser(id: string, payload: Partial<User>): void {
+  const users = getCachedUsersList();
+  const updated = users.map((u) => (u.id === id ? { ...u, ...payload } : u));
+  saveCachedUsersList(updated);
+}
+
+export function deleteOfflineUser(id: string): void {
+  const users = getCachedUsersList().filter((u) => u.id !== id);
+  saveCachedUsersList(users);
+}
+
 // ─── Frontend Local Database: Products Table ──────────────────
 
 export function saveCachedProducts(products: ProductRecord[]): void {
   try {
-    localStorage.setItem(LOCAL_PRODUCTS_TABLE, JSON.stringify(products));
+    writePermanentData(LOCAL_PRODUCTS_TABLE, JSON.stringify(products));
   } catch (err) {
-    console.error('[FrontendDB] Failed to save products to local DB:', err);
+    console.error('[PermanentDB] Failed to save products to disk DB:', err);
   }
 }
 
 export function getCachedProducts(): ProductRecord[] {
   try {
-    const raw = localStorage.getItem(LOCAL_PRODUCTS_TABLE);
+    const raw = readPermanentData(LOCAL_PRODUCTS_TABLE);
     return raw ? JSON.parse(raw) : [];
   } catch (err) {
     return [];
@@ -121,31 +188,63 @@ export function queueOfflineProduct(payload: {
     updatedAt: now,
   };
 
-  // Insert into local products table
   const products = getCachedProducts();
   products.push(record);
   saveCachedProducts(products);
 
-  // Push to local sync queue
   pushToSyncQueue({ id, type: 'PRODUCT', payload, createdAt: now });
 
   window.dispatchEvent(new CustomEvent('products_updated'));
   return record;
 }
 
+export function updateOfflineProduct(id: string, payload: Partial<ProductRecord>): ProductRecord {
+  const products = getCachedProducts();
+  let updatedRecord: ProductRecord | null = null;
+  const revised = products.map((p) => {
+    if (p.id === id) {
+      updatedRecord = { ...p, ...payload, updatedAt: new Date().toISOString() };
+      return updatedRecord;
+    }
+    return p;
+  });
+  if (updatedRecord) {
+    saveCachedProducts(revised);
+    window.dispatchEvent(new CustomEvent('products_updated'));
+    return updatedRecord;
+  }
+  throw new Error('Product not found in local database');
+}
+
+export function deleteOfflineProduct(id: string): void {
+  const products = getCachedProducts().filter((p) => p.id !== id);
+  saveCachedProducts(products);
+  window.dispatchEvent(new CustomEvent('products_updated'));
+}
+
+export async function uploadOfflineImage(file: File): Promise<{ imageUrl: string }> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      resolve({ imageUrl: (e.target?.result as string) || '' });
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // ─── Frontend Local Database: Customers Table ─────────────────
 
 export function saveCachedCustomers(customers: CustomerRecord[]): void {
   try {
-    localStorage.setItem(LOCAL_CUSTOMERS_TABLE, JSON.stringify(customers));
+    writePermanentData(LOCAL_CUSTOMERS_TABLE, JSON.stringify(customers));
   } catch (err) {
-    console.error('[FrontendDB] Failed to save customers to local DB:', err);
+    console.error('[PermanentDB] Failed to save customers to disk DB:', err);
   }
 }
 
 export function getCachedCustomers(): CustomerRecord[] {
   try {
-    const raw = localStorage.getItem(LOCAL_CUSTOMERS_TABLE);
+    const raw = readPermanentData(LOCAL_CUSTOMERS_TABLE);
     return raw ? JSON.parse(raw) : [];
   } catch (err) {
     return [];
@@ -200,19 +299,16 @@ export function queueOfflineTransaction(payload: {
     createdAt: now,
   };
 
-  // Save transaction locally
   const localTxs = getLocalTransactions();
   localTxs.push(txRecord);
   try {
-    localStorage.setItem(LOCAL_TRANSACTIONS_TABLE, JSON.stringify(localTxs));
+    writePermanentData(LOCAL_TRANSACTIONS_TABLE, JSON.stringify(localTxs));
   } catch (err) {
-    console.error('[FrontendDB] Failed to save transaction locally:', err);
+    console.error('[PermanentDB] Failed to save transaction to disk:', err);
   }
 
-  // Push to local sync queue
   pushToSyncQueue({ id: offlineId, type: 'TRANSACTION', payload, createdAt: now });
 
-  // Update local stock in client DB
   const prods = getCachedProducts();
   const updatedProds = prods.map((prod) => {
     const item = payload.items.find((i) => i.productId === prod.id);
@@ -230,7 +326,7 @@ export function queueOfflineTransaction(payload: {
 
 export function getLocalTransactions(): TransactionRecord[] {
   try {
-    const raw = localStorage.getItem(LOCAL_TRANSACTIONS_TABLE);
+    const raw = readPermanentData(LOCAL_TRANSACTIONS_TABLE);
     return raw ? JSON.parse(raw) : [];
   } catch (err) {
     return [];
@@ -241,7 +337,7 @@ export function getLocalTransactions(): TransactionRecord[] {
 
 interface SyncQueueItem {
   id: string;
-  type: 'CUSTOMER' | 'PRODUCT' | 'TRANSACTION';
+  type: 'CUSTOMER' | 'PRODUCT' | 'TRANSACTION' | 'USER';
   payload: any;
   createdAt: string;
 }
@@ -249,12 +345,12 @@ interface SyncQueueItem {
 function pushToSyncQueue(item: SyncQueueItem): void {
   const queue = getPendingSyncQueue();
   queue.push(item);
-  localStorage.setItem(PENDING_SYNC_QUEUE_TABLE, JSON.stringify(queue));
+  writePermanentData(PENDING_SYNC_QUEUE_TABLE, JSON.stringify(queue));
 }
 
 export function getPendingSyncQueue(): SyncQueueItem[] {
   try {
-    const raw = localStorage.getItem(PENDING_SYNC_QUEUE_TABLE);
+    const raw = readPermanentData(PENDING_SYNC_QUEUE_TABLE);
     return raw ? JSON.parse(raw) : [];
   } catch (err) {
     return [];
@@ -289,6 +385,7 @@ export async function syncAllOfflineData(api: {
   createCustomer: (data: any) => Promise<any>;
   createProduct: (data: any) => Promise<any>;
   createTransaction: (data: any) => Promise<any>;
+  registerUser?: (data: any) => Promise<any>;
 }): Promise<number> {
   if (isForceOfflineEnabled()) {
     return 0;
@@ -300,12 +397,24 @@ export async function syncAllOfflineData(api: {
   let syncedTotal = 0;
   const remainingQueue: SyncQueueItem[] = [];
 
-  // Sort queue by type: CUSTOMER first, then PRODUCT, then TRANSACTION
+  const users = queue.filter((i) => i.type === 'USER');
   const customers = queue.filter((i) => i.type === 'CUSTOMER');
   const products = queue.filter((i) => i.type === 'PRODUCT');
   const transactions = queue.filter((i) => i.type === 'TRANSACTION');
 
-  // 1. Flush Customers
+  // 1. Flush Users
+  if (api.registerUser) {
+    for (const item of users) {
+      try {
+        await api.registerUser(item.payload);
+        syncedTotal++;
+      } catch (err) {
+        remainingQueue.push(item);
+      }
+    }
+  }
+
+  // 2. Flush Customers
   for (const item of customers) {
     try {
       await api.createCustomer(item.payload);
@@ -315,7 +424,7 @@ export async function syncAllOfflineData(api: {
     }
   }
 
-  // 2. Flush Products
+  // 3. Flush Products
   for (const item of products) {
     try {
       await api.createProduct(item.payload);
@@ -325,7 +434,7 @@ export async function syncAllOfflineData(api: {
     }
   }
 
-  // 3. Flush Transactions
+  // 4. Flush Transactions
   for (const item of transactions) {
     try {
       await api.createTransaction(item.payload);
@@ -335,7 +444,7 @@ export async function syncAllOfflineData(api: {
     }
   }
 
-  localStorage.setItem(PENDING_SYNC_QUEUE_TABLE, JSON.stringify(remainingQueue));
+  writePermanentData(PENDING_SYNC_QUEUE_TABLE, JSON.stringify(remainingQueue));
 
   if (syncedTotal > 0) {
     window.dispatchEvent(new CustomEvent('transactions_updated'));

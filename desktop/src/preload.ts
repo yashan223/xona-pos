@@ -1,2 +1,6 @@
-// See the Electron documentation for details on how to use preload scripts:
-// https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
+import { contextBridge, ipcRenderer } from 'electron';
+
+contextBridge.exposeInMainWorld('electronDB', {
+  readPermanentFile: (key: string) => ipcRenderer.invoke('db-read-file', key),
+  writePermanentFile: (key: string, data: string) => ipcRenderer.invoke('db-write-file', key, data),
+});
