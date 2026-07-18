@@ -3,6 +3,7 @@ import { Receipt, Search, RotateCcw, Printer, Clock } from 'lucide-react';
 import { useNotification } from '@/context/NotificationContext';
 import { transactionApi } from '@/lib/api';
 import type { TransactionRecord, User } from '@/lib/api';
+import { useTranslation } from '@/lib/translations';
 
 let cachedTransactions: TransactionRecord[] | null = null;
 
@@ -11,6 +12,7 @@ interface SolutionsPageProps {
 }
 
 export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
+  const { t } = useTranslation();
   const { confirm, toast } = useNotification();
   const [transactions, setTransactions] = useState<TransactionRecord[]>(cachedTransactions || []);
   const [filteredTransactions, setFilteredTransactions] = useState<TransactionRecord[]>(cachedTransactions || []);
@@ -92,9 +94,9 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Transactions Log</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('transactionsLog')}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Browse and manage transaction history receipts ({filteredTransactions.length} total logs)
+            ({filteredTransactions.length} total logs)
           </p>
         </div>
         <button
@@ -111,7 +113,7 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
         <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
         <input
           type="text"
-          placeholder="Search by Transaction ID, Cashier ID, or Customer ID..."
+          placeholder={t('searchTransactions')}
           value={searchQuery}
           onChange={e => handleSearch(e.target.value)}
           className="w-full bg-card border border-border/50 rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:border-primary shadow-sm"

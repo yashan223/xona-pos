@@ -17,7 +17,7 @@ const TransactionSchema = new mongoose.Schema({
   discount: { type: Number, default: 0 },
   tax: { type: Number, default: 0 },
   totalAmount: { type: Number, required: true },
-  paymentMethod: { type: String, enum: ['cash', 'card', 'mobile'], required: true },
+  paymentMethod: { type: String, enum: ['cash'], default: 'cash' },
   paymentStatus: { type: String, enum: ['paid', 'refunded', 'voided'], required: true },
   createdAt: { type: String, required: true },
 });

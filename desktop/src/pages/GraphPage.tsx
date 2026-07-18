@@ -3,8 +3,10 @@ import { RefreshCw } from 'lucide-react';
 import GraphCanvas from '@/components/GraphCanvas';
 import { graphApi } from '@/lib/api';
 import type { GraphNode, GraphEdge } from '@/lib/api';
+import { useTranslation } from '@/lib/translations';
 
 export default function GraphPage() {
+  const { t } = useTranslation();
   const [nodes, setNodes] = useState<GraphNode[]>([]);
   const [edges, setEdges] = useState<GraphEdge[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,9 +54,9 @@ export default function GraphPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Recommendation Net</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('recommendationNet')}</h1>
           <p className="text-sm text-muted-foreground mt-1 text-primary/80">
-            Visualizing Product → Category and Co-occurrence (Bought-Together) relationships
+            {t('graphSubtitle')}
             {stats && ` · ${stats.nodeCount} items, ${stats.edgeCount} connections`}
           </p>
         </div>

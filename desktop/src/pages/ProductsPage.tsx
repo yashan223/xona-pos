@@ -4,6 +4,7 @@ import SearchBar from '@/components/SearchBar';
 import { useNotification } from '@/context/NotificationContext';
 import { productApi } from '@/lib/api';
 import type { ProductRecord, User } from '@/lib/api';
+import { useTranslation } from '@/lib/translations';
 
 let cachedProducts: ProductRecord[] | null = null;
 
@@ -12,6 +13,7 @@ interface ProductsPageProps {
 }
 
 export default function ProductsPage({ currentUser }: ProductsPageProps) {
+  const { t } = useTranslation();
   const { confirm, toast } = useNotification();
   const [products, setProducts] = useState<ProductRecord[]>(cachedProducts || []);
   const [categories, setCategories] = useState<string[]>([]);
@@ -239,10 +241,9 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Products Catalog</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('productsCatalog')}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {products.length} product{products.length !== 1 ? 's' : ''} registered
-            {searchQuery && ` · searching "${searchQuery}"`}
+            {products.length} {t('productsCount')}
           </p>
         </div>
         {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
@@ -251,7 +252,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors cursor-pointer text-sm shadow-md shadow-primary/20"
           >
             <Plus className="w-4 h-4" />
-            Add Product
+            {t('addProduct')}
           </button>
         )}
       </div>
@@ -261,7 +262,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
             <SearchBar
-              placeholder="Search product catalog by name or prefix..."
+              placeholder={t('searchProducts')}
               onSearch={handleSearch}
             />
           </div>
@@ -278,7 +279,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                 paddingRight: '2.5rem'
               }}
             >
-              <option value="All">All Categories ({products.length})</option>
+              <option value="All">{t('allCategories')} ({products.length})</option>
               {categories.map(cat => {
                 const count = products.filter(p => p.category === cat).length;
                 return (
@@ -341,11 +342,11 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                 <div className="flex justify-between items-center mt-5 pt-3 border-t border-border/20">
                   <div className="flex gap-6">
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Price</p>
+                      <p className="text-[10px] text-muted-foreground">{t('price')}</p>
                       <p className="font-bold text-sm text-primary">{formatCurrency(prod.price)}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Stock</p>
+                      <p className="text-[10px] text-muted-foreground">{t('stockQuantity')}</p>
                       <p className={`font-semibold text-sm ${prod.stock === -1 ? 'text-emerald-400' : (prod.stock < 5 ? 'text-destructive font-bold animate-pulse' : 'text-foreground')}`}>
                         {prod.stock === -1 ? 'Unlimited' : `${prod.stock} units`}
                       </p>

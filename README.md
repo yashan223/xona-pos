@@ -13,7 +13,7 @@ Xona POS is a modern, high-performance Point of Sale (POS) system built for reta
 
 ## ⚡ Key Features
 
-* **🛒 POS Checkout Register:** Fast product lookup, customer association, instant discount calculations, tax handling, multi-payment methods (Cash, Card, Mobile), and real-time inventory updates.
+* **🛒 POS Checkout Register:** Fast product lookup, customer association, instant discount calculations, tax handling, cash payment method, and real-time inventory updates.
 * **📦 Catalog Management:** Full inventory CRUD controls, SKU management, stock tracking, price/cost adjustments, and product image uploads.
 * **👥 Customer CRM:** Customer profile management and transaction association.
 * **🕸️ Product Co-Occurrence Net:** Graph relationship visualization (powered by ECharts) highlighting items frequently purchased together using BFS & DFS graph algorithms.

@@ -7,12 +7,14 @@ import { authApi } from '@/lib/api';
 import type { User } from '@/lib/api';
 import { KeyRound, User as UserIcon, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import Logo from '@/components/Logo';
+import { useTranslation } from '@/lib/translations';
 
 interface LoginPageProps {
   onLoginSuccess: (user: User, rememberMe: boolean) => void;
 }
 
 export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -57,7 +59,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
             <Logo className="h-16 w-auto text-foreground" />
           </div>
           <CardDescription className="text-sm text-muted-foreground mt-1">
-            Log in to manage Xona Point of Sale register
+            {t('loginSubtitle')}
           </CardDescription>
         </CardHeader>
 
@@ -73,7 +75,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Username */}
             <div className="space-y-1.5">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">{t('username')}</Label>
               <div className="relative group">
                 <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 <Input
@@ -91,7 +93,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
 
             {/* Password */}
             <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('password')}</Label>
               <div className="relative group">
                 <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 <Input
@@ -136,10 +138,10 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
               {loading ? (
                 <div className="flex items-center justify-center">
                   <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
-                  Logging in...
+                  ...
                 </div>
               ) : (
-                'Log In'
+                t('login')
               )}
             </Button>
           </form>

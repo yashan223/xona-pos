@@ -3,6 +3,7 @@ import { ShoppingCart, Search, Plus, Minus, Trash2, Tag, Sparkles, CheckCircle2,
 import { useNotification } from '@/context/NotificationContext';
 import { productApi, transactionApi, graphApi, BASE_HOST } from '@/lib/api';
 import type { ProductRecord, TransactionItem, User, GraphNode } from '@/lib/api';
+import { useTranslation } from '@/lib/translations';
 
 interface CheckoutPageProps {
   currentUser: User | null;
@@ -10,6 +11,7 @@ interface CheckoutPageProps {
 }
 
 export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
+  const { t } = useTranslation();
   const { toast } = useNotification();
   const [catalog, setCatalog] = useState<ProductRecord[]>([]);
   const [filteredCatalog, setFilteredCatalog] = useState<ProductRecord[]>([]);
@@ -257,7 +259,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
           <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search products by SKU or name..."
+            placeholder={t('searchProducts')}
             value={searchQuery}
             onChange={e => handleSearchChange(e.target.value)}
             className="w-full bg-card border border-border/50 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-primary shadow-sm"
@@ -326,9 +328,9 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
         {/* Graph recommendations */}
         {recommendations.length > 0 && (
           <div className="p-3.5 bg-primary/5 border border-primary/20 rounded-xl space-y-2">
-            <h4 className="text-xs font-bold text-primary flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-              Frequently Bought Together
+            <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5 mb-2">
+              <Sparkles className="w-3.5 h-3.5 text-accent animate-pulse" />
+              {t('boughtTogether')}
             </h4>
             <div className="flex gap-2">
               {recommendations.map(node => {
@@ -361,7 +363,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
           <div className="flex justify-between items-center border-b border-sidebar-border pb-3">
             <h2 className="text-base font-bold flex items-center gap-2">
               <ShoppingCart className="w-4 h-4 text-primary" />
-              Current Basket
+              {t('currentBasket')}
             </h2>
             <span className="text-[10px] bg-primary/15 text-primary border border-primary/25 font-bold px-2 py-0.5 rounded-full">
               {cart.reduce((sum, item) => sum + item.quantity, 0)} Items
@@ -376,7 +378,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
               <ShoppingCart className="w-8 h-8 mb-2 opacity-25" />
-              <p className="text-xs">Basket is empty</p>
+              <p className="text-xs">{t('emptyBasket')}</p>
             </div>
           ) : (
             cart.map(item => (
@@ -406,7 +408,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
         <div className="border-t border-sidebar-border pt-4 space-y-4">
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Subtotal</span>
+              <span>{t('subtotal')}</span>
               <span>{formatCurrency(cartSubtotal)}</span>
             </div>
 
@@ -414,7 +416,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
             <div className="flex justify-between text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Tag className="w-3 h-3 text-success" />
-                Discount (%)
+                {t('discount')} (%)
               </span>
               <input
                 type="number"
@@ -432,7 +434,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
             </div>
 
             <div className="flex justify-between text-sm font-bold text-foreground pt-1.5 border-t border-sidebar-border/30">
-              <span>Total Amount</span>
+              <span>{t('totalAmount')}</span>
               <span className="text-primary">{formatCurrency(cartTotal)}</span>
             </div>
           </div>
@@ -444,7 +446,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
             className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-bold shadow-md shadow-primary/20 hover:bg-primary/95 transition-all text-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Banknote className="w-4 h-4" />
-            Complete Checkout {formatCurrency(cartTotal)}
+            {t('completeCheckout')} {formatCurrency(cartTotal)}
           </button>
         </div>
       </div>
@@ -458,7 +460,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
             {/* Header */}
             <div className="text-center p-6 border-b border-border/40 flex-shrink-0 space-y-2">
               <CheckCircle2 className="w-12 h-12 text-success mx-auto" />
-              <h2 className="text-lg font-bold">Transaction Complete</h2>
+              <h2 className="text-lg font-bold">{t('transactionComplete')}</h2>
               <p className="text-xs text-muted-foreground">Receipt #{checkoutResult.id}</p>
             </div>
 
@@ -539,7 +541,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
                 onClick={() => setCheckoutResult(null)}
                 className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-bold transition-all cursor-pointer"
               >
-                Next Customer
+                {t('nextCustomer')}
               </button>
             </div>
           </div>

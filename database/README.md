@@ -68,7 +68,7 @@ Stores finalized checkouts, payment preferences, line-item arrays, taxes, discou
 | `discount` | `Number` | Yes | Discount amount subtracted from subtotal. |
 | `tax` | `Number` | Yes | Sales tax amount computed (default $8\%$). |
 | `totalAmount` | `Number` | Yes | Net final sum charged to customer. |
-| `paymentMethod` | `String` | Yes | Payment selection (`cash`, `card`, `mobile`). |
+| `paymentMethod` | `String` | Yes | Payment selection (`cash`). |
 | `paymentStatus` | `String` | Yes | Transaction status (`paid`, `refunded`, `voided`). |
 | `createdAt` | `String` | Yes | ISO datetime of checkout processing. |
 

@@ -4,11 +4,14 @@ import StatsCard from '@/components/StatsCard';
 import { reportApi } from '@/lib/api';
 import type { SystemStats, TransactionRecord } from '@/lib/api';
 
+import { useTranslation } from '@/lib/translations';
+
 // Module-level cache for Stale-While-Revalidate pattern to eliminate visual flickering
 let cachedStats: SystemStats | null = null;
 let cachedTimeline: TransactionRecord[] | null = null;
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<SystemStats | null>(cachedStats);
   const [timeline, setTimeline] = useState<TransactionRecord[]>(cachedTimeline || []);
   const [loading, setLoading] = useState(!cachedStats);
@@ -61,42 +64,42 @@ export default function DashboardPage() {
     <div className="p-6 h-full flex flex-col space-y-6 max-w-6xl mx-auto overflow-hidden animate-fade-in text-left">
       {/* Header */}
       <div className="flex-shrink-0">
-        <h1 className="text-2xl font-bold tracking-tight">POS Dashboard</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t('dashboard')}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Overview of Xona Point of Sale operations
+          Xona Point of Sale
         </p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0">
         <StatsCard
-          title="Total Products"
+          title={t('productsCount')}
           value={stats?.products.total ?? 0}
           icon={Package}
           color="violet"
           delay={0}
         />
         <StatsCard
-          title="Total Sales"
+          title={t('totalSales')}
           value={stats?.transactions.total ?? 0}
           icon={ShoppingCart}
           color="green"
           delay={100}
         />
         <StatsCard
-          title="Gross Revenue"
+          title={t('revenue')}
           value={formatCurrency(stats?.transactions.totalRevenue ?? 0)}
           icon={DollarSign}
           color="teal"
           delay={200}
         />
         <StatsCard
-          title="Product Associations"
+          title={t('recommendationNet')}
           value={stats?.graph.nodeCount ?? 0}
           icon={GitBranch}
           color="violet"
           delay={300}
-          suffix={`(${stats?.graph.edgeCount ?? 0} connections)`}
+          suffix={`(${stats?.graph.edgeCount ?? 0})`}
         />
       </div>
 
@@ -105,7 +108,7 @@ export default function DashboardPage() {
         <div className="flex flex-col h-full overflow-hidden">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 flex-shrink-0">
             <Clock className="w-5 h-5 text-primary" />
-            Recent Transactions
+            {t('recentTransactions')}
           </h2>
           {timeline.length > 0 ? (
             <div className="flex-1 overflow-y-auto pr-2 space-y-3 min-h-0">

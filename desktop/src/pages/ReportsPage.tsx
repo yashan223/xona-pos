@@ -3,12 +3,14 @@ import { RefreshCw, Package, TrendingUp, DollarSign, FileText } from 'lucide-rea
 import { reportApi, BASE_HOST } from '@/lib/api';
 import type { ProductRecord, POSPatterns, User, SavedReportRecord } from '@/lib/api';
 import { useNotification } from '@/context/NotificationContext';
+import { useTranslation } from '@/lib/translations';
 
 interface ReportsPageProps {
   currentUser: User | null;
 }
 
 export default function ReportsPage({ currentUser }: ReportsPageProps) {
+  const { t } = useTranslation();
   const { confirm, toast } = useNotification();
   const [popularProducts, setPopularProducts] = useState<ProductRecord[]>([]);
   const [patterns, setPatterns] = useState<POSPatterns | null>(null);
@@ -119,7 +121,7 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Reports & Analytics</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('salesReports')}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Visual insights from Xona Point of Sale database
           </p>

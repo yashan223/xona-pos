@@ -152,9 +152,9 @@ export default function MaintenancePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-4">
           <div className="p-4 rounded-lg bg-secondary/20 border border-border/50 space-y-2 flex flex-col justify-between">
             <div>
-              <h4 className="text-sm font-semibold text-foreground text-left">Create Local Backup</h4>
+              <h4 className="text-sm font-semibold text-foreground text-left">{t('createBackup')}</h4>
               <p className="text-xs text-muted-foreground mt-1 text-left">
-                Generate a snapshot JSON file containing all products, categories, transactions, and cashiers, and save it on the HDD.
+                Generate a snapshot JSON file containing all products, categories, and transactions.
               </p>
             </div>
             <button
@@ -163,13 +163,13 @@ export default function MaintenancePage() {
               className="mt-3 w-full py-2 rounded-lg bg-primary text-primary-foreground font-medium text-xs hover:bg-primary/95 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 animate-fade-in"
             >
               <Database className="w-3.5 h-3.5" />
-              Create DB Backup
+              {t('createBackup')}
             </button>
           </div>
 
           <div className="p-4 rounded-lg bg-secondary/20 border border-border/50 space-y-2 flex flex-col justify-between col-span-2">
             <div>
-              <h4 className="text-sm font-semibold text-foreground text-left">Upload and Restore Backup File</h4>
+              <h4 className="text-sm font-semibold text-foreground text-left">{t('uploadBackup')}</h4>
               <p className="text-xs text-muted-foreground mt-1 text-left">
                 Choose a previously exported backup `.json` file from your local computer's HDD to overwrite and restore the entire database.
               </p>
@@ -188,7 +188,7 @@ export default function MaintenancePage() {
 
         {/* Backups List Table */}
         <div className="pt-2 border-t border-border/20">
-          <h4 className="text-sm font-semibold text-foreground mb-3 text-left">Available Server Backups (HDD)</h4>
+          <h4 className="text-sm font-semibold text-foreground mb-3 text-left">{t('availableBackups')}</h4>
           {backups.length === 0 ? (
             <div className="text-center p-8 bg-secondary/10 rounded-xl text-xs text-muted-foreground">
               No backups created yet. Click "Create DB Backup" to save your first snapshot to the disk.
@@ -220,7 +220,7 @@ export default function MaintenancePage() {
                           className="px-2 py-1 bg-teal-500/10 text-teal-400 hover:bg-teal-500/20 rounded border border-teal-500/25 transition-all text-[10px] font-semibold cursor-pointer"
                           title="Restore this backup"
                         >
-                          Restore
+                          {t('restore')}
                         </button>
                         <a
                           href={`${BASE_HOST}/api/reports/backups/${b.filename}/download`}
@@ -228,7 +228,7 @@ export default function MaintenancePage() {
                           className="inline-block px-2 py-1 bg-primary/10 text-primary hover:bg-primary/20 rounded border border-primary/25 transition-all text-[10px] font-semibold cursor-pointer"
                           title="Download copy to client HDD"
                         >
-                          Download
+                          {t('download')}
                         </a>
                         <button
                           onClick={() => handleDeleteBackup(b.filename)}

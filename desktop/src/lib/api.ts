@@ -74,7 +74,7 @@ export interface TransactionRecord {
   discount: number;
   tax: number;
   totalAmount: number;
-  paymentMethod: 'cash' | 'card' | 'mobile';
+  paymentMethod: 'cash';
   paymentStatus: 'paid' | 'refunded' | 'voided';
   createdAt: string;
   pdfUrl?: string;
@@ -171,7 +171,7 @@ export const transactionApi = {
     discount: number;
     tax: number;
     totalAmount: number;
-    paymentMethod: 'cash' | 'card' | 'mobile';
+    paymentMethod?: 'cash';
   }) => request<TransactionRecord>('/transactions', { method: 'POST', body: JSON.stringify(data) }),
 
   getAll: () => request<TransactionRecord[]>('/transactions'),

@@ -30,7 +30,7 @@ export interface TransactionRecord {
   discount: number;
   tax: number;
   totalAmount: number;
-  paymentMethod: 'cash' | 'card' | 'mobile';
+  paymentMethod: 'cash';
   paymentStatus: 'paid' | 'refunded' | 'voided';
   createdAt: string;
 }
