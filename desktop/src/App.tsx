@@ -5,7 +5,6 @@ import DashboardPage from '@/pages/DashboardPage';
 import ProductsPage from '@/pages/ProductsPage';
 import CheckoutPage from '@/pages/CheckoutPage';
 import SolutionsPage from '@/pages/SolutionsPage';
-import GraphPage from '@/pages/GraphPage';
 import ReportsPage from '@/pages/ReportsPage';
 import LoginPage from '@/pages/LoginPage';
 import AdminPage from '@/pages/AdminPage';
@@ -71,14 +70,9 @@ export default function App() {
       case 'products':
         return <ProductsPage currentUser={currentUser} />;
       case 'checkout':
-        if (isAdminOrOwner) return <AdminPage />;
         return <CheckoutPage currentUser={currentUser} onSuccess={() => {}} />;
       case 'transactions':
-        if (isAdminOrOwner) return <AdminPage />;
         return <SolutionsPage currentUser={currentUser} />;
-      case 'graph':
-        if (isAdminOrOwner) return <AdminPage />;
-        return <GraphPage />;
       case 'reports':
         return <ReportsPage currentUser={currentUser} />;
       case 'settings':

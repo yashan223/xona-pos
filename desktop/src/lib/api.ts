@@ -421,17 +421,22 @@ export const authApi = {
   },
 
   login: async (data: { username: string; password?: string }): Promise<{ message: string; user: User }> => {
+    const cachedUsers = getCachedUsersList();
+    const matchedCached = cachedUsers.find((u) => u.username.toLowerCase() === data.username.toLowerCase());
+    const inferredRole = matchedCached?.role || (data.username.toLowerCase().includes('admin') ? 'admin' : 'cashier');
+
     if (isForceOfflineEnabled()) {
-      const offlineUser = getOfflineUser();
+      const offlineUser = matchedCached || getOfflineUser();
       if (offlineUser && offlineUser.username.toLowerCase() === data.username.toLowerCase()) {
+        saveOfflineUser(offlineUser);
         return { message: 'Logged in offline successfully', user: offlineUser };
       }
       const syntheticUser: User = {
-        id: offlineUser?.id || 'admin-user-id',
+        id: `user-off-${Date.now()}`,
         username: data.username,
         email: `${data.username}@xona-pos.dev`,
         createdAt: new Date().toISOString(),
-        role: 'admin',
+        role: inferredRole,
       };
       saveOfflineUser(syntheticUser);
       return { message: 'Logged in offline successfully', user: syntheticUser };
@@ -443,19 +448,20 @@ export const authApi = {
         body: JSON.stringify(data),
       });
       saveOfflineUser(res.user);
+      saveCachedUsersList([...getCachedUsersList().filter((u) => u.id !== res.user.id), res.user]);
       return res;
     } catch (err) {
       console.warn('[API Client] Cloud Backend unreachable. Operating in offline login mode:', err);
-      const offlineUser = getOfflineUser();
-      if (offlineUser && offlineUser.username.toLowerCase() === data.username.toLowerCase()) {
-        return { message: 'Logged in offline successfully', user: offlineUser };
+      if (matchedCached) {
+        saveOfflineUser(matchedCached);
+        return { message: 'Logged in offline successfully', user: matchedCached };
       }
       const fallbackUser: User = {
-        id: 'offline-user-id',
+        id: `offline-user-${data.username}`,
         username: data.username,
         email: `${data.username}@xona-pos.dev`,
         createdAt: new Date().toISOString(),
-        role: 'admin',
+        role: inferredRole,
       };
       saveOfflineUser(fallbackUser);
       return { message: 'Logged in offline successfully', user: fallbackUser };
