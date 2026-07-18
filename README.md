@@ -6,80 +6,12 @@ It is designed with a **dual-layer architecture**: the Desktop Client runs **100
 
 ---
 
-## 📐 System Architecture Diagram
+## 📂 Documentation & Repository Structure
 
-```mermaid
-flowchart TD
-    subgraph ClientPC ["💻 Cashier Computer (Client PC)"]
-        UI["🖥️ Desktop Frontend (React + Vite + Electron)"]
-        LocalDB[("💾 Frontend Local DB Engine\n(products, customers, transactions, sync_queue)")]
-        SyncEngine["🔄 Frontend Auto-Sync Engine\n(Online/Offline Detector & Dependency Flusher)"]
-        ReceiptGen["🧾 Local Receipt Generator\n(Instant PDF / Thermal Print)"]
-
-        UI <-->|Read Catalog / Save Checkouts| LocalDB
-        UI -->|Instant Print| ReceiptGen
-        SyncEngine <-->|Monitor Pending Queue| LocalDB
-    end
-
-    subgraph NetworkBoundary ["🌐 Network Connection"]
-        InternetStatus{"📡 Internet Available?"}
-    end
-
-    subgraph CloudInfra ["☁️ Cloud Server & Remote Infrastructure"]
-        CloudBackend["🚀 Node.js / Express REST API"]
-        MongoDB[("🍃 Cloud MongoDB Cluster\n(Persistent Database)")]
-        WS["⚡ WebSocket Broadcast Server"]
-
-        CloudBackend <--> MongoDB
-        CloudBackend --> WS
-    end
-
-    SyncEngine -->|"Check Ping"| InternetStatus
-    InternetStatus -->|"YES: Online"| CloudBackend
-    InternetStatus -->|"NO: Offline"| LocalDB
-    WS -.->|Real-Time Inventory Broadcast| UI
-```
-
----
-
-## 🔄 Offline & Cloud Auto-Sync Workflow
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Cashier as 👤 Cashier
-    participant Desktop as 💻 Desktop Client (PC)
-    participant LocalDB as 💾 Local Client DB
-    participant Network as 🌐 Internet Connection
-    participant Cloud as ☁️ Cloud MongoDB Backend
-
-    Cashier->>Desktop: Scans items & clicks Checkout
-    Desktop->>LocalDB: Writes Transaction to local_transactions & decrements stock
-    Desktop-->>Cashier: Displays Instant Receipt (0ms delay)
-
-    alt Internet Connected
-        Desktop->>Network: Auto-Sync Heartbeat
-        Network->>Cloud: POST /api/transactions
-        Cloud-->>Desktop: 201 Created & Synced
-        Desktop->>LocalDB: Mark transaction as synced
-    else Offline Mode / Network Outage
-        Network--xCloud: Connection Failed
-        Desktop->>LocalDB: Keep transaction in pending_sync queue
-        Note over Desktop,LocalDB: POS operates 100% locally without errors
-        Note over Network,Cloud: Internet connection restored later
-        Desktop->>Network: Trigger Background Flusher
-        Network->>Cloud: POST /api/customers -> /api/products -> /api/transactions
-        Cloud-->>Desktop: All pending records synced to Cloud MongoDB
-    end
-```
-
----
-
-## 📂 Repository Structure
-
+* [📐 System Architecture Guide](./ARCHITECTURE.md) — Detailed network topology diagrams, component breakdown, and offline auto-sync sequence flow.
+* [🗄️ Database Documentation](./database/README.md) — Comprehensive schema specifications for MongoDB and local SQLite tables.
 * [backend/](./backend) — Node.js & Express.js REST API server powered by Mongoose for Cloud MongoDB persistence, local SQLite (`better-sqlite3`), background sync engine, PDF reporting, and recommendation graph traversals.
 * [desktop/](./desktop) — React + Vite + Electron desktop client featuring an embedded client-side database, offline login fallback, Sinhala typography support (`Noto Sans Sinhala`), real-time sync status badge, and interactive POS registers.
-* [database/](./database) — Comprehensive database schema documentation for users, products, customers, transactions, and co-occurrence graph relationships.
 
 ---
 
