@@ -34,9 +34,9 @@ flowchart TD
         CloudBackend --> WS
     end
 
-    SyncEngine -->|Check Ping| InternetStatus
-    InternetStatus -- YES: Online -->|POST /api/sync & /transactions| CloudBackend
-    InternetStatus -- NO: Offline -->|Queue Pending & Operate 100% Offline| LocalDB
+    SyncEngine -->|"Check Ping"| InternetStatus
+    InternetStatus -->|"YES: Online"| CloudBackend
+    InternetStatus -->|"NO: Offline"| LocalDB
     WS -.->|Real-Time Inventory Broadcast| UI
 ```
 
