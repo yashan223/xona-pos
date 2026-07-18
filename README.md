@@ -6,12 +6,12 @@ It is designed with a **dual-layer architecture**: the Desktop Client runs **100
 
 ---
 
-## 📂 Documentation & Repository Structure
+## 📚 Documentation Index (Central Navigation Hub)
 
-* [📐 System Architecture Guide](./ARCHITECTURE.md) — Detailed network topology diagrams, component breakdown, and offline auto-sync sequence flow.
-* [🗄️ Database Documentation](./database/README.md) — Comprehensive schema specifications for MongoDB and local SQLite tables.
-* [backend/](./backend) — Node.js & Express.js REST API server powered by Mongoose for Cloud MongoDB persistence, local SQLite (`better-sqlite3`), background sync engine, PDF reporting, and recommendation graph traversals.
-* [desktop/](./desktop) — React + Vite + Electron desktop client featuring an embedded client-side database, offline login fallback, Sinhala typography support (`Noto Sans Sinhala`), real-time sync status badge, and interactive POS registers.
+* [📐 System Architecture Guide](./ARCHITECTURE.md) — Network topology diagrams, component breakdown, and offline auto-sync sequence flow.
+* [🗄️ Database Documentation](./database/README.md) — Comprehensive schema specifications for Cloud MongoDB collections and local SQLite tables (`pos_local.db`).
+* [⚙️ Backend API Server Documentation](./backend/README.md) — Node.js & Express REST API server, WAL SQLite engine, and background sync flusher.
+* [💻 Desktop Client Documentation](./desktop/README.md) — React + Vite + Electron desktop application, client database engine, and Sinhala font integration.
 
 ---
 

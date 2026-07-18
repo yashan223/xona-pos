@@ -36,7 +36,7 @@ Stores product item details, pricing records, cost, stocks, and sales popularity
 | `stock` | `Number` | Yes | Quantity in inventory storage (defaults to `0`). |
 | `description` | `String` | No | Short product description details. |
 | `imageUrl` | `String` | No | Image asset URL path. |
-| `salesCount` | `Number` | Yes | Total units checked out (used for Max Heap popularity ranking). |
+| `salesCount` | `Number` | Yes | Total units checked out. |
 | `createdAt` | `String` | Yes | ISO datetime of product entry creation. |
 | `updatedAt` | `String` | Yes | ISO datetime of last product update. |
 
@@ -66,7 +66,7 @@ Stores finalized checkouts, payment preferences, line-item arrays, taxes, discou
 | `items` | `Array` | Yes | Nested array of `TransactionItem` structures (see below). |
 | `subtotal` | `Number` | Yes | Gross aggregate amount before tax/discounts. |
 | `discount` | `Number` | Yes | Discount amount subtracted from subtotal. |
-| `tax` | `Number` | Yes | Sales tax amount computed (default $8\%$). |
+| `tax` | `Number` | Yes | Sales tax amount computed. |
 | `totalAmount` | `Number` | Yes | Net final sum charged to customer. |
 | `paymentMethod` | `String` | Yes | Payment selection (`cash`). |
 | `paymentStatus` | `String` | Yes | Transaction status (`paid`, `refunded`, `voided`). |
@@ -104,7 +104,18 @@ Captures connection pathways and increments transaction co-occurrence weights.
 | `type` | `String` | Yes | Connection descriptor (`BOUGHT_WITH` or `BELONGS_TO`). |
 | `metadata` | `Mixed` | Yes | Holds the `weight` property (e.g. `{ weight: 5 }` incremented on joint checkouts). |
 
-* **Collection Indexing:** Uses a unique compound index `{ source: 1, target: 1, type: 1 }` to prevent redundant connection edges.
+---
+
+## 💾 Local SQLite Database Tables (`pos_local.db`)
+
+When operating in local/offline mode, the system uses WAL-enabled SQLite (`pos_local.db`):
+
+* `local_users` (`id`, `username`, `passwordHash`, `email`, `role`, `synced`, `createdAt`)
+* `local_products` (`id`, `name`, `sku`, `category`, `price`, `cost`, `stock`, `description`, `imageUrl`, `salesCount`, `synced`, `createdAt`, `updatedAt`)
+* `local_customers` (`id`, `name`, `phone`, `email`, `synced`, `createdAt`)
+* `local_transactions` (`id`, `cashierId`, `customerId`, `itemsJson`, `subtotal`, `discount`, `tax`, `totalAmount`, `paymentMethod`, `paymentStatus`, `synced`, `createdAt`)
+* `local_graph_nodes` (`id`, `type`, `label`, `metadataJson`, `synced`)
+* `local_graph_edges` (`id`, `source`, `target`, `type`, `metadataJson`, `synced`)
 
 ---
 
