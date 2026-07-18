@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { RefreshCw, Package, TrendingUp, DollarSign, FileText } from 'lucide-react';
-import { reportApi } from '@/lib/api';
+import { reportApi, BASE_HOST } from '@/lib/api';
 import type { ProductRecord, POSPatterns, User, SavedReportRecord } from '@/lib/api';
 import { useNotification } from '@/context/NotificationContext';
 
@@ -67,7 +67,7 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
         }
       }
 
-      const res = await fetch(`http://localhost:3000/api/reports/pdf?type=${selectedReportType}&role=${role}`, {
+      const res = await fetch(`${BASE_HOST}/api/reports/pdf?type=${selectedReportType}&role=${role}`, {
         headers
       });
 
@@ -473,7 +473,7 @@ function SavedReportsTab({
                 </td>
                 <td className="p-3.5 text-right space-x-2 whitespace-nowrap">
                   <a
-                    href={`http://localhost:3000/reports/${report.filename}`}
+                    href={`${BASE_HOST}/reports/${report.filename}`}
                     download
                     target="_blank"
                     rel="noreferrer"

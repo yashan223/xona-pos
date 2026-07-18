@@ -2,7 +2,9 @@
  * API Client — Centralized typed functions for all POS backend endpoints
  */
 
-const BASE_URL = 'http://localhost:3000/api';
+/** Single source of truth — change the URL in desktop/.env (VITE_API_BASE_URL) */
+export const BASE_HOST = import.meta.env.VITE_API_BASE_URL as string ?? 'http://localhost:3000';
+const BASE_URL = `${BASE_HOST}/api`;
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {};

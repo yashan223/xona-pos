@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Database } from 'lucide-react';
-import { reportApi } from '@/lib/api';
+import { reportApi, BASE_HOST } from '@/lib/api';
 import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
 
@@ -223,7 +223,7 @@ export default function MaintenancePage() {
                           Restore
                         </button>
                         <a
-                          href={`http://localhost:3000/api/reports/backups/${b.filename}/download`}
+                          href={`${BASE_HOST}/api/reports/backups/${b.filename}/download`}
                           download
                           className="inline-block px-2 py-1 bg-primary/10 text-primary hover:bg-primary/20 rounded border border-primary/25 transition-all text-[10px] font-semibold cursor-pointer"
                           title="Download copy to client HDD"

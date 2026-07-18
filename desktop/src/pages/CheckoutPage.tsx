@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ShoppingCart, Search, Plus, Minus, Trash2, Tag, Sparkles, CheckCircle2, RefreshCw, Printer, Banknote } from 'lucide-react';
 import { useNotification } from '@/context/NotificationContext';
-import { productApi, transactionApi, graphApi } from '@/lib/api';
+import { productApi, transactionApi, graphApi, BASE_HOST } from '@/lib/api';
 import type { ProductRecord, TransactionItem, User, GraphNode } from '@/lib/api';
 
 interface CheckoutPageProps {
@@ -516,7 +516,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
               {checkoutResult.pdfUrl ? (
                 <button
                   onClick={() => {
-                    const fullUrl = `http://localhost:3000${checkoutResult.pdfUrl}`;
+                    const fullUrl = `${BASE_HOST}${checkoutResult.pdfUrl}`;
                     window.open(fullUrl, '_blank');
                   }}
                   className="flex-1 py-2 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
