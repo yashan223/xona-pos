@@ -4,6 +4,9 @@ import { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeMode
 import db from './sqliteDb.js';
 import { startAutoSync, pullCloudToLocal } from './syncEngine.js';
 
+// Disable command buffering so operations fail immediately or fallback to SQLite when Cloud MongoDB is offline
+mongoose.set('bufferCommands', false);
+
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/xona-pos';
 
 mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 })
