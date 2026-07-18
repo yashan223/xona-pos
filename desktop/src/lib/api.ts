@@ -12,6 +12,7 @@ import {
   queueOfflineTransaction,
   getTotalPendingOfflineCount,
   syncAllOfflineData,
+  isForceOfflineEnabled,
 } from './offlineStore';
 
 /** Single source of truth — change the URL in desktop/.env (VITE_API_BASE_URL) */
@@ -153,6 +154,9 @@ export const productApi = {
     description?: string;
     imageUrl?: string;
   }): Promise<ProductRecord> => {
+    if (isForceOfflineEnabled()) {
+      return queueOfflineProduct(data);
+    }
     try {
       const created = await request<ProductRecord>('/products', { method: 'POST', body: JSON.stringify(data) });
       saveCachedProducts([...getCachedProducts().filter((p) => p.id !== created.id), created]);
@@ -164,6 +168,9 @@ export const productApi = {
   },
 
   getAll: async (): Promise<ProductRecord[]> => {
+    if (isForceOfflineEnabled()) {
+      return getCachedProducts();
+    }
     try {
       const products = await request<ProductRecord[]>('/products');
       saveCachedProducts(products);
@@ -177,6 +184,11 @@ export const productApi = {
   },
 
   search: async (query: string): Promise<ProductRecord[]> => {
+    if (isForceOfflineEnabled()) {
+      const cached = getCachedProducts();
+      const q = query.toLowerCase();
+      return cached.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
+    }
     try {
       return await request<ProductRecord[]>(`/products/search?q=${encodeURIComponent(query)}`);
     } catch (err) {
@@ -216,6 +228,9 @@ export const transactionApi = {
     totalAmount: number;
     paymentMethod?: 'cash';
   }): Promise<TransactionRecord> => {
+    if (isForceOfflineEnabled()) {
+      return queueOfflineTransaction({ ...data, paymentMethod: 'cash' });
+    }
     try {
       return await request<TransactionRecord>('/transactions', { method: 'POST', body: JSON.stringify(data) });
     } catch (err) {
@@ -235,6 +250,9 @@ export const transactionApi = {
 
 export const customerApi = {
   create: async (data: { name: string; phone?: string; email?: string }): Promise<CustomerRecord> => {
+    if (isForceOfflineEnabled()) {
+      return queueOfflineCustomer(data);
+    }
     try {
       const created = await request<CustomerRecord>('/customers', { method: 'POST', body: JSON.stringify(data) });
       saveCachedCustomers([...getCachedCustomers().filter((c) => c.id !== created.id), created]);
@@ -246,6 +264,9 @@ export const customerApi = {
   },
 
   getAll: async (): Promise<CustomerRecord[]> => {
+    if (isForceOfflineEnabled()) {
+      return getCachedCustomers();
+    }
     try {
       const customers = await request<CustomerRecord[]>('/customers');
       saveCachedCustomers(customers);
@@ -370,6 +391,9 @@ export interface SyncStatus {
 export const syncApi = {
   getStatus: async (): Promise<SyncStatus> => {
     const pendingOffline = getTotalPendingOfflineCount();
+    if (isForceOfflineEnabled()) {
+      return { isOnline: false, pendingCount: pendingOffline, isSyncing: false, lastSyncTime: null };
+    }
     try {
       const status = await request<SyncStatus>('/sync/status');
       if (pendingOffline > 0) {
@@ -387,6 +411,12 @@ export const syncApi = {
 
   trigger: async () => {
     const pendingOffline = getTotalPendingOfflineCount();
+    if (isForceOfflineEnabled()) {
+      return {
+        success: false,
+        status: { isOnline: false, pendingCount: pendingOffline, isSyncing: false, lastSyncTime: null },
+      };
+    }
     if (pendingOffline > 0) {
       await syncAllOfflineData({
         createCustomer: (data) => request<CustomerRecord>('/customers', { method: 'POST', body: JSON.stringify(data) }),

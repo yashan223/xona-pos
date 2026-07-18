@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Database } from 'lucide-react';
-import { reportApi, BASE_HOST } from '@/lib/api';
+import { Database, Cloud, HardDrive, RefreshCw, Trash2, Download } from 'lucide-react';
+import { reportApi, syncApi, BASE_HOST, SyncStatus } from '@/lib/api';
+import { getCachedProducts, getCachedCustomers, getPendingOfflineTransactions, saveCachedProducts, saveCachedCustomers } from '@/lib/offlineStore';
 import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
 
@@ -8,11 +9,30 @@ export default function MaintenancePage() {
   const { t } = useTranslation();
   const { confirm, toast } = useNotification();
   const [backups, setBackups] = useState<{ filename: string; size: number; createdAt: string }[]>([]);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const [cachedProdCount, setCachedProdCount] = useState(0);
+  const [cachedCustCount, setCachedCustCount] = useState(0);
+  const [pendingTxCount, setPendingTxCount] = useState(0);
 
   useEffect(() => {
     loadBackups();
+    loadLocalDbStats();
   }, []);
+
+  const loadLocalDbStats = async () => {
+    setCachedProdCount(getCachedProducts().length);
+    setCachedCustCount(getCachedCustomers().length);
+    setPendingTxCount(getPendingOfflineTransactions().length);
+
+    try {
+      const status = await syncApi.getStatus();
+      setSyncStatus(status);
+    } catch (e) {
+      setSyncStatus({ isOnline: false, pendingCount: 0, isSyncing: false, lastSyncTime: null });
+    }
+  };
 
   const loadBackups = async () => {
     try {
@@ -22,8 +42,6 @@ export default function MaintenancePage() {
       console.error('Failed to load database backups:', err);
     }
   };
-
-
 
   const handleCreateBackup = async () => {
     setLoading(true);
@@ -38,13 +56,60 @@ export default function MaintenancePage() {
     }
   };
 
+  const handleExportLocalJsonBackup = () => {
+    try {
+      const products = getCachedProducts();
+      const customers = getCachedCustomers();
+      const pendingTx = getPendingOfflineTransactions();
+
+      const backupObj = {
+        version: 1,
+        timestamp: new Date().toISOString(),
+        source: 'Client Offline Local Storage',
+        data: {
+          products,
+          customers,
+          transactions: pendingTx.map((t) => t.payload),
+        },
+      };
+
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupObj, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', `local_pos_backup_${new Date().toISOString().slice(0, 10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+
+      toast.success('Exported local client offline database backup JSON file.');
+    } catch (e) {
+      toast.error('Failed to export local backup JSON file.');
+    }
+  };
+
+  const handleClearLocalCache = async () => {
+    const isConfirmed = await confirm({
+      title: 'Clear Local Client Cache',
+      message: 'Are you sure you want to clear the local client cached products and customers? Pending unsynced checkouts will be preserved.',
+      confirmText: 'Clear Cache',
+      cancelText: 'Cancel',
+      type: 'warning',
+    });
+    if (!isConfirmed) return;
+
+    saveCachedProducts([]);
+    saveCachedCustomers([]);
+    loadLocalDbStats();
+    toast.success('Local client cache cleared successfully.');
+  };
+
   const handleRestoreBackup = async (filename: string) => {
     const isConfirmed = await confirm({
       title: 'Restore Database',
       message: `Are you sure you want to restore the database from backup file "${filename}"? All current data will be overwritten.`,
       confirmText: 'Restore',
       cancelText: 'Cancel',
-      type: 'warning'
+      type: 'warning',
     });
     if (!isConfirmed) return;
 
@@ -52,6 +117,7 @@ export default function MaintenancePage() {
     try {
       const res = await reportApi.restoreBackup(filename);
       toast.success(res.message || 'Database restored successfully');
+      loadLocalDbStats();
     } catch (err) {
       toast.error('Failed to restore database from backup');
     } finally {
@@ -65,7 +131,7 @@ export default function MaintenancePage() {
       message: `Are you sure you want to delete backup file "${filename}"?`,
       confirmText: 'Delete',
       cancelText: 'Cancel',
-      type: 'danger'
+      type: 'danger',
     });
     if (!isConfirmed) return;
 
@@ -101,7 +167,7 @@ export default function MaintenancePage() {
           message: 'Are you sure you want to restore the database from this uploaded file? All current records will be overwritten.',
           confirmText: 'Restore',
           cancelText: 'Cancel',
-          type: 'warning'
+          type: 'warning',
         });
         if (!isConfirmed) return;
 
@@ -109,6 +175,7 @@ export default function MaintenancePage() {
         const res = await reportApi.uploadBackup(backupData);
         toast.success(res.message || 'Database restored from uploaded backup successfully');
         loadBackups();
+        loadLocalDbStats();
       } catch (err) {
         toast.error('Failed to parse or restore uploaded backup file.');
       } finally {
@@ -129,18 +196,98 @@ export default function MaintenancePage() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6 animate-fade-in text-left">
+    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-fade-in text-left">
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <Database className="w-6 h-6 text-primary" />
           {t('databaseMaintenance')}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Perform administrative DB actions, create backups, and restore snapshots
+          Perform administrative DB operations, manage Local SQLite & Cloud MongoDB data, and handle backups
         </p>
       </div>
 
+      {/* Database Engines Status Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Local Disk & Client Storage Card */}
+        <div className="glass-card p-5 bg-card/30 border border-border/40 rounded-2xl space-y-3">
+          <div className="flex justify-between items-center border-b border-border/40 pb-2">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+              <HardDrive className="w-4 h-4 text-emerald-400" />
+              Local Storage / SQLite Database
+            </h3>
+            <span className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold px-2 py-0.5 rounded-full">
+              🟢 Active
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="p-2 bg-secondary/20 rounded-lg border border-border/30">
+              <p className="text-[10px] text-muted-foreground">Cached Items</p>
+              <p className="font-bold text-foreground text-sm">{cachedProdCount}</p>
+            </div>
+            <div className="p-2 bg-secondary/20 rounded-lg border border-border/30">
+              <p className="text-[10px] text-muted-foreground">Customers</p>
+              <p className="font-bold text-foreground text-sm">{cachedCustCount}</p>
+            </div>
+            <div className="p-2 bg-secondary/20 rounded-lg border border-border/30">
+              <p className="text-[10px] text-muted-foreground">Pending Sync</p>
+              <p className="font-bold text-amber-400 text-sm">{pendingTxCount}</p>
+            </div>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleExportLocalJsonBackup}
+              className="flex-1 py-1.5 rounded-lg bg-secondary/60 hover:bg-secondary text-foreground text-xs font-semibold border border-border/50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Export Local JSON
+            </button>
+            <button
+              onClick={handleClearLocalCache}
+              className="py-1.5 px-3 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-semibold border border-destructive/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              title="Clear Local Cache"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
 
+        {/* Cloud MongoDB Engine Card */}
+        <div className="glass-card p-5 bg-card/30 border border-border/40 rounded-2xl space-y-3">
+          <div className="flex justify-between items-center border-b border-border/40 pb-2">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+              <Cloud className="w-4 h-4 text-primary" />
+              Cloud MongoDB Database
+            </h3>
+            {syncStatus?.isOnline ? (
+              <span className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold px-2 py-0.5 rounded-full">
+                🟢 Connected
+              </span>
+            ) : (
+              <span className="text-[10px] bg-red-500/15 text-red-400 border border-red-500/30 font-bold px-2 py-0.5 rounded-full">
+                🔴 Unreachable
+              </span>
+            )}
+          </div>
+          <div className="space-y-1.5 text-xs text-muted-foreground">
+            <div className="flex justify-between">
+              <span>Database Provider:</span>
+              <span className="font-medium text-foreground">MongoDB Cluster / Atlas</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Auto-Sync Frequency:</span>
+              <span className="font-medium text-foreground">10 seconds</span>
+            </div>
+          </div>
+          <button
+            onClick={loadLocalDbStats}
+            className="w-full py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold border border-primary/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Refresh DB Connection Status
+          </button>
+        </div>
+      </div>
 
       {/* Backup & Restore Controls */}
       <div className="glass-card p-5 space-y-4 bg-card/30 border border-border/40 rounded-2xl">
@@ -154,7 +301,7 @@ export default function MaintenancePage() {
             <div>
               <h4 className="text-sm font-semibold text-foreground text-left">{t('createBackup')}</h4>
               <p className="text-xs text-muted-foreground mt-1 text-left">
-                Generate a snapshot JSON file containing all products, categories, and transactions.
+                Generate a snapshot JSON file containing all products, categories, transactions, and customers.
               </p>
             </div>
             <button

@@ -5,6 +5,24 @@ const CACHED_CUSTOMERS_KEY = 'xona_offline_customers';
 const PENDING_PRODUCTS_KEY = 'xona_pending_products';
 const PENDING_CUSTOMERS_KEY = 'xona_pending_customers';
 const PENDING_TX_KEY = 'xona_pending_transactions';
+const FORCE_OFFLINE_KEY = 'xona_force_offline';
+
+export function isForceOfflineEnabled(): boolean {
+  try {
+    return localStorage.getItem(FORCE_OFFLINE_KEY) === 'true';
+  } catch (err) {
+    return false;
+  }
+}
+
+export function setForceOfflineEnabled(enabled: boolean): void {
+  try {
+    localStorage.setItem(FORCE_OFFLINE_KEY, String(enabled));
+    window.dispatchEvent(new CustomEvent('offline_mode_changed'));
+  } catch (err) {
+    console.error('Failed to update force offline mode:', err);
+  }
+}
 
 // ─── Products Offline Storage ─────────────────────────────────
 
@@ -52,12 +70,10 @@ export function queueOfflineProduct(payload: {
     updatedAt: now,
   };
 
-  // 1. Add to cached products list
   const current = getCachedProducts();
   current.push(record);
   saveCachedProducts(current);
 
-  // 2. Queue for server sync
   const pending = getPendingOfflineProducts();
   pending.push({ id, payload, createdAt: now });
   localStorage.setItem(PENDING_PRODUCTS_KEY, JSON.stringify(pending));
@@ -197,6 +213,11 @@ export async function syncAllOfflineData(api: {
   createProduct: (data: any) => Promise<any>;
   createTransaction: (data: any) => Promise<any>;
 }): Promise<number> {
+  if (isForceOfflineEnabled()) {
+    console.log('[OfflineStore] Force Offline Mode is enabled. Skipping cloud sync.');
+    return 0;
+  }
+
   let syncedTotal = 0;
 
   // 1. Sync Customers first
@@ -252,7 +273,6 @@ export async function syncAllOfflineData(api: {
   return syncedTotal;
 }
 
-// Keep backward compatibility alias
 export const syncOfflineTransactions = async (sendFunction: (payload: any) => Promise<any>) => {
   return syncAllOfflineData({
     createCustomer: async () => {},

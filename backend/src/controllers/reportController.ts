@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import reportRepository from '../repositories/reportRepository.js';
 import { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeModel, GraphEdgeModel, SavedReportModel } from '../persistence/database.js';
+import db from '../persistence/sqliteDb.js';
+import { isCloudOnline } from '../persistence/syncEngine.js';
+import { broadcast } from '../lib/websocket.js';
 import fs from 'fs';
 import path from 'path';
 import { generateSalesReportPDF } from '../lib/reportPdfGenerator.js';
@@ -231,12 +234,74 @@ class ReportController {
 
   createBackup = async (req: Request, res: Response) => {
     try {
-      const users = await UserModel.find({});
-      const products = await ProductModel.find({});
-      const customers = await CustomerModel.find({});
-      const transactions = await TransactionModel.find({});
-      const graphNodes = await GraphNodeModel.find({});
-      const graphEdges = await GraphEdgeModel.find({});
+      const online = isCloudOnline();
+
+      // Read from local SQLite
+      const localProds = db.prepare('SELECT * FROM local_products').all() as any[];
+      const localCusts = db.prepare('SELECT * FROM local_customers').all() as any[];
+      const localTxs = db.prepare('SELECT * FROM local_transactions').all() as any[];
+      const localNodes = db.prepare('SELECT * FROM local_graph_nodes').all() as any[];
+      const localEdges = db.prepare('SELECT * FROM local_graph_edges').all() as any[];
+      const localUsers = db.prepare('SELECT * FROM local_users').all() as any[];
+
+      let users = localUsers;
+      let products = localProds.map(p => ({
+        _id: p.id,
+        name: p.name,
+        sku: p.sku,
+        category: p.category,
+        price: p.price,
+        cost: p.cost,
+        stock: p.stock,
+        description: p.description,
+        imageUrl: p.imageUrl,
+        salesCount: p.salesCount,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+      }));
+      let customers = localCusts.map(c => ({
+        _id: c.id,
+        name: c.name,
+        phone: c.phone,
+        email: c.email,
+        createdAt: c.createdAt,
+      }));
+      let transactions = localTxs.map(t => ({
+        _id: t.id,
+        cashierId: t.cashierId,
+        customerId: t.customerId,
+        items: JSON.parse(t.itemsJson || '[]'),
+        subtotal: t.subtotal,
+        discount: t.discount,
+        tax: t.tax,
+        totalAmount: t.totalAmount,
+        paymentMethod: t.paymentMethod,
+        paymentStatus: t.paymentStatus,
+        createdAt: t.createdAt,
+      }));
+      let graphNodes = localNodes.map(n => ({
+        _id: n.id,
+        type: n.type,
+        label: n.label,
+        metadata: n.metadataJson ? JSON.parse(n.metadataJson) : {},
+      }));
+      let graphEdges = localEdges.map(e => ({
+        _id: e.id,
+        source: e.source,
+        target: e.target,
+        type: e.type,
+        metadata: e.metadataJson ? JSON.parse(e.metadataJson) : {},
+      }));
+
+      // Fallback/enrich with Cloud MongoDB if online and SQLite is empty
+      if (online && products.length === 0) {
+        users = await UserModel.find({}).lean() as any[];
+        products = await ProductModel.find({}).lean() as any[];
+        customers = await CustomerModel.find({}).lean() as any[];
+        transactions = await TransactionModel.find({}).lean() as any[];
+        graphNodes = await GraphNodeModel.find({}).lean() as any[];
+        graphEdges = await GraphEdgeModel.find({}).lean() as any[];
+      }
 
       const backupObj = {
         version: 1,
@@ -324,7 +389,15 @@ class ReportController {
 
   uploadBackup = async (req: Request, res: Response) => {
     try {
-      const { backupData } = req.body;
+      let backupData = req.body.backupData;
+      if (typeof backupData === 'string') {
+        try {
+          backupData = JSON.parse(backupData);
+        } catch (e) {
+          // ignore
+        }
+      }
+
       if (!backupData || !backupData.data) {
         res.status(400).json({ error: 'Invalid backup data format' });
         return;
@@ -341,24 +414,155 @@ class ReportController {
 
   private restoreBackupData = async (backup: any) => {
     const { users, products, customers, transactions, graphNodes, graphEdges } = backup.data;
+    const online = isCloudOnline();
 
-    // Clear Mongoose collections
-    await UserModel.deleteMany({});
-    await ProductModel.deleteMany({});
-    await TransactionModel.deleteMany({});
-    await CustomerModel.deleteMany({});
-    await GraphNodeModel.deleteMany({});
-    await GraphEdgeModel.deleteMany({});
+    // 1. Clear local SQLite tables
+    db.prepare('DELETE FROM local_products').run();
+    db.prepare('DELETE FROM local_customers').run();
+    db.prepare('DELETE FROM local_transactions').run();
+    db.prepare('DELETE FROM local_graph_nodes').run();
+    db.prepare('DELETE FROM local_graph_edges').run();
 
-    // Restore data
-    if (users && users.length > 0) await UserModel.insertMany(users);
-    if (products && products.length > 0) await ProductModel.insertMany(products);
-    if (customers && customers.length > 0) await CustomerModel.insertMany(customers);
-    if (transactions && transactions.length > 0) await TransactionModel.insertMany(transactions);
-    if (graphNodes && graphNodes.length > 0) await GraphNodeModel.insertMany(graphNodes);
-    if (graphEdges && graphEdges.length > 0) await GraphEdgeModel.insertMany(graphEdges);
+    // 2. Clear Cloud MongoDB collections if online
+    if (online) {
+      try {
+        await ProductModel.deleteMany({});
+        await TransactionModel.deleteMany({});
+        await CustomerModel.deleteMany({});
+        await GraphNodeModel.deleteMany({});
+        await GraphEdgeModel.deleteMany({});
+      } catch (err) {
+        console.error('[reports] Failed to clear Cloud MongoDB during restore:', err);
+      }
+    }
 
-    // Done
+    // 3. Restore Products into SQLite and Cloud MongoDB
+    if (products && products.length > 0) {
+      const insertProd = db.prepare(`
+        INSERT INTO local_products (id, name, sku, category, price, cost, stock, description, imageUrl, salesCount, synced, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+      `);
+      for (const p of products) {
+        const id = p._id || p.id;
+        insertProd.run(
+          id,
+          p.name,
+          p.sku,
+          p.category,
+          p.price,
+          p.cost || 0,
+          p.stock || 0,
+          p.description || '',
+          p.imageUrl || '',
+          p.salesCount || 0,
+          p.createdAt || new Date().toISOString(),
+          p.updatedAt || new Date().toISOString()
+        );
+      }
+
+      if (online) {
+        try {
+          await ProductModel.insertMany(products.map((p: any) => ({ ...p, _id: p._id || p.id })));
+        } catch (err) {
+          console.error('[reports] Cloud MongoDB product restore error:', err);
+        }
+      }
+    }
+
+    // 4. Restore Customers into SQLite and Cloud MongoDB
+    if (customers && customers.length > 0) {
+      const insertCust = db.prepare(`
+        INSERT INTO local_customers (id, name, phone, email, synced, createdAt)
+        VALUES (?, ?, ?, ?, 1, ?)
+      `);
+      for (const c of customers) {
+        const id = c._id || c.id;
+        insertCust.run(id, c.name, c.phone || '', c.email || '', c.createdAt || new Date().toISOString());
+      }
+
+      if (online) {
+        try {
+          await CustomerModel.insertMany(customers.map((c: any) => ({ ...c, _id: c._id || c.id })));
+        } catch (err) {
+          console.error('[reports] Cloud MongoDB customer restore error:', err);
+        }
+      }
+    }
+
+    // 5. Restore Transactions into SQLite and Cloud MongoDB
+    if (transactions && transactions.length > 0) {
+      const insertTx = db.prepare(`
+        INSERT INTO local_transactions (id, cashierId, customerId, itemsJson, subtotal, discount, tax, totalAmount, paymentMethod, paymentStatus, synced, createdAt)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+      `);
+      for (const t of transactions) {
+        const id = t._id || t.id;
+        insertTx.run(
+          id,
+          t.cashierId,
+          t.customerId || null,
+          JSON.stringify(t.items || []),
+          t.subtotal,
+          t.discount || 0,
+          t.tax || 0,
+          t.totalAmount,
+          t.paymentMethod || 'cash',
+          t.paymentStatus || 'paid',
+          t.createdAt || new Date().toISOString()
+        );
+      }
+
+      if (online) {
+        try {
+          await TransactionModel.insertMany(transactions.map((t: any) => ({ ...t, _id: t._id || t.id })));
+        } catch (err) {
+          console.error('[reports] Cloud MongoDB transaction restore error:', err);
+        }
+      }
+    }
+
+    // 6. Restore Graph Nodes & Edges into SQLite and Cloud MongoDB
+    if (graphNodes && graphNodes.length > 0) {
+      const insertNode = db.prepare(`
+        INSERT INTO local_graph_nodes (id, type, label, metadataJson, synced)
+        VALUES (?, ?, ?, ?, 1)
+      `);
+      for (const n of graphNodes) {
+        const id = n._id || n.id;
+        insertNode.run(id, n.type, n.label, JSON.stringify(n.metadata || {}));
+      }
+
+      if (online) {
+        try {
+          await GraphNodeModel.insertMany(graphNodes.map((n: any) => ({ ...n, _id: n._id || n.id })));
+        } catch (err) {
+          console.error('[reports] Cloud MongoDB node restore error:', err);
+        }
+      }
+    }
+
+    if (graphEdges && graphEdges.length > 0) {
+      const insertEdge = db.prepare(`
+        INSERT INTO local_graph_edges (id, source, target, type, metadataJson, synced)
+        VALUES (?, ?, ?, ?, ?, 1)
+      `);
+      for (const e of graphEdges) {
+        const id = e._id || e.id || `edge:${e.source}:${e.target}:${e.type}`;
+        insertEdge.run(id, e.source, e.target, e.type, JSON.stringify(e.metadata || {}));
+      }
+
+      if (online) {
+        try {
+          await GraphEdgeModel.insertMany(graphEdges.map((e: any) => ({ ...e, _id: e._id || e.id })));
+        } catch (err) {
+          console.error('[reports] Cloud MongoDB edge restore error:', err);
+        }
+      }
+    }
+
+    // Broadcast WebSocket updates
+    broadcast('PRODUCTS_UPDATED');
+    broadcast('TRANSACTIONS_UPDATED');
   };
 }
 
