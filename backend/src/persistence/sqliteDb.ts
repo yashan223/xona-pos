@@ -15,6 +15,16 @@ db.pragma('journal_mode = WAL');
 
 // Initialize database schema tables
 db.exec(`
+  CREATE TABLE IF NOT EXISTS local_users (
+    id TEXT PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    passwordHash TEXT NOT NULL,
+    email TEXT,
+    role TEXT DEFAULT 'cashier',
+    synced INTEGER DEFAULT 0,
+    createdAt TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS local_products (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
