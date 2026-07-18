@@ -12,7 +12,6 @@ import AdminPage from '@/pages/AdminPage';
 import SettingsPage from '@/pages/SettingsPage';
 import MaintenancePage from '@/pages/MaintenancePage';
 import type { User } from '@/lib/api';
-import { BASE_HOST } from '@/lib/api';
 import DarkVeil from '@/components/DarkVeil';
 import { startWebSocketListener } from '@/lib/websocket';
 import { NotificationProvider } from '@/context/NotificationContext';
@@ -35,17 +34,11 @@ export default function App() {
         const saved = localStorage.getItem('currentUser');
         if (saved) {
           const parsed = JSON.parse(saved);
-          // Ping the backend to ensure it's up before auto-logging in
-          const res = await fetch(`${BASE_HOST}/`);
-          if (res.ok) {
-            setCurrentUser(parsed);
-            setCurrentPage('dashboard');
-          } else {
-            localStorage.removeItem('currentUser');
-          }
+          setCurrentUser(parsed);
+          setCurrentPage('dashboard');
         }
       } catch (e) {
-        localStorage.removeItem('currentUser');
+        // ignore JSON parse error
       } finally {
         setIsInitializing(false);
       }

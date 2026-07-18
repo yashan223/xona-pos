@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { CheckCircle2, AlertTriangle, XCircle, Info, X } from 'lucide-react';
+import { isForceOfflineEnabled } from '@/lib/offlineStore';
 
 export interface Toast {
   id: string;
@@ -45,6 +46,20 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Expose toast helpers
   const addToast = useCallback((type: Toast['type'], message: string) => {
+    if (isForceOfflineEnabled() && (type === 'error' || type === 'warning')) {
+      const lower = message.toLowerCase();
+      if (
+        lower.includes('offline') ||
+        lower.includes('cloud') ||
+        lower.includes('sync') ||
+        lower.includes('unreachable') ||
+        lower.includes('network') ||
+        lower.includes('fetch') ||
+        lower.includes('failed')
+      ) {
+        return; // Suppress connection/sync error toasts in Always Offline Mode
+      }
+    }
     const id = Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { id, type, message }]);
     
