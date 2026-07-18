@@ -1,4 +1,6 @@
 import { CustomerModel } from '../persistence/database.js';
+import db from '../persistence/sqliteDb.js';
+import { isCloudOnline } from '../persistence/syncEngine.js';
 import { CustomerRecord } from '../types/index.js';
 
 class CustomerRepository {
@@ -18,31 +20,94 @@ class CustomerRepository {
       createdAt: now,
     };
 
-    await CustomerModel.create({
-      _id: record.id,
-      name: record.name,
-      phone: record.phone,
-      email: record.email,
-      createdAt: record.createdAt,
-    });
+    const online = isCloudOnline();
+
+    db.prepare(`
+      INSERT INTO local_customers (id, name, phone, email, synced, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        name = excluded.name,
+        phone = excluded.phone,
+        email = excluded.email,
+        synced = excluded.synced
+    `).run(
+      record.id,
+      record.name,
+      record.phone,
+      record.email,
+      online ? 1 : 0,
+      record.createdAt
+    );
+
+    if (online) {
+      try {
+        await CustomerModel.create({
+          _id: record.id,
+          name: record.name,
+          phone: record.phone,
+          email: record.email,
+          createdAt: record.createdAt,
+        });
+      } catch (err) {
+        console.error('[CustomerRepository] Error writing customer to Cloud MongoDB (saved locally):', err);
+      }
+    }
 
     return record;
   }
 
   async getAllCustomers(): Promise<CustomerRecord[]> {
-    const docs = await CustomerModel.find().sort({ name: 1 }).lean();
-    return docs.map((doc: any) => this.docToCustomer(doc));
+    const rows = db.prepare('SELECT * FROM local_customers ORDER BY name ASC').all() as any[];
+    if (rows.length > 0) {
+      return rows.map(r => ({
+        id: r.id,
+        name: r.name,
+        phone: r.phone || '',
+        email: r.email || '',
+        createdAt: r.createdAt,
+      }));
+    }
+
+    if (isCloudOnline()) {
+      const docs = await CustomerModel.find().sort({ name: 1 }).lean();
+      return docs.map((doc: any) => this.docToCustomer(doc));
+    }
+
+    return [];
   }
 
   async getCustomerById(id: string): Promise<CustomerRecord | null> {
-    const doc = await CustomerModel.findById(id).lean() as any;
-    if (!doc) return null;
-    return this.docToCustomer(doc);
+    const row = db.prepare('SELECT * FROM local_customers WHERE id = ?').get(id) as any;
+    if (row) {
+      return {
+        id: row.id,
+        name: row.name,
+        phone: row.phone || '',
+        email: row.email || '',
+        createdAt: row.createdAt,
+      };
+    }
+
+    if (isCloudOnline()) {
+      const doc = await CustomerModel.findById(id).lean() as any;
+      if (doc) return this.docToCustomer(doc);
+    }
+
+    return null;
   }
 
   async deleteCustomer(id: string): Promise<boolean> {
-    const res = await CustomerModel.deleteOne({ _id: id });
-    return (res.deletedCount || 0) > 0;
+    db.prepare('DELETE FROM local_customers WHERE id = ?').run(id);
+
+    if (isCloudOnline()) {
+      try {
+        await CustomerModel.deleteOne({ _id: id });
+      } catch (err) {
+        console.error('[CustomerRepository] Error deleting customer from Cloud MongoDB:', err);
+      }
+    }
+
+    return true;
   }
 
   docToCustomer(doc: any): CustomerRecord {

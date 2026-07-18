@@ -1,13 +1,17 @@
 import mongoose from 'mongoose';
 import { hashPassword } from '../lib/crypto.js';
 import { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeModel, GraphEdgeModel, SavedReportModel } from '../models/index.js';
+import db from './sqliteDb.js';
+import { startAutoSync, pullCloudToLocal } from './syncEngine.js';
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/xona-pos';
 
 mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 })
-  .then(() => console.log('[Database] Connected to MongoDB at ' + MONGO_URI))
+  .then(() => {
+    console.log('[Database] Connected to Cloud MongoDB at ' + MONGO_URI);
+  })
   .catch((err) => {
-    console.error('[Database] MongoDB connection error:', err);
+    console.warn('[Database] Cloud MongoDB unavailable on startup. Operating in Local SQLite Offline Mode:', err.message);
   });
 
 // Re-export models for external usage in repositories
@@ -21,39 +25,52 @@ async function initAdmin() {
     const adminPassword = process.env.ADMIN_PASSWORD;
 
     if (!adminUsername || !adminPassword) {
-      console.log('[Database Info] ADMIN_USERNAME or ADMIN_PASSWORD not specified in environment. Admin seeding skipped.');
       return;
     }
 
-    const adminCheck = await UserModel.findOne({ username: adminUsername });
-    const adminPwHash = hashPassword(adminPassword); // Sync admin password
-    if (!adminCheck) {
-      const adminId = 'admin-user-id';
-      const now = new Date().toISOString();
-      await UserModel.create({
-        _id: adminId,
-        username: adminUsername,
-        passwordHash: adminPwHash,
-        email: 'admin@xona-pos.dev',
-        createdAt: now,
-        role: 'admin',
-      });
-      console.log(`[Database] Seeded default admin user: ${adminUsername}`);
-    } else {
-      await UserModel.updateOne(
-        { username: adminUsername },
-        { $set: { passwordHash: adminPwHash } }
-      );
-      console.log(`[Database] Synced admin user password: ${adminUsername}`);
+    const adminPwHash = hashPassword(adminPassword);
+    const adminId = 'admin-user-id';
+    const now = new Date().toISOString();
+
+    // 1. Initialize in local SQLite first (ensures local login works offline)
+    db.prepare(`
+      INSERT INTO local_users (id, username, passwordHash, email, role, createdAt)
+      VALUES (?, ?, ?, 'admin@xona-pos.dev', 'admin', ?)
+      ON CONFLICT(id) DO UPDATE SET passwordHash = excluded.passwordHash
+    `).run(adminId, adminUsername, adminPwHash, now);
+
+    // 2. Initialize in Cloud MongoDB if online
+    if (mongoose.connection.readyState === 1) {
+      const adminCheck = await UserModel.findOne({ username: adminUsername });
+      if (!adminCheck) {
+        await UserModel.create({
+          _id: adminId,
+          username: adminUsername,
+          passwordHash: adminPwHash,
+          email: 'admin@xona-pos.dev',
+          createdAt: now,
+          role: 'admin',
+        });
+        console.log(`[Database] Initialized default admin user in cloud: ${adminUsername}`);
+      } else {
+        await UserModel.updateOne(
+          { username: adminUsername },
+          { $set: { passwordHash: adminPwHash } }
+        );
+      }
     }
   } catch (err) {
-    console.error('[Database] Failed to seed admin user:', err);
+    console.error('[Database] Admin initialization notice:', err);
   }
 }
 
-// Perform seed in background once connection is ready
-mongoose.connection.once('open', () => {
-  initAdmin();
+// Start auto sync background interval
+startAutoSync();
+
+// Perform initial setup once connection is open
+mongoose.connection.once('open', async () => {
+  await initAdmin();
+  await pullCloudToLocal();
 });
 
 export default mongoose;

@@ -8,6 +8,7 @@ import customerRoutes from './routes/customers.js';
 import graphRoutes from './routes/graph.js';
 import reportRoutes from './routes/reports.js';
 import authRoutes from './routes/auth.js';
+import syncRoutes from './routes/sync.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +38,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/graph', graphRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/sync', syncRoutes);
 
 import http from 'http';
 import { initWebSocketServer } from './lib/websocket.js';

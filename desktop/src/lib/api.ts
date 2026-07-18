@@ -1,6 +1,18 @@
 /**
  * API Client — Centralized typed functions for all POS backend endpoints
+ * Equipped with automatic local offline caching & background cloud sync queueing
  */
+import {
+  saveCachedProducts,
+  getCachedProducts,
+  queueOfflineProduct,
+  saveCachedCustomers,
+  getCachedCustomers,
+  queueOfflineCustomer,
+  queueOfflineTransaction,
+  getTotalPendingOfflineCount,
+  syncAllOfflineData,
+} from './offlineStore';
 
 /** Single source of truth — change the URL in desktop/.env (VITE_API_BASE_URL) */
 export const BASE_HOST = import.meta.env.VITE_API_BASE_URL as string ?? 'http://localhost:3000';
@@ -92,56 +104,87 @@ export interface GraphNode {
   id: string;
   type: 'product' | 'category';
   label: string;
-  depth?: number;
-  discoveryOrder?: number;
-  metadata?: Record<string, unknown>;
+  metadata?: any;
 }
 
 export interface GraphEdge {
   source: string;
   target: string;
-  type: string;
-}
-
-export interface GraphData {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  stats?: {
-    nodeCount: number;
-    edgeCount: number;
-    nodeTypes: Record<string, number>;
-  };
-}
-
-export interface SystemStats {
-  products: { total: number; treeHeight: number; isBalanced: boolean };
-  transactions: { total: number; totalRevenue: number };
-  graph: { nodeCount: number; edgeCount: number; nodeTypes: Record<string, number> };
+  type: 'BELONGS_TO' | 'BOUGHT_WITH';
+  metadata?: any;
 }
 
 export interface POSPatterns {
-  byCategory: { category: string; count: number }[];
+  salesByHour: { hour: number; count: number; totalSales: number }[];
+  byCategory: { category: string; salesCount: number; revenue: number; count: number }[];
   byPaymentMethod: { method: string; count: number }[];
-  timeline: { date: string; revenue: number }[];
+  topPairs: { pair: string[]; weight: number }[];
+  dailyTimeline: { date: string; salesCount: number; totalRevenue: number; revenue: number }[];
+  timeline: { date: string; salesCount: number; totalRevenue: number; revenue: number }[];
+}
+
+export interface SystemStats {
+  products: { total: number };
+  transactions: { total: number; totalRevenue: number };
+  graph: { nodeCount: number; edgeCount: number };
+}
+
+export interface SavedReportRecord {
+  _id: string;
+  id?: string;
+  filename: string;
+  createdAt: string;
+  size: number;
+  reportType: string;
+  localPath?: string;
+  generatedBy?: string;
 }
 
 // ─── Product APIs ──────────────────────────────────────
 
 export const productApi = {
-  create: (data: {
+  create: async (data: {
     name: string;
     sku: string;
-    category?: string;
+    category: string;
     price: number;
     cost?: number;
     stock?: number;
     description?: string;
     imageUrl?: string;
-  }) => request<ProductRecord>('/products', { method: 'POST', body: JSON.stringify(data) }),
+  }): Promise<ProductRecord> => {
+    try {
+      const created = await request<ProductRecord>('/products', { method: 'POST', body: JSON.stringify(data) });
+      saveCachedProducts([...getCachedProducts().filter((p) => p.id !== created.id), created]);
+      return created;
+    } catch (err) {
+      console.warn('[API Client] Cloud Backend unreachable. Saving product creation locally:', err);
+      return queueOfflineProduct(data);
+    }
+  },
 
-  getAll: () => request<ProductRecord[]>('/products'),
+  getAll: async (): Promise<ProductRecord[]> => {
+    try {
+      const products = await request<ProductRecord[]>('/products');
+      saveCachedProducts(products);
+      return products;
+    } catch (err) {
+      console.warn('[API Client] Cloud Backend unreachable. Serving local cached products:', err);
+      const cached = getCachedProducts();
+      if (cached.length > 0) return cached;
+      throw err;
+    }
+  },
 
-  search: (query: string) => request<ProductRecord[]>(`/products/search?q=${encodeURIComponent(query)}`),
+  search: async (query: string): Promise<ProductRecord[]> => {
+    try {
+      return await request<ProductRecord[]>(`/products/search?q=${encodeURIComponent(query)}`);
+    } catch (err) {
+      const cached = getCachedProducts();
+      const q = query.toLowerCase();
+      return cached.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
+    }
+  },
 
   getById: (id: string) => request<ProductRecord>(`/products/${id}`),
 
@@ -163,7 +206,7 @@ export const productApi = {
 // ─── Transaction APIs ──────────────────────────────────
 
 export const transactionApi = {
-  create: (data: {
+  create: async (data: {
     cashierId: string;
     customerId?: string | null;
     items: TransactionItem[];
@@ -172,7 +215,14 @@ export const transactionApi = {
     tax: number;
     totalAmount: number;
     paymentMethod?: 'cash';
-  }) => request<TransactionRecord>('/transactions', { method: 'POST', body: JSON.stringify(data) }),
+  }): Promise<TransactionRecord> => {
+    try {
+      return await request<TransactionRecord>('/transactions', { method: 'POST', body: JSON.stringify(data) });
+    } catch (err) {
+      console.warn('[API Client] Cloud Backend unreachable. Queuing transaction locally for auto-sync:', err);
+      return queueOfflineTransaction({ ...data, paymentMethod: 'cash' });
+    }
+  },
 
   getAll: () => request<TransactionRecord[]>('/transactions'),
 
@@ -184,69 +234,104 @@ export const transactionApi = {
 // ─── Customer APIs ─────────────────────────────────────
 
 export const customerApi = {
-  create: (data: { name: string; phone?: string; email?: string }) =>
-    request<CustomerRecord>('/customers', { method: 'POST', body: JSON.stringify(data) }),
+  create: async (data: { name: string; phone?: string; email?: string }): Promise<CustomerRecord> => {
+    try {
+      const created = await request<CustomerRecord>('/customers', { method: 'POST', body: JSON.stringify(data) });
+      saveCachedCustomers([...getCachedCustomers().filter((c) => c.id !== created.id), created]);
+      return created;
+    } catch (err) {
+      console.warn('[API Client] Cloud Backend unreachable. Saving customer creation locally:', err);
+      return queueOfflineCustomer(data);
+    }
+  },
 
-  getAll: () => request<CustomerRecord[]>('/customers'),
+  getAll: async (): Promise<CustomerRecord[]> => {
+    try {
+      const customers = await request<CustomerRecord[]>('/customers');
+      saveCachedCustomers(customers);
+      return customers;
+    } catch (err) {
+      const cached = getCachedCustomers();
+      if (cached.length > 0) return cached;
+      throw err;
+    }
+  },
 
   getById: (id: string) => request<CustomerRecord>(`/customers/${id}`),
 
   delete: (id: string) => request<{ message: string }>(`/customers/${id}`, { method: 'DELETE' }),
 };
 
-// ─── Graph APIs ────────────────────────────────────────
+// ─── Graph / Recommendation APIs ───────────────────────
 
 export const graphApi = {
-  getRelated: (productId: string, depth = 3) => request<GraphData>(`/graph/related/${productId}?depth=${depth}`),
+  getVisualization: () => request<{ nodes: GraphNode[]; edges: GraphEdge[]; stats: any }>('/graph/visualization'),
 
-  explore: (nodeId: string) => request<GraphData>(`/graph/explore/${nodeId}`),
+  getRecommendations: (productId: string) => request<GraphNode[]>(`/graph/recommendations/${productId}`),
 
-  getVisualization: () => request<GraphData>('/graph/visualization'),
+  getRelated: (productId: string, depth = 3) =>
+    request<{ nodes: GraphNode[]; edges: GraphEdge[] }>(`/graph/subgraph/${productId}?depth=${depth}`),
 
-  getSubgraph: (nodeId: string, depth = 2) => request<GraphData>(`/graph/subgraph/${nodeId}?depth=${depth}`),
+  getSubgraph: (nodeId: string, depth = 2) =>
+    request<{ nodes: GraphNode[]; edges: GraphEdge[] }>(`/graph/subgraph/${nodeId}?depth=${depth}`),
 };
 
 // ─── Report APIs ───────────────────────────────────────
 
 export const reportApi = {
-  popularProducts: () => request<ProductRecord[]>('/reports/frequent-errors'),
+  stats: () => request<SystemStats>('/reports/stats'),
 
-  effectiveProducts: () => request<ProductRecord[]>('/reports/effective-solutions'),
+  patterns: () => request<POSPatterns>('/reports/patterns'),
 
-  posPatterns: () => request<POSPatterns>('/reports/developer-patterns'),
+  posPatterns: () => request<POSPatterns>('/reports/patterns'),
+
+  popularProducts: () => productApi.getAll(),
 
   timeline: () => request<TransactionRecord[]>('/reports/timeline'),
 
-  stats: () => request<SystemStats>('/reports/stats'),
+  generatePdf: (type: 'summary' | 'category' | 'daily' = 'summary') =>
+    request<{ message: string; pdfUrl: string; filename: string }>('/reports/generate-pdf', {
+      method: 'POST',
+      body: JSON.stringify({ type }),
+    }),
 
-  resetDatabase: () => request<{ message: string }>('/reports/reset', { method: 'POST' }),
+  listSavedPdfReports: () => request<SavedReportRecord[]>('/reports/saved-pdfs'),
 
-  clearDatabase: () => request<{ message: string }>('/reports/clear', { method: 'POST' }),
+  listSavedReports: () => request<SavedReportRecord[]>('/reports/saved-pdfs'),
 
-  listBackups: () => request<{ filename: string; size: number; createdAt: string }[]>('/reports/backups'),
+  deleteSavedReport: (id: string) => request<{ message: string }>(`/reports/saved-pdfs/${id}`, { method: 'DELETE' }),
 
-  createBackup: () => request<{ message: string; filename: string }>('/reports/backups', { method: 'POST' }),
+  listBackups: () => request<{ filename: string; createdAt: string; size: number }[]>('/reports/backups'),
 
-  restoreBackup: (filename: string) => request<{ message: string }>(`/reports/backups/${filename}/restore`, { method: 'POST' }),
+  createBackup: () => request<{ message: string; filename: string }>('/reports/backups/create', { method: 'POST' }),
 
-  deleteBackup: (filename: string) => request<{ message: string }>(`/reports/backups/${filename}`, { method: 'DELETE' }),
+  uploadBackup: (file: File) => {
+    const formData = new FormData();
+    formData.append('backup', file);
+    return request<{ message: string }>('/reports/backups/upload', {
+      method: 'POST',
+      body: formData,
+    });
+  },
 
-  uploadBackup: (backupData: any) => request<{ message: string }>('/reports/backups/upload', { method: 'POST', body: JSON.stringify({ backupData }) }),
+  restoreBackup: (filename: string) =>
+    request<{ message: string }>(`/reports/backups/${filename}/restore`, { method: 'POST' }),
 
-  listSavedReports: () => request<SavedReportRecord[]>('/reports/saved'),
+  deleteBackup: (filename: string) =>
+    request<{ message: string }>(`/reports/backups/${filename}`, { method: 'DELETE' }),
 
-  deleteSavedReport: (id: string) => request<{ message: string }>(`/reports/saved/${id}`, { method: 'DELETE' }),
+  resetData: (includeAdmin = false) =>
+    request<{ message: string }>('/reports/reset', {
+      method: 'POST',
+      body: JSON.stringify({ includeAdmin }),
+    }),
+
+  clearDatabase: () =>
+    request<{ message: string }>('/reports/reset', {
+      method: 'POST',
+      body: JSON.stringify({ includeAdmin: false }),
+    }),
 };
-
-export interface SavedReportRecord {
-  _id: string;
-  reportType: 'summary' | 'category' | 'daily';
-  filename: string;
-  filePath: string;
-  localPath: string;
-  generatedBy: string;
-  createdAt: string;
-}
 
 // ─── Auth APIs ─────────────────────────────────────────
 
@@ -273,4 +358,49 @@ export const authApi = {
 
   update: (id: string, data: { username?: string; password?: string; email?: string; role?: string }) =>
     request<{ message: string }>(`/auth/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+};
+
+export interface SyncStatus {
+  isOnline: boolean;
+  pendingCount: number;
+  isSyncing: boolean;
+  lastSyncTime: string | null;
+}
+
+export const syncApi = {
+  getStatus: async (): Promise<SyncStatus> => {
+    const pendingOffline = getTotalPendingOfflineCount();
+    try {
+      const status = await request<SyncStatus>('/sync/status');
+      if (pendingOffline > 0) {
+        syncAllOfflineData({
+          createCustomer: (data) => request<CustomerRecord>('/customers', { method: 'POST', body: JSON.stringify(data) }),
+          createProduct: (data) => request<ProductRecord>('/products', { method: 'POST', body: JSON.stringify(data) }),
+          createTransaction: (data) => request<TransactionRecord>('/transactions', { method: 'POST', body: JSON.stringify(data) }),
+        });
+      }
+      return { ...status, pendingCount: status.pendingCount + pendingOffline };
+    } catch (err) {
+      return { isOnline: false, pendingCount: pendingOffline, isSyncing: false, lastSyncTime: null };
+    }
+  },
+
+  trigger: async () => {
+    const pendingOffline = getTotalPendingOfflineCount();
+    if (pendingOffline > 0) {
+      await syncAllOfflineData({
+        createCustomer: (data) => request<CustomerRecord>('/customers', { method: 'POST', body: JSON.stringify(data) }),
+        createProduct: (data) => request<ProductRecord>('/products', { method: 'POST', body: JSON.stringify(data) }),
+        createTransaction: (data) => request<TransactionRecord>('/transactions', { method: 'POST', body: JSON.stringify(data) }),
+      });
+    }
+    try {
+      return await request<{ success: boolean; status: SyncStatus }>('/sync/trigger', { method: 'POST' });
+    } catch (err) {
+      return {
+        success: false,
+        status: { isOnline: false, pendingCount: getTotalPendingOfflineCount(), isSyncing: false, lastSyncTime: null },
+      };
+    }
+  },
 };

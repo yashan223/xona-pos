@@ -16,6 +16,7 @@ import {
 import type { User } from '@/lib/api';
 import Logo from './Logo';
 import { useTranslation } from '@/lib/translations';
+import SyncBadge from './SyncBadge';
 
 export type Page = 'dashboard' | 'products' | 'checkout' | 'transactions' | 'graph' | 'reports' | 'admin' | 'settings' | 'maintenance';
 
@@ -109,6 +110,11 @@ export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout
           );
         })}
       </nav>
+
+      {/* Sync Status Badge */}
+      <div className="px-2 py-1.5 flex-shrink-0 border-t border-sidebar-border">
+        <SyncBadge collapsed={collapsed} />
+      </div>
 
       {/* User profile / Logout */}
       {currentUser && (

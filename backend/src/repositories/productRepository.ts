@@ -1,4 +1,6 @@
 import { ProductModel, GraphNodeModel, GraphEdgeModel } from '../persistence/database.js';
+import db from '../persistence/sqliteDb.js';
+import { isCloudOnline } from '../persistence/syncEngine.js';
 import store from '../persistence/store.js';
 import { ProductRecord } from '../types/index.js';
 
@@ -25,42 +27,98 @@ class ProductRepository {
       updatedAt: now,
     };
 
-    // 1. Save to MongoDB
-    await ProductModel.create({
-      _id: record.id,
-      name: record.name,
-      sku: record.sku,
-      category: record.category,
-      price: record.price,
-      cost: record.cost,
-      stock: record.stock,
-      description: record.description,
-      imageUrl: record.imageUrl,
-      salesCount: record.salesCount,
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt,
-    });
+    const online = isCloudOnline();
 
-    // 2. Add to Graph Nodes and Edges
-    await GraphNodeModel.findOneAndUpdate(
-      { _id: record.id },
-      { type: 'product', label: record.name },
-      { upsert: true }
+    // 1. Save to local SQLite
+    db.prepare(`
+      INSERT INTO local_products (id, name, sku, category, price, cost, stock, description, imageUrl, salesCount, synced, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        name=excluded.name,
+        sku=excluded.sku,
+        category=excluded.category,
+        price=excluded.price,
+        cost=excluded.cost,
+        stock=excluded.stock,
+        description=excluded.description,
+        imageUrl=excluded.imageUrl,
+        synced=excluded.synced,
+        updatedAt=excluded.updatedAt
+    `).run(
+      record.id,
+      record.name,
+      record.sku,
+      record.category,
+      record.price,
+      record.cost,
+      record.stock,
+      record.description,
+      record.imageUrl,
+      record.salesCount,
+      online ? 1 : 0,
+      record.createdAt,
+      record.updatedAt
     );
 
-    if (record.category) {
-      const categoryId = `cat:${record.category.toLowerCase().replace(/\s+/g, '-')}`;
-      await GraphNodeModel.findOneAndUpdate(
-        { _id: categoryId },
-        { type: 'category', label: record.category },
-        { upsert: true }
-      );
+    // Save graph node & category edge in SQLite
+    const categoryId = `cat:${record.category.toLowerCase().replace(/\s+/g, '-')}`;
+    db.prepare(`
+      INSERT INTO local_graph_nodes (id, type, label, metadataJson, synced)
+      VALUES (?, 'product', ?, '{}', ?)
+      ON CONFLICT(id) DO UPDATE SET label=excluded.label, synced=excluded.synced
+    `).run(record.id, record.name, online ? 1 : 0);
 
-      await GraphEdgeModel.findOneAndUpdate(
-        { source: record.id, target: categoryId, type: 'BELONGS_TO' },
-        {},
-        { upsert: true }
-      );
+    db.prepare(`
+      INSERT INTO local_graph_nodes (id, type, label, metadataJson, synced)
+      VALUES (?, 'category', ?, '{}', ?)
+      ON CONFLICT(id) DO UPDATE SET label=excluded.label, synced=excluded.synced
+    `).run(categoryId, record.category, online ? 1 : 0);
+
+    const edgeId = `edge:${record.id}:${categoryId}:BELONGS_TO`;
+    db.prepare(`
+      INSERT INTO local_graph_edges (id, source, target, type, metadataJson, synced)
+      VALUES (?, ?, ?, 'BELONGS_TO', '{}', ?)
+      ON CONFLICT(id) DO UPDATE SET synced=excluded.synced
+    `).run(edgeId, record.id, categoryId, online ? 1 : 0);
+
+    // 2. Save to Cloud MongoDB if online
+    if (online) {
+      try {
+        await ProductModel.create({
+          _id: record.id,
+          name: record.name,
+          sku: record.sku,
+          category: record.category,
+          price: record.price,
+          cost: record.cost,
+          stock: record.stock,
+          description: record.description,
+          imageUrl: record.imageUrl,
+          salesCount: record.salesCount,
+          createdAt: record.createdAt,
+          updatedAt: record.updatedAt,
+        });
+
+        await GraphNodeModel.findOneAndUpdate(
+          { _id: record.id },
+          { type: 'product', label: record.name },
+          { upsert: true }
+        );
+
+        await GraphNodeModel.findOneAndUpdate(
+          { _id: categoryId },
+          { type: 'category', label: record.category },
+          { upsert: true }
+        );
+
+        await GraphEdgeModel.findOneAndUpdate(
+          { source: record.id, target: categoryId, type: 'BELONGS_TO' },
+          {},
+          { upsert: true }
+        );
+      } catch (err) {
+        console.error('[ProductRepository] Error writing to Cloud MongoDB (saved locally):', err);
+      }
     }
 
     return record;
@@ -71,44 +129,54 @@ class ProductRepository {
     if (!existing) return null;
 
     const now = new Date().toISOString();
-    const updates = {
+    const updatedRecord: ProductRecord = {
+      ...existing,
       ...productData,
       updatedAt: now,
     };
 
-    // 1. Update in MongoDB
-    const updatedDoc = await ProductModel.findByIdAndUpdate(
-      id,
-      { $set: updates },
-      { new: true }
-    ).lean() as any;
+    const online = isCloudOnline();
 
-    if (!updatedDoc) return null;
+    // 1. Update in local SQLite
+    db.prepare(`
+      UPDATE local_products SET
+        name = ?,
+        sku = ?,
+        category = ?,
+        price = ?,
+        cost = ?,
+        stock = ?,
+        description = ?,
+        imageUrl = ?,
+        synced = ?,
+        updatedAt = ?
+      WHERE id = ?
+    `).run(
+      updatedRecord.name,
+      updatedRecord.sku,
+      updatedRecord.category,
+      updatedRecord.price,
+      updatedRecord.cost,
+      updatedRecord.stock,
+      updatedRecord.description,
+      updatedRecord.imageUrl,
+      online ? 1 : 0,
+      updatedRecord.updatedAt,
+      id
+    );
 
-    const updatedRecord = store.docToProduct(updatedDoc);
-
-    // 2. Update Graph Node label
-    await GraphNodeModel.updateOne({ _id: id }, { label: updatedRecord.name });
-
-    // Handle category change if applicable
-    if (productData.category && productData.category !== existing.category) {
-      // Remove old category edge
-      const oldCatId = `cat:${existing.category.toLowerCase().replace(/\s+/g, '-')}`;
-      await GraphEdgeModel.deleteOne({ source: id, target: oldCatId, type: 'BELONGS_TO' });
-
-      // Add new category edge
-      const newCatId = `cat:${productData.category.toLowerCase().replace(/\s+/g, '-')}`;
-      await GraphNodeModel.findOneAndUpdate(
-        { _id: newCatId },
-        { type: 'category', label: productData.category },
-        { upsert: true }
-      );
-
-      await GraphEdgeModel.findOneAndUpdate(
-        { source: id, target: newCatId, type: 'BELONGS_TO' },
-        {},
-        { upsert: true }
-      );
+    // 2. Update Cloud MongoDB if online
+    if (online) {
+      try {
+        await ProductModel.findByIdAndUpdate(
+          id,
+          { $set: productData, updatedAt: now },
+          { new: true }
+        );
+        await GraphNodeModel.updateOne({ _id: id }, { label: updatedRecord.name });
+      } catch (err) {
+        console.error('[ProductRepository] Error updating Cloud MongoDB (saved locally):', err);
+      }
     }
 
     return updatedRecord;
@@ -118,28 +186,99 @@ class ProductRepository {
     const existing = await this.getProduct(id);
     if (!existing) return false;
 
-    // 1. Delete from MongoDB
-    await ProductModel.deleteOne({ _id: id });
-    await GraphNodeModel.deleteOne({ _id: id });
-    await GraphEdgeModel.deleteMany({ $or: [{ source: id }, { target: id }] });
+    // Delete from SQLite
+    db.prepare('DELETE FROM local_products WHERE id = ?').run(id);
+    db.prepare('DELETE FROM local_graph_nodes WHERE id = ?').run(id);
+    db.prepare('DELETE FROM local_graph_edges WHERE source = ? OR target = ?').run(id, id);
+
+    // Delete from Cloud MongoDB if online
+    if (isCloudOnline()) {
+      try {
+        await ProductModel.deleteOne({ _id: id });
+        await GraphNodeModel.deleteOne({ _id: id });
+        await GraphEdgeModel.deleteMany({ $or: [{ source: id }, { target: id }] });
+      } catch (err) {
+        console.error('[ProductRepository] Error deleting from Cloud MongoDB:', err);
+      }
+    }
 
     return true;
   }
 
   async getProduct(id: string): Promise<ProductRecord | null> {
-    const doc = await ProductModel.findById(id).lean();
-    return doc ? store.docToProduct(doc) : null;
+    const row = db.prepare('SELECT * FROM local_products WHERE id = ?').get(id) as any;
+    if (row) {
+      return store.docToProduct({
+        _id: row.id,
+        name: row.name,
+        sku: row.sku,
+        category: row.category,
+        price: row.price,
+        cost: row.cost,
+        stock: row.stock,
+        description: row.description,
+        imageUrl: row.imageUrl,
+        salesCount: row.salesCount,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      });
+    }
+
+    if (isCloudOnline()) {
+      const doc = await ProductModel.findById(id).lean();
+      return doc ? store.docToProduct(doc) : null;
+    }
+
+    return null;
   }
 
   async getAllProducts(): Promise<ProductRecord[]> {
-    const docs = await ProductModel.find().sort({ name: 1 }).lean();
-    return docs.map((doc: any) => store.docToProduct(doc));
+    const rows = db.prepare('SELECT * FROM local_products ORDER BY name ASC').all() as any[];
+    if (rows.length > 0) {
+      return rows.map((row: any) =>
+        store.docToProduct({
+          _id: row.id,
+          name: row.name,
+          sku: row.sku,
+          category: row.category,
+          price: row.price,
+          cost: row.cost,
+          stock: row.stock,
+          description: row.description,
+          imageUrl: row.imageUrl,
+          salesCount: row.salesCount,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+        })
+      );
+    }
+
+    if (isCloudOnline()) {
+      const docs = await ProductModel.find().sort({ name: 1 }).lean();
+      return docs.map((doc: any) => store.docToProduct(doc));
+    }
+
+    return [];
   }
 
   async searchProducts(query: string): Promise<ProductRecord[]> {
-    const regex = new RegExp('^' + query, 'i');
-    const docs = await ProductModel.find({ name: regex }).sort({ name: 1 }).lean();
-    return docs.map((doc: any) => store.docToProduct(doc));
+    const rows = db.prepare('SELECT * FROM local_products WHERE name LIKE ? OR sku LIKE ? ORDER BY name ASC').all(`%${query}%`, `%${query}%`) as any[];
+    return rows.map((row: any) =>
+      store.docToProduct({
+        _id: row.id,
+        name: row.name,
+        sku: row.sku,
+        category: row.category,
+        price: row.price,
+        cost: row.cost,
+        stock: row.stock,
+        description: row.description,
+        imageUrl: row.imageUrl,
+        salesCount: row.salesCount,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      })
+    );
   }
 }
 
