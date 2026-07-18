@@ -71,30 +71,31 @@ export default function App() {
   };
 
   const renderPage = () => {
+    const isAdminOrOwner = currentUser?.role === 'admin' || currentUser?.role === 'owner';
     switch (currentPage) {
       case 'dashboard':
         return <DashboardPage />;
       case 'products':
         return <ProductsPage currentUser={currentUser} />;
       case 'checkout':
-        if (currentUser?.role === 'admin') return <AdminPage />;
+        if (isAdminOrOwner) return <AdminPage />;
         return <CheckoutPage currentUser={currentUser} onSuccess={() => {}} />;
       case 'transactions':
-        if (currentUser?.role === 'admin') return <AdminPage />;
+        if (isAdminOrOwner) return <AdminPage />;
         return <SolutionsPage currentUser={currentUser} />;
       case 'graph':
-        if (currentUser?.role === 'admin') return <AdminPage />;
+        if (isAdminOrOwner) return <AdminPage />;
         return <GraphPage />;
       case 'reports':
         return <ReportsPage currentUser={currentUser} />;
       case 'settings':
-        if (currentUser?.role !== 'admin') return <DashboardPage />;
+        if (!isAdminOrOwner) return <DashboardPage />;
         return <SettingsPage />;
       case 'maintenance':
-        if (currentUser?.role !== 'admin') return <DashboardPage />;
+        if (!isAdminOrOwner) return <DashboardPage />;
         return <MaintenancePage />;
       case 'admin':
-        if (currentUser?.role !== 'admin') return <DashboardPage />;
+        if (!isAdminOrOwner) return <DashboardPage />;
         return <AdminPage />;
       default:
         return <DashboardPage />;

@@ -178,7 +178,8 @@ class ReportController {
   clearDatabase = async (req: Request, res: Response) => {
     try {
       // 1. Clear Mongoose collections
-      await UserModel.deleteMany({ username: { $ne: 'admin' } });
+      const adminUsername = process.env.ADMIN_USERNAME || 'admin';
+      await UserModel.deleteMany({ username: { $ne: adminUsername } });
       await ProductModel.deleteMany({});
       await TransactionModel.deleteMany({});
       await CustomerModel.deleteMany({});
@@ -198,7 +199,8 @@ class ReportController {
   resetDatabase = async (req: Request, res: Response) => {
     try {
       // 1. Clear database
-      await UserModel.deleteMany({ username: { $ne: 'admin' } });
+      const adminUsername = process.env.ADMIN_USERNAME || 'admin';
+      await UserModel.deleteMany({ username: { $ne: adminUsername } });
       await ProductModel.deleteMany({});
       await TransactionModel.deleteMany({});
       await CustomerModel.deleteMany({});

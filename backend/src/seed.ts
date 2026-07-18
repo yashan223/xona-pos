@@ -4,6 +4,7 @@ import { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeMode
 import { hashPassword } from './lib/crypto.js';
 import store from './persistence/store.js';
 
+
 // Setup connection check for direct script run
 const isDirectRun = process.argv[1]?.endsWith('seed.ts') || process.argv[1]?.endsWith('seed.js');
 
@@ -12,12 +13,12 @@ const MOCK_PRODUCTS = [
   { id: 'p-mouse', name: 'Wireless Ergonomic Mouse', sku: 'SKU-E-MOUSE', category: 'Electronics', price: 39.99, cost: 15.00, stock: 45, description: 'Rechargeable 2.4G optical mouse.', imageUrl: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=100' },
   { id: 'p-kb', name: 'Mechanical Keyboard Blue Switch', sku: 'SKU-E-MECHKB', category: 'Electronics', price: 89.99, cost: 38.00, stock: 20, description: 'Retro RGB backlit clicky mechanical keyboard.', imageUrl: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=100' },
   { id: 'p-phones', name: 'Noise Cancelling Headphones', sku: 'SKU-E-HEADPHONE', category: 'Electronics', price: 199.99, cost: 95.00, stock: 15, description: 'Premium active noise cancelling over-ear headphones.', imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100' },
-  
+
   { id: 'p-beans', name: 'Espresso Roast Coffee Beans', sku: 'SKU-C-BEANS', category: 'Coffee & Beverages', price: 16.99, cost: 6.00, stock: 60, description: 'Organic fair-trade dark roast beans (1kg).', imageUrl: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=100' },
   { id: 'p-milk', name: 'Organic Oat Milk 1L', sku: 'SKU-C-OATMILK', category: 'Coffee & Beverages', price: 4.49, cost: 1.80, stock: 32, description: 'Barista edition creamy oat milk.', imageUrl: 'https://images.unsplash.com/photo-1563227812-0ea4c22e6cc8?w=100' },
   { id: 'p-syrup', name: 'Salted Caramel Syrup', sku: 'SKU-C-CARAMEL', category: 'Coffee & Beverages', price: 8.99, cost: 3.50, stock: 18, description: 'Sweet gourmet syrup for coffees and lattes.', imageUrl: 'https://images.unsplash.com/photo-1595981267035-7b04ca84a82d?w=100' },
   { id: 'p-matcha', name: 'Green Tea Matcha Powder', sku: 'SKU-C-MATCHA', category: 'Coffee & Beverages', price: 24.99, cost: 11.50, stock: 25, description: 'Ceremonial grade pure Uji matcha powder (100g).', imageUrl: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=100' },
-  
+
   { id: 'p-journal', name: 'A5 Dotted Leather Journal', sku: 'SKU-S-JOURNAL', category: 'Stationery', price: 14.50, cost: 5.00, stock: 25, description: '160 pages fountain pen-friendly notebook.', imageUrl: 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=100' },
   { id: 'p-pens', name: 'Fine Gel Ink Pens 5-Pack', sku: 'SKU-S-PENS', category: 'Stationery', price: 7.99, cost: 2.20, stock: 50, description: 'Quick-drying black gel ink pens 0.5mm.', imageUrl: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=100' },
   { id: 'p-sticky', name: 'Sticky Notes Pastel Pack', sku: 'SKU-S-STICKY', category: 'Stationery', price: 5.49, cost: 1.50, stock: 100, description: '6 pads of colorful adhesive sticky notes.', imageUrl: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=100' },
@@ -29,10 +30,12 @@ const MOCK_CUSTOMERS = [
   { id: 'c-bob', name: 'Bob Miller', phone: '555-0122', email: 'bob.miller@hotmail.com', loyaltyPoints: 15 },
 ];
 
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
 const MOCK_CASHIERS = [
   { id: 'cashier-1', username: 'cashier1', password: 'cashier123', email: 'cashier1@xona-pos.dev', role: 'cashier' },
   { id: 'cashier-2', username: 'cashier2', password: 'cashier123', email: 'cashier2@xona-pos.dev', role: 'cashier' },
-  { id: 'owner-1', username: 'owner', password: 'owner123', email: 'owner@xona-pos.dev', role: 'owner' },
 ];
 
 // Helper to get past dates
@@ -49,37 +52,50 @@ export async function runSeed(): Promise<void> {
     // 1. Seed Cashiers
     for (const cashier of MOCK_CASHIERS) {
       await UserModel.findOneAndUpdate(
-        { username: cashier.username },
+        { _id: cashier.id },
         {
-          _id: cashier.id,
-          username: cashier.username,
-          passwordHash: hashPassword(cashier.password),
-          email: cashier.email,
-          createdAt: new Date().toISOString(),
-          role: cashier.role,
+          $setOnInsert: { _id: cashier.id, createdAt: new Date().toISOString() },
+          $set: {
+            username: cashier.username,
+            passwordHash: hashPassword(cashier.password),
+            email: cashier.email,
+            role: cashier.role,
+          },
         },
         { upsert: true, new: true }
       );
     }
     console.log('[Seed] Seeded users/cashiers');
 
+    // Ensure the env-configured admin user has the 'owner' role
+    if (ADMIN_USERNAME) {
+      await UserModel.updateOne(
+        { username: ADMIN_USERNAME },
+        { $set: { role: 'owner' } }
+      );
+      console.log(`[Seed] Set role=owner for admin user: ${ADMIN_USERNAME}`);
+    } else {
+      console.log('[Seed] ADMIN_USERNAME not specified in environment. Skipping owner role assignment.');
+    }
+
     // 2. Seed Products & Graph Nodes
     for (const prod of MOCK_PRODUCTS) {
       await ProductModel.findOneAndUpdate(
         { _id: prod.id },
         {
-          _id: prod.id,
-          name: prod.name,
-          sku: prod.sku,
-          category: prod.category,
-          price: prod.price,
-          cost: prod.cost,
-          stock: prod.stock,
-          description: prod.description,
-          imageUrl: prod.imageUrl,
-          salesCount: 0,
-          createdAt: getPastDate(15),
-          updatedAt: getPastDate(15),
+          $setOnInsert: { _id: prod.id, createdAt: getPastDate(15) },
+          $set: {
+            name: prod.name,
+            sku: prod.sku,
+            category: prod.category,
+            price: prod.price,
+            cost: prod.cost,
+            stock: prod.stock,
+            description: prod.description,
+            imageUrl: prod.imageUrl,
+            salesCount: 0,
+            updatedAt: getPastDate(15),
+          },
         },
         { upsert: true }
       );
@@ -113,12 +129,13 @@ export async function runSeed(): Promise<void> {
       await CustomerModel.findOneAndUpdate(
         { _id: cust.id },
         {
-          _id: cust.id,
-          name: cust.name,
-          phone: cust.phone,
-          email: cust.email,
-          loyaltyPoints: cust.loyaltyPoints,
-          createdAt: getPastDate(10),
+          $setOnInsert: { _id: cust.id, createdAt: getPastDate(10) },
+          $set: {
+            name: cust.name,
+            phone: cust.phone,
+            email: cust.email,
+            loyaltyPoints: cust.loyaltyPoints,
+          },
         },
         { upsert: true }
       );
@@ -325,12 +342,25 @@ export async function runSeed(): Promise<void> {
 
 // Automatically run if executed directly
 if (isDirectRun) {
-  const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/xona-pos';
-  console.log('[Seed] Connecting to MongoDB to run seed directly...');
-  mongoose.connect(MONGO_URI)
-    .then(async () => {
-      // Clear first
-      await UserModel.deleteMany({ username: { $ne: 'admin' } });
+  const MONGO_URI = process.env.MONGO_URI;
+  if (!MONGO_URI) {
+    console.error('[Seed] MONGO_URI is not set. Check your .env file.');
+    process.exit(1);
+  }
+
+  (async () => {
+    try {
+      // database.ts may have already initiated a connection — wait for it or connect fresh
+      if (mongoose.connection.readyState === 0) {
+        console.log('[Seed] Connecting to MongoDB...');
+        await mongoose.connect(MONGO_URI);
+      } else {
+        console.log('[Seed] Waiting for existing MongoDB connection...');
+        await mongoose.connection.asPromise();
+      }
+
+      // Clear existing seed data
+      await UserModel.deleteMany({ _id: { $ne: 'admin-user-id' } });
       await ProductModel.deleteMany({});
       await TransactionModel.deleteMany({});
       await CustomerModel.deleteMany({});
@@ -341,9 +371,10 @@ if (isDirectRun) {
       await mongoose.disconnect();
       console.log('[Seed] Disconnected from MongoDB.');
       process.exit(0);
-    })
-    .catch(err => {
+    } catch (err) {
       console.error('[Seed] Script connection error:', err);
       process.exit(1);
-    });
+    }
+  })();
 }
+
