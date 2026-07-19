@@ -15,6 +15,8 @@ It is designed with a **dual-layer architecture**: the Desktop Client runs **100
 * [🌐 Web Admin Portal Documentation](./webapp/README.md) — Cloud-only React SPA for remote owners/admins to monitor reports and inventory.
 * [🌱 Items Seeding Backend Documentation](./items-backend/README.md) — Lightweight, isolated Node.js script for seeding the product catalog directly to MongoDB.
 
+> **Note:** A utility script `generate-api-key.cmd` is included in the root directory to help you generate secure 256-bit API keys for device authentication.
+
 ---
 
 ## ⚡ Key Features
@@ -49,6 +51,7 @@ DEVICE_API_KEY=xona_secure_device_key_123
 ```
 
 > **Security Note:** The backend enforces strict device authentication. Ensure you copy the `DEVICE_API_KEY` into your `desktop/.env` and `webapp/.env` files as `VITE_DEVICE_API_KEY`.
+> You can generate a new cryptographically secure key by double-clicking the **`generate-api-key.cmd`** utility in the root directory.
 
 ### 2. Launch the Backend
 Run the root helper command:

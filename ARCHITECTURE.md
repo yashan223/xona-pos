@@ -104,7 +104,12 @@ sequenceDiagram
 * **Role**: An isolated, lightweight utility script to batch insert or reset product catalogs directly into the MongoDB cluster.
 * **Architecture**: Operates entirely independently of the Express API. Connects directly to the DB, runs the seed payload, and safely shuts down upon completion.
 
-### 5. Sync Engine Pipeline
+### 5. Security & Device Authentication
+* **Strict CORS**: The Node.js Express server restricts browser origin requests to a whitelisted array defined in the `.env` file (e.g. `localhost:5173`).
+* **API Key Interceptor**: The backend uses an Express middleware to require an `x-api-key` header on all `/api/*` endpoints. 
+* **Key Generation utility**: A cryptographically secure 256-bit API key generator is provided via `generate-api-key.cmd` to easily provision authenticated device clients.
+
+### 6. Sync Engine Pipeline
 * **Dependency-Ordered Flushing**:
   1. **Customers First**: Syncs new customer profiles to generate valid Cloud IDs.
   2. **Products Second**: Syncs newly created/edited catalog items.
