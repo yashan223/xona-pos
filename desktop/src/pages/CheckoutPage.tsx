@@ -4,6 +4,7 @@ import { useNotification } from '@/context/NotificationContext';
 import { productApi, transactionApi, graphApi, BASE_HOST } from '@/lib/api';
 import type { ProductRecord, TransactionItem, User, GraphNode } from '@/lib/api';
 import { useTranslation } from '@/lib/translations';
+import { printReceipt, getPrinterConfig } from '@/lib/printerStore';
 
 interface CheckoutPageProps {
   currentUser: User | null;
@@ -217,6 +218,15 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
       setDiscountPercent(0);
       setRecommendations([]);
       toast.success('Checkout completed successfully!');
+
+      // Auto-print receipt if enabled
+      const printerCfg = getPrinterConfig();
+      if (printerCfg.enabled && printerCfg.autoPrint) {
+        const printResult = await printReceipt(tx);
+        if (!printResult.success) {
+          toast.warning(`Auto-print failed: ${printResult.error}`);
+        }
+      }
 
       // Reload stock catalogs
       const updatedCatalog = await productApi.getAll();
@@ -528,8 +538,10 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
                 </button>
               ) : (
                 <button
-                  onClick={() => {
-                    window.print();
+                  onClick={async () => {
+                    const result = await printReceipt(checkoutResult);
+                    if (!result.success) toast.error(`Print failed: ${result.error}`);
+                    else toast.success('Receipt sent to printer.');
                   }}
                   className="flex-1 py-2 rounded-lg bg-secondary text-foreground text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >

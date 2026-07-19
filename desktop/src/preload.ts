@@ -7,3 +7,14 @@ contextBridge.exposeInMainWorld('electronDB', {
   setDbPath: (dirPath: string) => ipcRenderer.invoke('db-set-path', dirPath),
   browseDbFolder: () => ipcRenderer.invoke('db-browse-folder'),
 });
+
+contextBridge.exposeInMainWorld('electronPrinter', {
+  listPrinters: () =>
+    ipcRenderer.invoke('printer-list'),
+  printNetwork: (config: { ip: string; port: number }, receipt: unknown) =>
+    ipcRenderer.invoke('printer-print-network', config, receipt),
+  printQueue: (printerName: string, receipt: unknown) =>
+    ipcRenderer.invoke('printer-print-queue', printerName, receipt),
+  printSerial: (config: { port: string; baud: number }, receipt: unknown) =>
+    ipcRenderer.invoke('printer-print-serial', config, receipt),
+});

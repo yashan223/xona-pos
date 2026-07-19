@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Settings, Cloud, RefreshCw, CheckCircle2, CloudOff, HardDrive, FolderOpen, Save } from 'lucide-react';
+import { Settings, Cloud, RefreshCw, CheckCircle2, CloudOff, HardDrive, FolderOpen, Save, Printer, Wifi, Usb, TestTube } from 'lucide-react';
 import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
 import { syncApi, SyncStatus } from '@/lib/api';
 import { isForceOfflineEnabled, setForceOfflineEnabled } from '@/lib/offlineStore';
+import {
+  getPrinterConfig,
+  savePrinterConfig,
+  listWindowsPrinters,
+  printReceipt,
+  type PrinterConfig,
+  type PrintMethod,
+} from '@/lib/printerStore';
 
 export default function SettingsPage() {
   const { t, lang, setLanguage } = useTranslation();
@@ -65,6 +73,56 @@ export default function SettingsPage() {
       }
     } finally {
       setSavingPath(false);
+    }
+  };
+
+  // ─── Printer Settings State ───────────────────────────────────
+  const [printerCfg, setPrinterCfg] = useState<PrinterConfig>(() => getPrinterConfig());
+  const [availablePrinters, setAvailablePrinters] = useState<string[]>([]);
+  const [savingPrinter, setSavingPrinter] = useState(false);
+  const [testingPrinter, setTestingPrinter] = useState(false);
+
+  useEffect(() => {
+    if (printerCfg.method === 'queue') {
+      listWindowsPrinters().then(setAvailablePrinters);
+    }
+  }, [printerCfg.method]);
+
+  const updatePrinterCfg = (partial: Partial<PrinterConfig>) => {
+    setPrinterCfg((prev) => ({ ...prev, ...partial }));
+  };
+
+  const handleSavePrinter = () => {
+    setSavingPrinter(true);
+    try {
+      savePrinterConfig(printerCfg);
+      toast.success('Printer settings saved successfully.');
+    } catch {
+      toast.error('Failed to save printer settings.');
+    } finally {
+      setSavingPrinter(false);
+    }
+  };
+
+  const handleTestPrint = async () => {
+    savePrinterConfig(printerCfg);
+    setTestingPrinter(true);
+    try {
+      const result = await printReceipt({
+        id: 'TEST-001',
+        cashierId: 'Admin',
+        createdAt: new Date().toISOString(),
+        items: [{ name: 'Test Product', quantity: 1, price: 100, subtotal: 100 }],
+        subtotal: 100,
+        discount: 0,
+        tax: 8,
+        totalAmount: 108,
+        paymentMethod: 'cash',
+      });
+      if (result.success) toast.success('Test receipt sent to printer.');
+      else toast.error(`Test print failed: ${result.error}`);
+    } finally {
+      setTestingPrinter(false);
     }
   };
 
@@ -329,6 +387,248 @@ export default function SettingsPage() {
               {savingPath ? 'Saving...' : 'Save Path'}
             </button>
           </div>
+        </div>
+
+        {/* Receipt Printer Card */}
+        <div className="glass-card p-6 space-y-5 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
+          <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
+            <Printer className="w-4 h-4 text-primary" />
+            Receipt Printer
+          </h3>
+
+          {/* Enable / disable toggle */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/20 border border-border/50">
+            <div>
+              <h4 className="text-sm font-semibold text-foreground">Enable POS Printer</h4>
+              <p className="text-xs text-muted-foreground mt-0.5 max-w-[260px]">
+                Print ESC/POS receipts on any thermal printer via network, Windows driver, or serial port.
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer select-none flex-shrink-0">
+              <input
+                id="printer-enabled-toggle"
+                type="checkbox"
+                checked={printerCfg.enabled}
+                onChange={(e) => updatePrinterCfg({ enabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-secondary/60 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary" />
+            </label>
+          </div>
+
+          {printerCfg.enabled && (
+            <div className="space-y-4">
+              {/* Connection method */}
+              <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
+                <h4 className="text-sm font-semibold">Connection Method</h4>
+                <div className="flex gap-2 flex-wrap">
+                  {([
+                    { key: 'network', label: 'Network (TCP/IP)', icon: <Wifi className="w-3.5 h-3.5" /> },
+                    { key: 'queue',   label: 'Windows Print Queue', icon: <Printer className="w-3.5 h-3.5" /> },
+                    { key: 'serial',  label: 'Serial / COM Port', icon: <Usb className="w-3.5 h-3.5" /> },
+                  ] as { key: PrintMethod; label: string; icon: React.ReactNode }[]).map(({ key, label, icon }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      id={`printer-method-${key}`}
+                      onClick={() => updatePrinterCfg({ method: key })}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                        printerCfg.method === key
+                          ? 'bg-primary border-primary text-primary-foreground shadow-sm'
+                          : 'bg-secondary/40 border-border/50 text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {icon}{label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Network fields */}
+                {printerCfg.method === 'network' && (
+                  <div className="flex gap-3 pt-1">
+                    <div className="flex-1 space-y-1">
+                      <label className="text-[11px] text-muted-foreground font-medium">Printer IP Address</label>
+                      <input
+                        id="printer-network-ip"
+                        type="text"
+                        value={printerCfg.networkIp}
+                        onChange={(e) => updatePrinterCfg({ networkIp: e.target.value })}
+                        placeholder="192.168.1.100"
+                        className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-1.5 text-sm font-mono focus:outline-none focus:border-primary transition-all text-foreground"
+                      />
+                    </div>
+                    <div className="w-24 space-y-1">
+                      <label className="text-[11px] text-muted-foreground font-medium">Port</label>
+                      <input
+                        id="printer-network-port"
+                        type="number"
+                        value={printerCfg.networkPort}
+                        onChange={(e) => updatePrinterCfg({ networkPort: parseInt(e.target.value) || 9100 })}
+                        className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-1.5 text-sm font-mono focus:outline-none focus:border-primary transition-all text-foreground"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Windows queue fields */}
+                {printerCfg.method === 'queue' && (
+                  <div className="space-y-2 pt-1">
+                    <div className="flex gap-2 items-end">
+                      <div className="flex-1 space-y-1">
+                        <label className="text-[11px] text-muted-foreground font-medium">Printer Name</label>
+                        <select
+                          id="printer-queue-name"
+                          value={printerCfg.queueName}
+                          onChange={(e) => updatePrinterCfg({ queueName: e.target.value })}
+                          className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-primary transition-all text-foreground"
+                        >
+                          <option value="">-- Select a printer --</option>
+                          {availablePrinters.map((p) => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => listWindowsPrinters().then(setAvailablePrinters)}
+                        title="Refresh printer list"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary/50 border border-border/50 text-xs text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    {availablePrinters.length === 0 && (
+                      <p className="text-[11px] text-amber-400">No printers detected. Make sure the printer driver is installed in Windows.</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Serial fields */}
+                {printerCfg.method === 'serial' && (
+                  <div className="flex gap-3 pt-1">
+                    <div className="flex-1 space-y-1">
+                      <label className="text-[11px] text-muted-foreground font-medium">COM Port</label>
+                      <input
+                        id="printer-serial-port"
+                        type="text"
+                        value={printerCfg.serialPort}
+                        onChange={(e) => updatePrinterCfg({ serialPort: e.target.value })}
+                        placeholder="COM3"
+                        className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-1.5 text-sm font-mono focus:outline-none focus:border-primary transition-all text-foreground"
+                      />
+                    </div>
+                    <div className="w-32 space-y-1">
+                      <label className="text-[11px] text-muted-foreground font-medium">Baud Rate</label>
+                      <select
+                        id="printer-serial-baud"
+                        value={printerCfg.serialBaud}
+                        onChange={(e) => updatePrinterCfg({ serialBaud: parseInt(e.target.value) })}
+                        className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-primary transition-all text-foreground"
+                      >
+                        {[1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200].map((b) => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Paper width + Store info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
+                  <h4 className="text-sm font-semibold">Paper Width</h4>
+                  <div className="flex gap-2">
+                    {([{ w: 48, label: '80 mm' }, { w: 32, label: '58 mm' }] as { w: 48|32; label: string }[]).map(({ w, label }) => (
+                      <button
+                        key={w}
+                        type="button"
+                        id={`printer-paper-${w}`}
+                        onClick={() => updatePrinterCfg({ paperWidth: w })}
+                        className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                          printerCfg.paperWidth === w
+                            ? 'bg-primary border-primary text-primary-foreground'
+                            : 'bg-secondary/40 border-border/50 text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
+                  <h4 className="text-sm font-semibold">Auto-Print after Checkout</h4>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">Automatically print receipt on successful sale</p>
+                    <label className="relative inline-flex items-center cursor-pointer select-none flex-shrink-0">
+                      <input
+                        id="printer-autoprint-toggle"
+                        type="checkbox"
+                        checked={printerCfg.autoPrint}
+                        onChange={(e) => updatePrinterCfg({ autoPrint: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-secondary/60 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary" />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Store info for receipt header */}
+              <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
+                <h4 className="text-sm font-semibold">Receipt Header</h4>
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-muted-foreground font-medium">Store Name</label>
+                    <input
+                      id="printer-store-name"
+                      type="text"
+                      value={printerCfg.storeName}
+                      onChange={(e) => updatePrinterCfg({ storeName: e.target.value })}
+                      placeholder="Xona POS"
+                      className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-primary transition-all text-foreground"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-muted-foreground font-medium">Store Address / Tagline</label>
+                    <input
+                      id="printer-store-address"
+                      type="text"
+                      value={printerCfg.storeAddress}
+                      onChange={(e) => updatePrinterCfg({ storeAddress: e.target.value })}
+                      placeholder="123 Main St, City"
+                      className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-primary transition-all text-foreground"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  id="printer-save-btn"
+                  type="button"
+                  onClick={handleSavePrinter}
+                  disabled={savingPrinter}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-bold text-xs hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-40"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  {savingPrinter ? 'Saving...' : 'Save Printer Settings'}
+                </button>
+                <button
+                  id="printer-test-btn"
+                  type="button"
+                  onClick={handleTestPrint}
+                  disabled={testingPrinter}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary/50 border border-border/50 text-foreground font-bold text-xs hover:bg-secondary/80 transition-all cursor-pointer disabled:opacity-40"
+                >
+                  <TestTube className="w-3.5 h-3.5" />
+                  {testingPrinter ? 'Sending...' : 'Test Print'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Language Settings Card */}
