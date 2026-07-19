@@ -69,6 +69,10 @@ export default function AdminPage() {
       toast.error('You cannot demote or modify your own role.');
       return;
     }
+    if (currentUser?.role === 'owner') {
+      toast.error('Owners do not have permission to change user roles.');
+      return;
+    }
 
     let nextRole = 'cashier';
     if (currentRole === 'cashier') {
@@ -95,6 +99,10 @@ export default function AdminPage() {
     }
     if (userId === currentUser?.id) {
       toast.error('You cannot delete your own logged-in user.');
+      return;
+    }
+    if (currentUser?.role === 'owner' && targetUser?.role !== 'cashier') {
+      toast.error('Owners can only delete cashier accounts.');
       return;
     }
 
@@ -127,6 +135,10 @@ export default function AdminPage() {
   };
 
   const startEdit = (u: User) => {
+    if (currentUser?.role === 'owner' && u.role !== 'cashier' && u.id !== currentUser.id) {
+      toast.error('Owners can only edit cashier accounts.');
+      return;
+    }
     setUsername(u.username);
     setEmail(u.email || '');
     setPassword('');
@@ -275,33 +287,39 @@ export default function AdminPage() {
                     </td>
                     <td className="p-4 text-right">
                       <div className="inline-flex gap-2">
-                        <button
-                          onClick={() => startEdit(u)}
-                          className="p-1.5 rounded bg-secondary hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                          title="Edit Credentials"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
+                        {!(currentUser?.role === 'owner' && u.role !== 'cashier' && u.id !== currentUser?.id) && (
+                          <button
+                            onClick={() => startEdit(u)}
+                            className="p-1.5 rounded bg-secondary hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                            title="Edit Credentials"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                        )}
                         {u.username !== 'admin' && u.id !== currentUser?.id && (
                           <>
-                            <button
-                              onClick={() => handleToggleRole(u.id, u.role)}
-                              className="p-1.5 rounded bg-secondary hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                              title="Cycle User Role"
-                            >
-                              {u.role === 'admin' ? (
-                                <UserX className="w-4 h-4" />
-                              ) : (
-                                <UserCheck className="w-4 h-4" />
-                              )}
-                            </button>
-                            <button
-                              onClick={() => handleDeleteUser(u.id)}
-                              className="p-1.5 rounded bg-secondary hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
-                              title="Delete Account"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {currentUser?.role === 'admin' && (
+                              <button
+                                onClick={() => handleToggleRole(u.id, u.role)}
+                                className="p-1.5 rounded bg-secondary hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                                title="Cycle User Role"
+                              >
+                                {u.role === 'admin' ? (
+                                  <UserX className="w-4 h-4" />
+                                ) : (
+                                  <UserCheck className="w-4 h-4" />
+                                )}
+                              </button>
+                            )}
+                            {!(currentUser?.role === 'owner' && u.role !== 'cashier') && (
+                              <button
+                                onClick={() => handleDeleteUser(u.id)}
+                                className="p-1.5 rounded bg-secondary hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                                title="Delete Account"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                           </>
                         )}
                       </div>
@@ -376,12 +394,12 @@ export default function AdminPage() {
                 <select
                   value={role}
                   onChange={e => setRole(e.target.value)}
-                  disabled={isEditing !== 'new' && (isEditing.username === 'admin' || isEditing.id === currentUser?.id)}
+                  disabled={(isEditing !== 'new' && (isEditing.username === 'admin' || isEditing.id === currentUser?.id)) || currentUser?.role === 'owner'}
                   className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground disabled:opacity-50"
                 >
                   <option value="cashier">Cashier</option>
-                  <option value="owner">Owner</option>
-                  <option value="admin">Admin</option>
+                  <option value="owner" disabled={currentUser?.role === 'owner'}>Owner</option>
+                  <option value="admin" disabled={currentUser?.role === 'owner'}>Admin</option>
                 </select>
               </div>
             </div>
