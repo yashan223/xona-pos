@@ -147,7 +147,7 @@ export default function MaintenancePage() {
           {t('databaseMaintenance')}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Perform administrative DB operations, manage Cloud MongoDB data, and handle backups
+          {t('maintenanceDesc')}
         </p>
       </div>
 
@@ -161,21 +161,21 @@ export default function MaintenancePage() {
             </h3>
             {syncStatus?.isOnline ? (
               <span className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold px-2 py-0.5 rounded-full">
-                🟢 Connected
+                🟢 {t('connected')}
               </span>
             ) : (
               <span className="text-[10px] bg-red-500/15 text-red-400 border border-red-500/30 font-bold px-2 py-0.5 rounded-full">
-                🔴 Unreachable
+                🔴 {t('unreachable')}
               </span>
             )}
           </div>
           <div className="space-y-1.5 text-xs text-muted-foreground">
             <div className="flex justify-between">
-              <span>Database Provider:</span>
+              <span>{t('dbProvider')}</span>
               <span className="font-medium text-foreground">MongoDB Cluster / Atlas</span>
             </div>
             <div className="flex justify-between">
-              <span>Connection Strategy:</span>
+              <span>{t('connStrategy')}</span>
               <span className="font-medium text-foreground">Direct REST API Polling</span>
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function MaintenancePage() {
             className="w-full py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold border border-primary/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            Refresh DB Connection Status
+            {t('refreshDbStatus')}
           </button>
         </div>
       </div>
@@ -193,7 +193,7 @@ export default function MaintenancePage() {
       <div className="glass-card p-5 space-y-4 bg-card/30 border border-border/40 rounded-2xl">
         <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2">
           <Database className="w-4 h-4 text-primary" />
-          DB Backup & Restore Manager
+          {t('dbManagerTitle')}
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-4">
@@ -201,7 +201,7 @@ export default function MaintenancePage() {
             <div>
               <h4 className="text-sm font-semibold text-foreground text-left">{t('createBackup')}</h4>
               <p className="text-xs text-muted-foreground mt-1 text-left">
-                Generate a snapshot JSON file containing all products, categories, transactions, and customers.
+                {t('createBackupDesc')}
               </p>
             </div>
             <button
@@ -218,7 +218,7 @@ export default function MaintenancePage() {
             <div>
               <h4 className="text-sm font-semibold text-foreground text-left">{t('uploadBackup')}</h4>
               <p className="text-xs text-muted-foreground mt-1 text-left">
-                Choose a previously exported backup `.json` file from your local computer's HDD to overwrite and restore the entire database.
+                {t('uploadBackupDesc')}
               </p>
             </div>
             <div className="mt-3 flex items-center gap-3">
@@ -238,17 +238,17 @@ export default function MaintenancePage() {
           <h4 className="text-sm font-semibold text-foreground mb-3 text-left">{t('availableBackups')}</h4>
           {backups.length === 0 ? (
             <div className="text-center p-8 bg-secondary/10 rounded-xl text-xs text-muted-foreground">
-              No backups created yet. Click "Create DB Backup" to save your first snapshot.
+              {t('noBackups')}
             </div>
           ) : (
             <div className="overflow-x-auto rounded-xl border border-border/30 bg-secondary/10">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-border bg-muted/20 font-semibold text-muted-foreground uppercase">
-                    <th className="p-3">File Name</th>
-                    <th className="p-3">Created Date</th>
-                    <th className="p-3">Size</th>
-                    <th className="p-3 text-right">Actions</th>
+                    <th className="p-3">{t('fileNameCol')}</th>
+                    <th className="p-3">{t('createdDateCol')}</th>
+                    <th className="p-3">{t('sizeCol')}</th>
+                    <th className="p-3 text-right">{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
@@ -282,7 +282,7 @@ export default function MaintenancePage() {
                           className="px-2 py-1 bg-destructive/10 text-destructive hover:bg-destructive/20 rounded border border-destructive/25 transition-all text-[10px] font-semibold cursor-pointer"
                           title="Delete backup file"
                         >
-                          Delete
+                          {t('deleteBtn')}
                         </button>
                       </td>
                     </tr>

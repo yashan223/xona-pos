@@ -47,8 +47,7 @@ export default function App() {
 
   const handleLoginSuccess = (user: User, rememberMe: boolean) => {
     if (user.role !== 'admin' && user.role !== 'owner') {
-      alert('Access Denied: Only Admin or Owner accounts can access the Web Management Portal.');
-      return;
+      throw new Error('Access Denied: Only Admin or Owner accounts can access the Web Management Portal.');
     }
     setCurrentUser(user);
     if (rememberMe) {

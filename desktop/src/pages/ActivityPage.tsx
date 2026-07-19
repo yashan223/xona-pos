@@ -3,8 +3,11 @@ import { Activity } from 'lucide-react';
 import { activityApi, ActivityRecord } from '@/lib/api';
 import { useNotification } from '@/context/NotificationContext';
 import { format } from 'date-fns';
+import { useTranslation } from '@/lib/translations';
+import { User } from '@/lib/api';
 
-export default function ActivityPage({ currentUser: user }: { currentUser: any }) {
+export default function ActivityPage({ currentUser: user }: { currentUser: User | null }) {
+  const { t } = useTranslation();
   const { toast } = useNotification();
   const [logs, setLogs] = useState<ActivityRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,8 +32,8 @@ export default function ActivityPage({ currentUser: user }: { currentUser: any }
   if (user?.role !== 'admin') {
     return (
       <div className="p-6 text-center mt-20">
-        <h2 className="text-xl font-bold text-destructive">Unauthorized</h2>
-        <p className="text-muted-foreground mt-2">You do not have permission to view the activity log.</p>
+        <h2 className="text-xl font-bold text-destructive">{t('unauthorized')}</h2>
+        <p className="text-muted-foreground mt-2">{t('noPermActivity')}</p>
       </div>
     );
   }
@@ -40,28 +43,28 @@ export default function ActivityPage({ currentUser: user }: { currentUser: any }
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <Activity className="w-6 h-6 text-primary" />
-          System Activity Log
+          {t('activityLogTitle')}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Audit trail of administrative and structural changes made to the system
+          {t('activityLogDesc')}
         </p>
       </div>
 
       <div className="glass-card bg-card/30 border border-border/40 rounded-2xl overflow-hidden">
         {loading ? (
-          <div className="p-10 text-center text-muted-foreground animate-pulse">Loading activity logs...</div>
+          <div className="p-10 text-center text-muted-foreground animate-pulse">{t('loadingActivity')}</div>
         ) : logs.length === 0 ? (
-          <div className="p-10 text-center text-muted-foreground">No recent activity recorded.</div>
+          <div className="p-10 text-center text-muted-foreground">{t('noActivity')}</div>
         ) : (
           <div className="overflow-auto max-h-[calc(100vh-220px)]">
             <table className="w-full text-sm text-left">
               <thead className="bg-secondary/90 backdrop-blur-sm border-b border-border/50 text-muted-foreground text-xs uppercase sticky top-0 z-10">
                 <tr>
-                  <th className="px-6 py-4 font-semibold">Time</th>
-                  <th className="px-6 py-4 font-semibold">Action</th>
-                  <th className="px-6 py-4 font-semibold">Entity</th>
-                  <th className="px-6 py-4 font-semibold">User ID</th>
-                  <th className="px-6 py-4 font-semibold">Details</th>
+                  <th className="px-6 py-4 font-semibold">{t('timeCol')}</th>
+                  <th className="px-6 py-4 font-semibold">{t('actionCol')}</th>
+                  <th className="px-6 py-4 font-semibold">{t('entityCol')}</th>
+                  <th className="px-6 py-4 font-semibold">{t('userIdCol')}</th>
+                  <th className="px-6 py-4 font-semibold">{t('detailsCol')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">

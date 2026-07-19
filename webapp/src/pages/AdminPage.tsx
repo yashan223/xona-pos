@@ -219,7 +219,7 @@ export default function AdminPage() {
             {t('userPanel')}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage system users, cashier accounts, and admin roles
+            {t('manageUsersDesc')}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -228,12 +228,12 @@ export default function AdminPage() {
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors cursor-pointer text-sm shadow-md shadow-primary/20"
           >
             <Plus className="w-4 h-4" />
-            Add User
+            {t('addUser')}
           </button>
           <button
             onClick={loadData}
             className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            title="Refresh Cashiers"
+            title={t('refreshCashiers')}
             disabled={loading}
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -257,11 +257,11 @@ export default function AdminPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-border bg-muted/20 text-xs font-semibold text-muted-foreground uppercase">
-                  <th className="p-4">Cashier</th>
-                  <th className="p-4">Email</th>
-                  <th className="p-4">Registered</th>
-                  <th className="p-4">Role</th>
-                  <th className="p-4 text-right">Actions</th>
+                  <th className="p-4">{t('cashierCol')}</th>
+                  <th className="p-4">{t('emailCol')}</th>
+                  <th className="p-4">{t('registeredCol')}</th>
+                  <th className="p-4">{t('roleCol')}</th>
+                  <th className="p-4 text-right">{t('actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40 text-sm">
@@ -273,7 +273,7 @@ export default function AdminPage() {
                       </div>
                       <span>{u.username}</span>
                       {u.id === currentUser?.id && (
-                        <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-bold">You</span>
+                        <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-bold">{t('you')}</span>
                       )}
                     </td>
                     <td className="p-4 text-muted-foreground">{u.email || 'N/A'}</td>
@@ -286,7 +286,7 @@ export default function AdminPage() {
                           u.role === 'admin' ? 'badge-teal' : (u.role === 'owner' ? 'badge-violet' : 'badge-amber')
                         }`}
                       >
-                        {u.role || 'cashier'}
+                        {t(u.role === 'admin' ? 'systemAdmin' : (u.role === 'owner' ? 'owner' : 'cashier'))}
                       </span>
                     </td>
                     <td className="p-4 text-right">
@@ -344,7 +344,7 @@ export default function AdminPage() {
             {/* Header */}
             <div className="flex justify-between items-center pb-3 border-b border-border/40">
               <h3 className="text-lg font-bold text-foreground">
-                {isEditing === 'new' ? 'Add New User' : 'Edit User Credentials'}
+                {isEditing === 'new' ? t('addNewUser') : t('editUserCreds')}
               </h3>
               <button type="button" onClick={cancelEdit} className="p-1 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg hover:bg-secondary">
                 <X className="w-5 h-5" />
@@ -358,7 +358,7 @@ export default function AdminPage() {
             {/* Input fields */}
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-muted-foreground font-semibold mb-1 block">Username *</label>
+                <label className="text-xs text-muted-foreground font-semibold mb-1 block">{t('usernameLabel')} *</label>
                 <input
                   type="text"
                   value={username}
@@ -370,7 +370,7 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="text-xs text-muted-foreground font-semibold mb-1 block">Email</label>
+                <label className="text-xs text-muted-foreground font-semibold mb-1 block">{t('emailLabel')}</label>
                 <input
                   type="email"
                   value={email}
@@ -382,28 +382,28 @@ export default function AdminPage() {
 
               <div>
                 <label className="text-xs text-muted-foreground font-semibold mb-1 block">
-                  {isEditing === 'new' ? 'Password *' : 'Password'}
+                  {isEditing === 'new' ? t('passwordLabel') + ' *' : t('passwordLabel')}
                 </label>
                 <input
                   type="password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                  placeholder={isEditing === 'new' ? '••••••' : 'Leave blank to keep current password'}
+                  placeholder={isEditing === 'new' ? '••••••' : t('leaveBlankPw')}
                 />
               </div>
 
               <div>
-                <label className="text-xs text-muted-foreground font-semibold mb-1 block">Role *</label>
+                <label className="text-xs text-muted-foreground font-semibold mb-1 block">{t('roleLabel')} *</label>
                 <select
                   value={role}
                   onChange={e => setRole(e.target.value)}
                   disabled={(isEditing !== 'new' && (isEditing.username === 'admin' || isEditing.id === currentUser?.id)) || currentUser?.role === 'owner'}
                   className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground disabled:opacity-50"
                 >
-                  <option value="cashier">Cashier</option>
-                  <option value="owner" disabled={currentUser?.role === 'owner'}>Owner</option>
-                  <option value="admin" disabled={currentUser?.role === 'owner'}>Admin</option>
+                  <option value="cashier">{t('cashier')}</option>
+                  <option value="owner" disabled={currentUser?.role === 'owner'}>{t('owner')}</option>
+                  <option value="admin" disabled={currentUser?.role === 'owner'}>{t('systemAdmin')}</option>
                 </select>
               </div>
             </div>
@@ -415,13 +415,13 @@ export default function AdminPage() {
                 onClick={cancelEdit}
                 className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium rounded-lg text-sm transition-colors cursor-pointer"
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 type="submit"
                 className="px-4 py-2 bg-primary hover:bg-primary/95 text-primary-foreground font-semibold rounded-lg text-sm transition-colors cursor-pointer"
               >
-                {isEditing === 'new' ? 'Create User' : 'Save Changes'}
+                {isEditing === 'new' ? t('createUserBtn') : t('saveChangesBtn')}
               </button>
             </div>
           </form>
