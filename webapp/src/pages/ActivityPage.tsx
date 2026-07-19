@@ -53,9 +53,9 @@ export default function ActivityPage({ currentUser: user }: { currentUser: User 
         ) : logs.length === 0 ? (
           <div className="p-10 text-center text-muted-foreground">No recent activity recorded.</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-auto max-h-[calc(100vh-220px)]">
             <table className="w-full text-sm text-left">
-              <thead className="bg-secondary/40 border-b border-border/50 text-muted-foreground text-xs uppercase">
+              <thead className="bg-secondary/90 backdrop-blur-sm border-b border-border/50 text-muted-foreground text-xs uppercase sticky top-0 z-10">
                 <tr>
                   <th className="px-6 py-4 font-semibold">Time</th>
                   <th className="px-6 py-4 font-semibold">Action</th>
