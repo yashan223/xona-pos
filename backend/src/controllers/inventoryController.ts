@@ -47,7 +47,7 @@ class InventoryController {
 
   deletePreset = async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       await StockPresetModel.findByIdAndDelete(id);
       await logActivity(req, 'DELETE_PRESET', 'StockPreset', id);
       res.json({ message: 'Preset deleted successfully' });
@@ -59,7 +59,7 @@ class InventoryController {
 
   applyPreset = async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userRole = req.headers['x-user-role'] as string;
       // You could extract the actual user name if passed, we'll use userRole for now
       // Let's also check if they sent a specific name in the body just in case
