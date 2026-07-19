@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { ProductModel, StockPresetModel } from '../persistence/database.js';
+import { logActivity } from '../lib/logger.js';
 
 class InventoryController {
   
@@ -36,6 +37,7 @@ class InventoryController {
       };
 
       await StockPresetModel.create(newPreset);
+      await logActivity(req, 'CREATE_PRESET', 'StockPreset', presetId, { name, itemsCount: items.length });
       res.json({ message: 'Preset created successfully', preset: newPreset });
     } catch (err) {
       console.error('[inventory] Error creating preset:', err);
@@ -47,6 +49,7 @@ class InventoryController {
     try {
       const { id } = req.params;
       await StockPresetModel.findByIdAndDelete(id);
+      await logActivity(req, 'DELETE_PRESET', 'StockPreset', id);
       res.json({ message: 'Preset deleted successfully' });
     } catch (err) {
       console.error('[inventory] Error deleting preset:', err);
@@ -80,6 +83,7 @@ class InventoryController {
         });
       }
 
+      await logActivity(req, 'APPLY_PRESET', 'StockPreset', id, { updatedProductsCount: preset.items.length, presetName: preset.name });
       res.json({ message: 'Preset applied successfully' });
     } catch (err) {
       console.error('[inventory] Error applying preset:', err);
