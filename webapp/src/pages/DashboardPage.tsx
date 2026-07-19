@@ -65,7 +65,7 @@ export default function DashboardPage() {
     : 0;
 
   return (
-    <div className="p-6 h-full flex flex-col space-y-6 max-w-6xl mx-auto overflow-hidden animate-fade-in text-left">
+    <div className="p-4 sm:p-6 flex flex-col space-y-6 max-w-6xl mx-auto animate-fade-in text-left">
       {/* Header */}
       <div className="flex-shrink-0">
         <h1 className="text-2xl font-bold tracking-tight">{t('dashboard')}</h1>

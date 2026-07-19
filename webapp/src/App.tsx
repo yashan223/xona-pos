@@ -14,11 +14,14 @@ import type { User } from '@/lib/api';
 import DarkVeil from '@/components/DarkVeil';
 import { startWebSocketListener } from '@/lib/websocket';
 import { NotificationProvider } from '@/context/NotificationContext';
+import { Menu, X } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const stopWS = startWebSocketListener();
@@ -107,14 +110,40 @@ export default function App() {
     }
 
     return (
-      <div className="flex w-full h-full relative z-10">
-        <Sidebar
-          currentPage={currentPage}
-          onNavigate={setCurrentPage}
-          currentUser={currentUser}
-          onLogout={handleLogout}
-        />
-        <main className="flex-1 overflow-y-auto">
+      <div className="flex w-full h-full relative z-10 flex-col md:flex-row">
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-border/40 bg-background/95 backdrop-blur-sm z-30 flex-shrink-0">
+          <Logo className="h-8 w-auto text-foreground" collapsed={false} />
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 -mr-2 text-foreground hover:bg-secondary/60 rounded-lg transition-colors cursor-pointer"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+
+        {/* Sidebar Overlay */}
+        {mobileMenuOpen && (
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden" 
+            onClick={() => setMobileMenuOpen(false)} 
+          />
+        )}
+
+        {/* Sidebar Container */}
+        <div className={`fixed inset-y-0 left-0 z-50 transform ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 transition-transform duration-300 ease-in-out`}>
+          <Sidebar
+            currentPage={currentPage}
+            onNavigate={(page) => {
+              setCurrentPage(page);
+              setMobileMenuOpen(false);
+            }}
+            currentUser={currentUser}
+            onLogout={handleLogout}
+          />
+        </div>
+
+        <main className="flex-1 min-h-0 min-w-0 overflow-y-auto w-full md:w-auto relative z-10">
           {renderPage()}
         </main>
       </div>

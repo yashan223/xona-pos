@@ -62,6 +62,17 @@
     font-family: 'Noto Sans Sinhala', 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Prevent horizontal shift on mobile */
+    overflow-x: hidden;
+    /* Smooth touch scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Allow native touch scrolling on scrollable containers */
+  .overflow-y-auto, main, [data-scrollable] {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior-y: contain;
   }
 
   code, pre, .mono {
