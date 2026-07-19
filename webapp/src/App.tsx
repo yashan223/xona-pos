@@ -88,7 +88,7 @@ export default function App() {
         return <AdminPage />;
       case 'activity':
         if (!isAdminOrOwner) return <DashboardPage />;
-        return <ActivityPage />;
+        return <ActivityPage currentUser={currentUser} />;
       default:
         return <DashboardPage />;
     }

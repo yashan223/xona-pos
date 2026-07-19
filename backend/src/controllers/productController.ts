@@ -105,7 +105,7 @@ class ProductController {
         return res.status(404).json({ error: 'Product record not found' });
       }
       broadcast('PRODUCTS_UPDATED');
-      await logActivity(req, 'DELETE', 'Product', req.params.id);
+      await logActivity(req, 'DELETE', 'Product', req.params.id as string);
       res.json({ message: 'Product record deleted' });
     } catch (err) {
       console.error('[products] DELETE error:', err);

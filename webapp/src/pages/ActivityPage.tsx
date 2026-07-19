@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Activity } from 'lucide-react';
-import { activityApi, ActivityRecord } from '@/lib/api';
-import { useAuth } from '@/context/AuthContext';
+import { activityApi, ActivityRecord, type User } from '@/lib/api';
 import { useNotification } from '@/context/NotificationContext';
 import { format } from 'date-fns';
 
-export default function ActivityPage() {
-  const { user } = useAuth();
+export default function ActivityPage({ currentUser: user }: { currentUser: User | null }) {
   const { toast } = useNotification();
   const [logs, setLogs] = useState<ActivityRecord[]>([]);
   const [loading, setLoading] = useState(true);
