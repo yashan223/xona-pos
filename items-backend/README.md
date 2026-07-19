@@ -30,3 +30,5 @@ Or run it manually inside this directory:
 npm install
 npm run seed
 ```
+ 
+* [Production Deployment Guide](../DEPLOYMENT.md) 

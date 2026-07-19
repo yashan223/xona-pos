@@ -21,12 +21,12 @@ export default function ActivityPage({ currentUser: user }: { currentUser: any }
       }
     }
 
-    if (user?.role === 'admin' || user?.role === 'owner') {
+    if (user?.role === 'admin') {
       fetchLogs();
     }
   }, [user, toast]);
 
-  if (user?.role !== 'admin' && user?.role !== 'owner') {
+  if (user?.role !== 'admin') {
     return (
       <div className="p-6 text-center mt-20">
         <h2 className="text-xl font-bold text-destructive">Unauthorized</h2>

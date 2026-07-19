@@ -13,6 +13,7 @@ It is designed with a **dual-layer architecture**: the Desktop Client runs **100
 * [⚙️ Backend API Server Documentation](./backend/README.md) — Node.js & Express REST API server, WAL SQLite engine, and background sync flusher.
 * [💻 Desktop Client Documentation](./desktop/README.md) — React + Vite + Electron desktop application, client database engine, and Sinhala font integration.
 * [🌐 Web Admin Portal Documentation](./webapp/README.md) — Cloud-only React SPA for remote owners/admins to monitor reports and inventory.
+* [🚀 Production Deployment Guide](./DEPLOYMENT.md) — Instructions for configuring, building, and deploying the backend, web portal, and desktop app to production environments.
 * [🌱 Items Seeding Backend Documentation](./items-backend/README.md) — Lightweight, isolated Node.js script for seeding the product catalog directly to MongoDB.
 
 > **Note:** A utility script `generate-api-key.cmd` is included in the root directory to help you generate secure 256-bit API keys for device authentication.

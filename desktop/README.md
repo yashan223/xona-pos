@@ -42,3 +42,5 @@ npm run dev
 * [Main Project README](../README.md)
 * [System Architecture Guide](../ARCHITECTURE.md)
 * [Database Schema Guide](../database/README.md)
+ 
+* [Production Deployment Guide](../DEPLOYMENT.md) 

@@ -61,6 +61,7 @@ export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout
   const filteredNav = navItems.filter((item) => {
     if (!item.role) return true;
     const isAdminOrOwner = currentUser?.role === 'admin' || currentUser?.role === 'owner';
+    if (item.page === 'activity') return currentUser?.role === 'admin';
     if (item.role === 'admin') return isAdminOrOwner;
     if (item.role === 'user') return !isAdminOrOwner;
     return true;

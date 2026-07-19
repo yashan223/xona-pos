@@ -39,3 +39,5 @@ To build the web portal for production deployment (e.g., on Vercel, Netlify, or 
 npm run build
 ```
 The compiled static files will be located in the `dist/` directory.
+ 
+* [Production Deployment Guide](../DEPLOYMENT.md) 
