@@ -12,6 +12,8 @@ It is designed with a **dual-layer architecture**: the Desktop Client runs **100
 * [🗄️ Database Documentation](./database/README.md) — Comprehensive schema specifications for Cloud MongoDB collections and local SQLite tables (`pos_local.db`).
 * [⚙️ Backend API Server Documentation](./backend/README.md) — Node.js & Express REST API server, WAL SQLite engine, and background sync flusher.
 * [💻 Desktop Client Documentation](./desktop/README.md) — React + Vite + Electron desktop application, client database engine, and Sinhala font integration.
+* [🌐 Web Admin Portal Documentation](./webapp/README.md) — Cloud-only React SPA for remote owners/admins to monitor reports and inventory.
+* [🌱 Items Seeding Backend Documentation](./items-backend/README.md) — Lightweight, isolated Node.js script for seeding the product catalog directly to MongoDB.
 
 ---
 
@@ -61,11 +63,15 @@ Run the root helper command:
 ```powershell
 .\run-frontend.cmd
 ```
-*Or manually:*
-```bash
-cd desktop
-npm install
-npm run dev
+
+### 4. Launch the Web Admin Portal (Optional)
+```powershell
+.\run-webapp.cmd
+```
+
+### 5. Run the Items Seeder (Optional)
+```powershell
+.\run-items-seeder.cmd
 ```
 
 ---

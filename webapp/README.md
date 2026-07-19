@@ -1,31 +1,38 @@
-# 💻 Xona POS Desktop Client
+# 🌐 Xona POS Web Admin Portal
 
-The Xona POS Desktop Client is a modern, offline-first cashier application built with React, Vite, TypeScript, Electron, Tailwind CSS, and Lucide Icons.
+This directory contains the **Web Admin Portal** for the Xona POS system. 
 
----
+Unlike the desktop application, this web portal is a **Cloud-Only** React Single Page Application (SPA). It directly connects to the remote backend API and does not maintain any local SQLite offline storage or hardware integrations (such as receipt printers).
 
-## ⚡ Core Features
+## 🔒 Role-Based Access
+This portal is strictly designed for **remote monitoring** and administration. 
+- Only **Admin** and **Owner** roles can log into this application.
+- Cashiers and standard users are blocked.
+- Features like "Checkout Register" have been completely removed to prevent accidental sales mutations from a remote web terminal.
 
-* **Offline-First Storage Engine (`offlineStore.ts`)**: Runs 100% locally on the cashier PC. Saves catalog items, CRM profiles, and transactions directly in client storage.
-* **Auto-Cloud Sync Flusher**: Automatically uploads pending checkouts and catalog additions up to the Cloud API whenever network connection is restored.
-* **Sinhala Typography (`Noto Sans Sinhala`)**: Complete localization with proper Sinhala font shaping across all views, receipts, and navigation.
-* **Always Offline Mode**: Toggle setting that silences error toasts and keeps the app running strictly locally on the client PC.
-* **Interactive Co-Occurrence Net**: ECharts graph visualization highlighting products frequently bought together.
+## 🚀 Key Features
+- **Remote Dashboard:** Live analytics and metrics straight from the cloud.
+- **Inventory Monitoring:** View and manage the product catalog (Products Page).
+- **Sales Reports:** Generate PDF sales reports and view historical data remotely.
+- **Transactions Log:** Review historical transactions processed by physical POS terminals.
 
----
+## ⚙️ Development Setup
 
-## 🚀 Quick Start
+Ensure you have your `.env` configured:
+```env
+VITE_API_BASE_URL=http://your-remote-backend:3000
+```
 
+Start the development server:
 ```bash
-cd desktop
 npm install
 npm run dev
 ```
 
----
+## 🏗️ Production Build
 
-## 🔗 Related Documentation
-
-* [Main Project README](../README.md)
-* [System Architecture Guide](../ARCHITECTURE.md)
-* [Database Schema Guide](../database/README.md)
+To build the web portal for production deployment (e.g., on Vercel, Netlify, or Nginx):
+```bash
+npm run build
+```
+The compiled static files will be located in the `dist/` directory.
