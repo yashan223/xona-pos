@@ -243,18 +243,16 @@ export const graphApi = {
 
 export const reportApi = {
   stats: () => request<SystemStats>('/reports/stats'),
-  patterns: () => request<POSPatterns>('/reports/patterns'),
-  posPatterns: () => request<POSPatterns>('/reports/patterns'),
-  popularProducts: () => productApi.getAll(),
   timeline: () => request<TransactionRecord[]>('/reports/timeline'),
+
   generatePdf: (type: 'summary' | 'category' | 'daily' = 'summary') =>
     request<{ message: string; pdfUrl: string; filename: string }>('/reports/generate-pdf', {
       method: 'POST',
       body: JSON.stringify({ type }),
     }),
-  listSavedPdfReports: () => request<SavedReportRecord[]>('/reports/saved-pdfs'),
-  listSavedReports: () => request<SavedReportRecord[]>('/reports/saved-pdfs'),
-  deleteSavedReport: (id: string) => request<{ message: string }>(`/reports/saved-pdfs/${id}`, { method: 'DELETE' }),
+  listSavedPdfReports: () => request<SavedReportRecord[]>('/reports/saved'),
+  listSavedReports: () => request<SavedReportRecord[]>('/reports/saved'),
+  deleteSavedReport: (id: string) => request<{ message: string }>(`/reports/saved/${id}`, { method: 'DELETE' }),
   listBackups: () => request<{ filename: string; createdAt: string; size: number }[]>('/reports/backups'),
   createBackup: () => request<{ message: string; filename: string }>('/reports/backups/create', { method: 'POST' }),
   uploadBackup: (file: File) => {

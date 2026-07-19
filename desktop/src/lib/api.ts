@@ -489,10 +489,8 @@ export const authApi = {
 
 export const reportApi = {
   stats: () => request<SystemStats>('/reports/stats'),
-  patterns: () => request<POSPatterns>('/reports/developer-patterns'),
-  posPatterns: () => request<POSPatterns>('/reports/developer-patterns'),
-  popularProducts: () => request<ProductRecord[]>('/reports/frequent-errors'),
   timeline: () => request<TransactionRecord[]>('/reports/timeline'),
+
   generatePdf: (type: 'summary' | 'category' | 'daily' = 'summary') =>
     request<{ message: string; pdfUrl: string; filename: string }>('/reports/generate-pdf', {
       method: 'POST',
