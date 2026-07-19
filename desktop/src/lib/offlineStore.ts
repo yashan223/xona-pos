@@ -23,6 +23,9 @@ declare global {
     electronDB?: {
       readPermanentFile: (key: string) => Promise<string | null>;
       writePermanentFile: (key: string, data: string) => Promise<boolean>;
+      getDbPath: () => Promise<string>;
+      setDbPath: (dirPath: string) => Promise<{ success: boolean; error?: string }>;
+      browseDbFolder: () => Promise<string | null>;
     };
   }
 }

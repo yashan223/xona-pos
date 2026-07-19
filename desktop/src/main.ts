@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import started from 'electron-squirrel-startup';
@@ -8,12 +8,32 @@ if (started) {
   app.quit();
 }
 
+// ─── Custom DB Path Config ────────────────────────────────────
+const CONFIG_FILE = path.join(app.getPath('userData'), 'xona-db-config.json');
+
+function getCustomDbDir(): string | null {
+  try {
+    if (fs.existsSync(CONFIG_FILE)) {
+      const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+      if (config.dbPath && fs.existsSync(config.dbPath)) {
+        return config.dbPath;
+      }
+    }
+  } catch (_) {}
+  return null;
+}
+
+function setCustomDbDir(dirPath: string): void {
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify({ dbPath: dirPath }), 'utf-8');
+}
+
 const getStoragePath = (key: string) => {
-  const userDir = app.getPath('userData');
-  if (!fs.existsSync(userDir)) {
-    fs.mkdirSync(userDir, { recursive: true });
+  const customDir = getCustomDbDir();
+  const storageDir = customDir ?? app.getPath('userData');
+  if (!fs.existsSync(storageDir)) {
+    fs.mkdirSync(storageDir, { recursive: true });
   }
-  return path.join(userDir, `${key}.json`);
+  return path.join(storageDir, `${key}.json`);
 };
 
 // Permanent Disk File IPC Handlers
@@ -38,6 +58,34 @@ ipcMain.handle('db-write-file', async (_event, key: string, data: string) => {
     console.error('[PermanentDB] Failed to write disk DB file:', err);
     return false;
   }
+});
+
+// ─── Custom DB Path IPC Handlers ─────────────────────────────
+ipcMain.handle('db-get-path', async () => {
+  const custom = getCustomDbDir();
+  return custom ?? app.getPath('userData');
+});
+
+ipcMain.handle('db-set-path', async (_event, dirPath: string) => {
+  try {
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+    setCustomDbDir(dirPath);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('db-browse-folder', async () => {
+  const win = BrowserWindow.getFocusedWindow();
+  const result = await dialog.showOpenDialog(win!, {
+    title: 'Select Local Database Storage Folder',
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return result.filePaths[0];
 });
 
 const createWindow = () => {

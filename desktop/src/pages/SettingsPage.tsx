@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, Cloud, RefreshCw, CheckCircle2, CloudOff } from 'lucide-react';
+import { Settings, Cloud, RefreshCw, CheckCircle2, CloudOff, HardDrive, FolderOpen, Save } from 'lucide-react';
 import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
 import { syncApi, SyncStatus } from '@/lib/api';
@@ -21,6 +21,52 @@ export default function SettingsPage() {
   const [forceOffline, setForceOffline] = useState(() => isForceOfflineEnabled());
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [syncing, setSyncing] = useState(false);
+
+  const [dbPath, setDbPath] = useState('');
+  const [dbPathInput, setDbPathInput] = useState('');
+  const [savingPath, setSavingPath] = useState(false);
+
+  // Load current DB storage path
+  useEffect(() => {
+    const load = async () => {
+      if (window.electronDB?.getDbPath) {
+        const p = await window.electronDB.getDbPath();
+        setDbPath(p);
+        setDbPathInput(p);
+      }
+    };
+    load();
+  }, []);
+
+  const handleBrowseDbFolder = async () => {
+    if (!window.electronDB?.browseDbFolder) return;
+    const selected = await window.electronDB.browseDbFolder();
+    if (selected) setDbPathInput(selected);
+  };
+
+  const handleSaveDbPath = async () => {
+    if (!window.electronDB?.setDbPath) {
+      toast.error('Folder picker is only available in the desktop app.');
+      return;
+    }
+    const trimmed = dbPathInput.trim();
+    if (!trimmed) {
+      toast.error('Please enter a valid folder path.');
+      return;
+    }
+    setSavingPath(true);
+    try {
+      const result = await window.electronDB.setDbPath(trimmed);
+      if (result.success) {
+        setDbPath(trimmed);
+        toast.success('Local database storage path updated. Restart the app to fully apply the change.');
+      } else {
+        toast.error(`Failed to set path: ${result.error ?? 'Unknown error'}`);
+      }
+    } finally {
+      setSavingPath(false);
+    }
+  };
 
   const fetchSyncStatus = async () => {
     try {
@@ -222,6 +268,66 @@ export default function SettingsPage() {
                 {syncing ? 'Syncing to Cloud...' : 'Trigger Cloud Sync Now'}
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Local Database Storage Card */}
+        <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
+          <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
+            <HardDrive className="w-4 h-4 text-primary" />
+            Local Database Storage
+          </h3>
+
+          <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
+            <div>
+              <h4 className="text-sm font-semibold">Storage Folder Location</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                The folder where all local offline database files (.json) are stored on this machine.
+                Changes take effect after restarting the app.
+              </p>
+            </div>
+
+            {/* Current active path */}
+            {dbPath && dbPath !== dbPathInput && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-secondary/30 px-3 py-2 rounded-lg border border-border/40">
+                <span className="shrink-0 font-medium">Active:</span>
+                <span className="font-mono truncate">{dbPath}</span>
+              </div>
+            )}
+
+            {/* Path input + browse button */}
+            <div className="flex gap-2 items-center">
+              <input
+                id="db-path-input"
+                type="text"
+                value={dbPathInput}
+                onChange={(e) => setDbPathInput(e.target.value)}
+                placeholder="e.g. C:\XonaPOS\Data"
+                spellCheck={false}
+                className="flex-1 bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary transition-all text-foreground placeholder:text-muted-foreground/60"
+              />
+              <button
+                id="db-browse-btn"
+                type="button"
+                onClick={handleBrowseDbFolder}
+                title="Browse folder"
+                className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-secondary/50 border border-border/50 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all cursor-pointer"
+              >
+                <FolderOpen className="w-4 h-4" />
+                Browse
+              </button>
+            </div>
+
+            <button
+              id="db-save-path-btn"
+              type="button"
+              onClick={handleSaveDbPath}
+              disabled={savingPath || dbPathInput.trim() === dbPath}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-bold text-xs hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Save className="w-3.5 h-3.5" />
+              {savingPath ? 'Saving...' : 'Save Path'}
+            </button>
           </div>
         </div>
 
