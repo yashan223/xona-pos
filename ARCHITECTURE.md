@@ -31,11 +31,20 @@ flowchart TD
         CloudBackend <--> MongoDB
         CloudBackend --> WS
     end
+    
+    subgraph RemoteClients ["🌐 Remote Admin Clients"]
+        WebAdmin["💻 Web Admin Portal (React SPA)"]
+        ItemSeeder["🌱 Items Seeding Script (Node.js)"]
+        
+        WebAdmin <-->|Cloud Sync & Monitoring| CloudBackend
+        ItemSeeder -->|Direct DB Writes| MongoDB
+    end
 
     SyncEngine -->|"Check Ping"| InternetStatus
     InternetStatus -->|"YES: Online"| CloudBackend
     InternetStatus -->|"NO: Offline"| LocalDB
     WS -.->|Real-Time Inventory Broadcast| UI
+    WS -.->|Real-Time Metrics| WebAdmin
 ```
 
 ---
@@ -85,7 +94,17 @@ sequenceDiagram
 * **Role**: Hosted on cloud infrastructure (e.g. AWS, Render, Heroku). Exposes REST endpoints for transactions, reporting, catalog management, and PDF generation.
 * **Persistence**: Connects to a Cloud MongoDB cluster for permanent storage.
 
-### 3. Sync Engine Pipeline
+### 3. Web Admin Portal (`webapp/`)
+* **Technology**: React 19, Vite, Tailwind CSS, Lucide Icons, ECharts.
+* **Role**: A purely cloud-connected web application intended for remote monitoring by owners and system administrators.
+* **Architecture**: Fully decoupled from local hardware (no offline database, no printers). Uses the same REST APIs as the desktop client but restricts mutations (like checkouts) to enforce a read-heavy monitoring workflow.
+
+### 4. Items Seeding Backend (`items-backend/`)
+* **Technology**: Node.js, Mongoose.
+* **Role**: An isolated, lightweight utility script to batch insert or reset product catalogs directly into the MongoDB cluster.
+* **Architecture**: Operates entirely independently of the Express API. Connects directly to the DB, runs the seed payload, and safely shuts down upon completion.
+
+### 5. Sync Engine Pipeline
 * **Dependency-Ordered Flushing**:
   1. **Customers First**: Syncs new customer profiles to generate valid Cloud IDs.
   2. **Products Second**: Syncs newly created/edited catalog items.
