@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { RefreshCw, Package, TrendingUp, DollarSign, FileText } from 'lucide-react';
+import { RefreshCw, Package, TrendingUp, DollarSign, FileText, ChevronDown } from 'lucide-react';
 import { reportApi, BASE_HOST } from '@/lib/api';
 import type { ProductRecord, POSPatterns, User, SavedReportRecord } from '@/lib/api';
 import { useNotification } from '@/context/NotificationContext';
@@ -19,6 +19,7 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
   const [exporting, setExporting] = useState(false);
   const [selectedReportType, setSelectedReportType] = useState<'summary' | 'category' | 'daily'>('summary');
   const [savedReports, setSavedReports] = useState<SavedReportRecord[]>([]);
+  const [showExportPanel, setShowExportPanel] = useState(false);
 
   useEffect(() => {
     loadReports();
@@ -56,6 +57,7 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
 
   async function generatePdfReport() {
     setExporting(true);
+    setShowExportPanel(false);
     try {
       const saved = localStorage.getItem('currentUser');
       const headers: Record<string, string> = {};
@@ -108,47 +110,70 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
   };
 
   const tabs = [
-    { key: 'popular' as const, label: 'Top Sold Items', icon: Package },
-    { key: 'patterns' as const, label: 'Sales Patterns', icon: TrendingUp },
-    { key: 'timeline' as const, label: 'Revenue Trends', icon: DollarSign },
+    { key: 'popular' as const, label: 'Top Items', icon: Package },
+    { key: 'patterns' as const, label: 'Patterns', icon: TrendingUp },
+    { key: 'timeline' as const, label: 'Revenue', icon: DollarSign },
     ...((currentUser?.role === 'admin' || currentUser?.role === 'owner') ? [
-      { key: 'saved' as const, label: 'Saved PDF Reports', icon: FileText }
+      { key: 'saved' as const, label: 'PDF Reports', icon: FileText }
     ] : []),
   ];
 
+  const isAdminOrOwner = currentUser?.role === 'admin' || currentUser?.role === 'owner';
+
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-fade-in">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-5 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('salesReports')}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('salesReports')}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Visual insights from Xona Point of Sale database
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
-            <>
-              {/* Report Type Dropdown */}
-              <select
-                value={selectedReportType}
-                onChange={(e) => setSelectedReportType(e.target.value as any)}
-                className="bg-[#0d0e12] border border-border/50 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-primary text-foreground cursor-pointer"
-              >
-                <option value="summary">Overview Summary Report</option>
-                <option value="category">Category-wise Sales Report</option>
-                <option value="daily">Daily Sales Timeline Report</option>
-              </select>
-
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {isAdminOrOwner && (
+            <div className="relative">
               <button
-                onClick={generatePdfReport}
+                onClick={() => setShowExportPanel(!showExportPanel)}
                 disabled={exporting}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-xs shadow-md shadow-primary/20"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-50 transition-all cursor-pointer text-xs shadow-md shadow-primary/20"
               >
                 <FileText className="w-3.5 h-3.5" />
-                {exporting ? 'Exporting...' : 'Export PDF Report'}
+                <span className="hidden sm:inline">{exporting ? 'Exporting…' : 'Export PDF'}</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${showExportPanel ? 'rotate-180' : ''}`} />
               </button>
-            </>
+              {showExportPanel && (
+                <div className="absolute right-0 top-full mt-2 w-64 glass-card border border-border/50 rounded-xl p-3 shadow-xl z-50 space-y-3 bg-[#0d0e12]/95 backdrop-blur-md">
+                  <p className="text-xs font-semibold text-muted-foreground">Select Report Type</p>
+                  <div className="space-y-1">
+                    {([
+                      { value: 'summary', label: 'Overview Summary' },
+                      { value: 'category', label: 'Category-wise Sales' },
+                      { value: 'daily', label: 'Daily Sales Timeline' },
+                    ] as const).map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setSelectedReportType(opt.value)}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                          selectedReportType === opt.value
+                            ? 'bg-primary/15 text-primary border border-primary/25'
+                            : 'hover:bg-secondary/60 text-foreground'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={generatePdfReport}
+                    className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-xs hover:bg-primary/90 transition-all cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    Export PDF Report
+                  </button>
+                </div>
+              )}
+            </div>
           )}
           <button
             onClick={loadReports}
@@ -160,21 +185,21 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-border/50 pb-2 overflow-x-auto">
+      {/* Tabs — scrollable strip on mobile */}
+      <div className="flex items-center gap-1 border-b border-border/50 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
         {tabs.map(tab => {
           const Icon = tab.icon;
           return (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-t-xl text-sm font-medium transition-all cursor-pointer whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-sm font-medium transition-all cursor-pointer whitespace-nowrap flex-shrink-0 border-b-2 -mb-px ${
                 activeTab === tab.key
-                  ? 'bg-primary/10 text-primary border-b-2 border-primary'
-                  : 'text-muted-foreground hover:bg-secondary/40 hover:text-foreground'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
               {tab.label}
             </button>
           );
@@ -194,6 +219,11 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
           {activeTab === 'saved' && <SavedReportsTab reports={savedReports} onDelete={handleDeleteSavedReport} />}
         </div>
       )}
+
+      {/* Export panel backdrop */}
+      {showExportPanel && (
+        <div className="fixed inset-0 z-40" onClick={() => setShowExportPanel(false)} />
+      )}
     </div>
   );
 }
@@ -211,43 +241,41 @@ function PopularProductsTab({ products }: { products: ProductRecord[] }) {
 
     const dpr = window.devicePixelRatio || 1;
     const w = canvas.clientWidth;
-    const h = 250;
+    const h = 220;
     canvas.width = w * dpr;
     canvas.height = h * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const maxCount = Math.max(...products.map(p => p.salesCount), 1);
-    const visibleProducts = products.slice(0, 10);
-    const barWidth = Math.max(20, (w - 60) / visibleProducts.length - 12);
-    const chartHeight = h - 50;
+    const maxVisible = Math.min(10, Math.max(3, Math.floor(w / 42)));
+    const visibleProducts = products.slice(0, maxVisible);
+    const barWidth = Math.max(16, (w - 50) / visibleProducts.length - 10);
+    const chartHeight = h - 48;
 
     ctx.clearRect(0, 0, w, h);
 
     visibleProducts.forEach((prod, i) => {
-      const x = 40 + i * (barWidth + 12);
+      const x = 28 + i * (barWidth + 10);
       const barHeight = (prod.salesCount / maxCount) * chartHeight;
-      const y = chartHeight - barHeight + 20;
+      const y = chartHeight - barHeight + 16;
 
-      // Bar gradient
       const gradient = ctx.createLinearGradient(x, y, x, y + barHeight);
-      gradient.addColorStop(0, '#8b5cf6'); // purple
-      gradient.addColorStop(1, '#8b5cf630');
+      gradient.addColorStop(0, '#8b5cf6');
+      gradient.addColorStop(1, '#8b5cf620');
       ctx.fillStyle = gradient;
       ctx.beginPath();
       ctx.roundRect(x, y, barWidth, barHeight, [4, 4, 0, 0]);
       ctx.fill();
 
-      // Count label
       ctx.fillStyle = '#e2e8f0';
-      ctx.font = '600 11px Inter, sans-serif';
+      ctx.font = '600 10px Inter, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(String(prod.salesCount), x + barWidth / 2, y - 6);
+      ctx.fillText(String(prod.salesCount), x + barWidth / 2, y - 4);
 
-      // X-axis label
       ctx.fillStyle = '#94a3b8';
-      ctx.font = '500 9px Inter, sans-serif';
-      const label = prod.name.substring(0, 10) + (prod.name.length > 10 ? '…' : '');
-      ctx.fillText(label, x + barWidth / 2, h - 8);
+      ctx.font = '500 8px Inter, sans-serif';
+      const label = prod.name.substring(0, 8) + (prod.name.length > 8 ? '…' : '');
+      ctx.fillText(label, x + barWidth / 2, h - 6);
     });
   }, [products]);
 
@@ -261,24 +289,24 @@ function PopularProductsTab({ products }: { products: ProductRecord[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="glass-card p-5 border border-border/40 rounded-xl bg-card/20">
-        <h3 className="text-sm font-bold mb-4">Total Units Sold (Top-10 Products)</h3>
-        <canvas ref={canvasRef} className="w-full" style={{ height: 250 }} />
+      <div className="glass-card p-4 sm:p-5 border border-border/40 rounded-xl bg-card/20">
+        <h3 className="text-sm font-bold mb-4">Total Units Sold (Top Products)</h3>
+        <canvas ref={canvasRef} className="w-full" style={{ height: 220 }} />
       </div>
 
       <div className="space-y-2">
         {products.slice(0, 10).map((prod, i) => (
-          <div key={prod.id} className="glass-card p-4 flex items-center justify-between border border-border/20 rounded-xl bg-card/10">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-bold text-muted-foreground w-6">#{i + 1}</span>
-              <div>
-                <p className="text-sm font-semibold text-foreground">{prod.name}</p>
-                <p className="text-[10px] text-muted-foreground">{prod.category} | {prod.sku}</p>
+          <div key={prod.id} className="glass-card p-3 sm:p-4 flex items-center justify-between border border-border/20 rounded-xl bg-card/10">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="text-sm font-bold text-muted-foreground w-6 flex-shrink-0">#{i + 1}</span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{prod.name}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{prod.category} | {prod.sku}</p>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0 ml-3">
               <p className="text-sm font-bold text-primary">{formatCurrency(prod.price)}</p>
-              <p className="text-xs text-emerald-400 font-semibold">{prod.salesCount} units sold</p>
+              <p className="text-xs text-emerald-400 font-semibold">{prod.salesCount} sold</p>
             </div>
           </div>
         ))}
@@ -298,7 +326,7 @@ function PatternsTab({ patterns }: { patterns: POSPatterns | null }) {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       
       {/* Categories pattern */}
-      <div className="glass-card p-5 border border-border/40 rounded-xl bg-card/20 space-y-4">
+      <div className="glass-card p-4 sm:p-5 border border-border/40 rounded-xl bg-card/20 space-y-4">
         <h3 className="text-sm font-bold">Sales Share by Category</h3>
         {patterns.byCategory.length > 0 ? (
           <div className="space-y-3">
@@ -308,7 +336,7 @@ function PatternsTab({ patterns }: { patterns: POSPatterns | null }) {
               return (
                 <div key={cat.category} className="space-y-1">
                   <div className="flex justify-between text-xs font-semibold text-foreground">
-                    <span>{cat.category}</span>
+                    <span className="truncate mr-2">{cat.category}</span>
                     <span>{cat.count} units</span>
                   </div>
                   <div className="w-full h-2.5 rounded-full bg-secondary/50 overflow-hidden">
@@ -329,8 +357,8 @@ function PatternsTab({ patterns }: { patterns: POSPatterns | null }) {
         )}
       </div>
 
-      {/* Payment method patterns */}
-      <div className="glass-card p-5 border border-border/40 rounded-xl bg-card/20 space-y-4">
+        {/* Payment method patterns */}
+        <div className="glass-card p-4 sm:p-5 border border-border/40 rounded-xl bg-card/20 space-y-4">
         <h3 className="text-sm font-bold">Preferred Payment Methods</h3>
         {patterns.byPaymentMethod.length > 0 ? (
           <div className="space-y-3">
@@ -340,7 +368,7 @@ function PatternsTab({ patterns }: { patterns: POSPatterns | null }) {
               return (
                 <div key={method.method} className="space-y-1">
                   <div className="flex justify-between text-xs font-semibold text-foreground">
-                    <span className="uppercase">{method.method}</span>
+                    <span className="uppercase truncate mr-2">{method.method}</span>
                     <span>{method.count} transactions</span>
                   </div>
                   <div className="w-full h-2.5 rounded-full bg-secondary/50 overflow-hidden">
@@ -383,9 +411,9 @@ function TimelineTab({ timeline }: { timeline: { date: string; revenue: number }
           const maxRev = Math.max(...timeline.map(t => t.revenue), 1);
           const width = (day.revenue / maxRev) * 100;
           return (
-            <div key={day.date} className="flex items-center gap-3">
-              <span className="text-[10px] font-mono text-muted-foreground w-20 flex-shrink-0">{day.date}</span>
-              <div className="flex-1 h-5 rounded-md bg-secondary/50 overflow-hidden">
+            <div key={day.date} className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-muted-foreground w-14 sm:w-20 flex-shrink-0">{day.date}</span>
+              <div className="flex-1 h-5 rounded-md bg-secondary/50 overflow-hidden min-w-0">
                 <div
                   className="h-full rounded-md transition-all duration-500"
                   style={{
@@ -394,7 +422,7 @@ function TimelineTab({ timeline }: { timeline: { date: string; revenue: number }
                   }}
                 />
               </div>
-              <span className="text-xs font-bold text-foreground w-20 text-right">{formatCurrency(day.revenue)}</span>
+              <span className="text-[10px] sm:text-xs font-bold text-foreground w-14 sm:w-20 text-right flex-shrink-0">{formatCurrency(day.revenue)}</span>
             </div>
           );
         })}
@@ -435,66 +463,56 @@ function SavedReportsTab({
   }
 
   return (
-    <div className="glass-card overflow-hidden border border-border/30 rounded-2xl bg-card/10">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr className="border-b border-border bg-muted/20 text-xs font-semibold text-muted-foreground uppercase">
-              <th className="p-3.5">Filename</th>
-              <th className="p-3.5">Report Type</th>
-              <th className="p-3.5">Generated By</th>
-              <th className="p-3.5">Created Date</th>
-              <th className="p-3.5 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border/20">
-            {reports.map((report) => (
-              <tr key={report._id} className="hover:bg-secondary/10 transition-colors">
-                <td className="p-3.5 text-left">
-                  <div className="font-mono text-foreground font-semibold select-all">{report.filename}</div>
-                  <div className="text-[9px] text-muted-foreground mt-1 select-all font-mono break-all bg-secondary/30 p-1 rounded border border-border/20 max-w-sm">
-                    {report.localPath}
-                  </div>
-                </td>
-                <td className="p-3.5 text-left">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                    report.reportType === 'category'
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                      : report.reportType === 'daily'
-                      ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
-                      : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                  }`}>
-                    {formatReportType(report.reportType)}
-                  </span>
-                </td>
-                <td className="p-3.5 text-muted-foreground text-left uppercase">
-                  {report.generatedBy}
-                </td>
-                <td className="p-3.5 text-muted-foreground text-left">
-                  {new Date(report.createdAt).toLocaleString()}
-                </td>
-                <td className="p-3.5 text-right space-x-2 whitespace-nowrap">
-                  <a
-                    href={`${BASE_HOST}/reports/${report.filename}`}
-                    download
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-block px-3 py-1 bg-primary/10 text-primary hover:bg-primary/20 rounded-md border border-primary/20 transition-all text-[11px] font-semibold cursor-pointer"
-                  >
-                    Download
-                  </a>
-                  <button
-                    onClick={() => onDelete(report._id)}
-                    className="px-3 py-1 bg-destructive/10 text-destructive hover:bg-destructive/20 rounded-md border border-destructive/20 transition-all text-[11px] font-semibold cursor-pointer"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <div className="space-y-3">
+      {reports.map((report) => (
+        <div key={report._id} className="glass-card p-4 border border-border/30 rounded-2xl bg-card/10 space-y-3">
+          {/* Type + Date */}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold flex-shrink-0 ${
+              report.reportType === 'category'
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                : report.reportType === 'daily'
+                ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
+                : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+            }`}>
+              {formatReportType(report.reportType)}
+            </span>
+            <span className="text-[10px] text-muted-foreground">{new Date(report.createdAt).toLocaleString()}</span>
+          </div>
+
+          {/* Filename */}
+          <div>
+            <p className="text-xs font-mono font-semibold text-foreground truncate">{report.filename}</p>
+            <p className="text-[9px] text-muted-foreground font-mono mt-0.5 truncate bg-secondary/30 px-2 py-1 rounded border border-border/20">
+              {report.localPath}
+            </p>
+          </div>
+
+          {/* By + Actions */}
+          <div className="flex items-center justify-between gap-2 border-t border-border/20 pt-2">
+            <p className="text-[11px] text-muted-foreground uppercase">
+              By: <span className="font-semibold text-foreground">{report.generatedBy}</span>
+            </p>
+            <div className="flex items-center gap-2">
+              <a
+                href={`${BASE_HOST}/reports/${report.filename}`}
+                download
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg border border-primary/20 transition-all text-[11px] font-semibold cursor-pointer"
+              >
+                Download
+              </a>
+              <button
+                onClick={() => onDelete(report._id)}
+                className="px-3 py-1.5 bg-destructive/10 text-destructive hover:bg-destructive/20 rounded-lg border border-destructive/20 transition-all text-[11px] font-semibold cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
