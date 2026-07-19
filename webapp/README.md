@@ -13,6 +13,7 @@ This portal is strictly designed for **remote monitoring** and administration.
 ## 🚀 Key Features
 - **Remote Dashboard:** Live analytics and metrics straight from the cloud.
 - **Inventory Monitoring:** View and manage the product catalog (Products Page).
+- **Bulk Stock Presets:** Manage batch restock templates to quickly update remote inventory levels.
 - **Sales Reports:** Generate PDF sales reports and view historical data remotely.
 - **Transactions Log:** Review historical transactions processed by physical POS terminals.
 

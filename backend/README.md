@@ -10,6 +10,7 @@ The Xona POS backend is a high-performance Express REST API server built with Ty
 * **Local SQLite Fallback (`pos_local.db`)**: Maintains a WAL-enabled local SQLite database file at `backend/data/pos_local.db` for instant offline queries.
 * **Background Sync Engine (`syncEngine.ts`)**: Monitors cloud connectivity and automatically syncs unsynced local SQLite records up to Cloud MongoDB.
 * **PDF Sales Report Generator**: Generates formatted PDF sales summaries and invoices.
+* **Bulk Stock Presets API**: Handles creation, deletion, and execution of batch stock update templates.
 * **WebSocket Server (`ws`)**: Broadcasts real-time inventory updates across connected desktop registers.
 
 ---

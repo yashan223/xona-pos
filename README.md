@@ -27,6 +27,7 @@ It is designed with a **dual-layer architecture**: the Desktop Client runs **100
 * **🔒 Seamless Offline Login:** Offline user credentials caching allows cashiers and admins to log in and operate the app even when disconnected from the internet.
 * **⚡ Always Offline Mode Toggle:** Setting switch that forces the app to run strictly from local disk storage without issuing remote cloud network requests or error notifications.
 * **📦 Catalog Management:** Full inventory CRUD controls, SKU management, stock tracking, price/cost adjustments, and product image uploads.
+* **🚚 Bulk Stock Presets:** Define, save, and instantly apply batch inventory restock templates to update multiple products at once with tracking for the user who made the update.
 
 * **🕸️ Product Co-Occurrence Net:** Graph relationship visualization (powered by ECharts) highlighting items frequently purchased together using BFS & DFS graph algorithms.
 * **🇱🇰 Multi-Language & Sinhala Typography:** Integrated Google Font `Noto Sans Sinhala` for proper Sinhala text shaping across all views, menus, and receipts.

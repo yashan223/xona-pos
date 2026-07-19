@@ -11,6 +11,7 @@ The Xona POS Desktop Client is a modern, offline-first cashier application built
 * **Sinhala Typography (`Noto Sans Sinhala`)**: Complete localization with proper Sinhala font shaping across all views, receipts, and navigation.
 * **Always Offline Mode**: Toggle setting that silences error toasts and keeps the app running strictly locally on the client PC.
 * **Interactive Co-Occurrence Net**: ECharts graph visualization highlighting products frequently bought together.
+* **Bulk Stock Presets**: Manage batch restock templates to quickly update inventory levels.
 
 ---
 
