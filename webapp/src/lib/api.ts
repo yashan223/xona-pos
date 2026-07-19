@@ -17,7 +17,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     headers['x-api-key'] = apiKey;
   }
 
-  const saved = localStorage.getItem('currentUser');
+  const saved = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
   if (saved) {
     try {
       const user = JSON.parse(saved);

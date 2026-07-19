@@ -31,7 +31,7 @@ export default function App() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const saved = localStorage.getItem('currentUser');
+        const saved = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
         if (saved) {
           const parsed = JSON.parse(saved);
           setCurrentUser(parsed);
@@ -53,6 +53,7 @@ export default function App() {
       localStorage.setItem('rememberMePreference', 'true');
     } else {
       localStorage.removeItem('currentUser');
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
       localStorage.setItem('rememberMePreference', 'false');
     }
     setCurrentPage('dashboard');
@@ -61,6 +62,7 @@ export default function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('currentUser');
+    sessionStorage.removeItem('currentUser');
   };
 
   const renderPage = () => {
