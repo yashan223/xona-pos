@@ -135,8 +135,12 @@ export default function AdminPage() {
   };
 
   const startEdit = (u: User) => {
-    if (currentUser?.role === 'owner' && (u.role !== 'cashier' || u.username === 'admin') && u.id !== currentUser.id) {
-      toast.error('Owners can only edit cashier accounts and cannot modify the system admin.');
+    if ((u.username === 'admin' || u.role === 'admin') && currentUser?.role !== 'admin') {
+      toast.error('Only a system admin can modify admin accounts.');
+      return;
+    }
+    if (currentUser?.role === 'owner' && u.role !== 'cashier' && u.id !== currentUser.id) {
+      toast.error('Owners can only edit cashier accounts.');
       return;
     }
     setUsername(u.username);
@@ -287,7 +291,7 @@ export default function AdminPage() {
                     </td>
                     <td className="p-4 text-right">
                       <div className="inline-flex gap-2">
-                        {!(currentUser?.role === 'owner' && (u.role !== 'cashier' || u.username === 'admin') && u.id !== currentUser?.id) && (
+                        {!((u.username === 'admin' || u.role === 'admin') && currentUser?.role !== 'admin') && !(currentUser?.role === 'owner' && u.role !== 'cashier' && u.id !== currentUser?.id) && (
                           <button
                             onClick={() => startEdit(u)}
                             className="p-1.5 rounded bg-secondary hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
