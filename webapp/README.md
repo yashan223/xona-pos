@@ -21,7 +21,10 @@ This portal is strictly designed for **remote monitoring** and administration.
 Ensure you have your `.env` configured:
 ```env
 VITE_API_BASE_URL=http://your-remote-backend:3000
+VITE_DEVICE_API_KEY=xona_secure_device_key_123
 ```
+
+- **VITE_DEVICE_API_KEY**: Required for authenticating the web app with the remote backend. Without it, the backend will reject all requests (401 Unauthorized) as part of the strict device authentication policy.
 
 Start the development server:
 ```bash

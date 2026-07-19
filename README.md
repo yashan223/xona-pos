@@ -44,7 +44,11 @@ PORT=3000
 MONGO_URI=mongodb://127.0.0.1:27017/xona-pos
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your_secure_password
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174
+DEVICE_API_KEY=xona_secure_device_key_123
 ```
+
+> **Security Note:** The backend enforces strict device authentication. Ensure you copy the `DEVICE_API_KEY` into your `desktop/.env` and `webapp/.env` files as `VITE_DEVICE_API_KEY`.
 
 ### 2. Launch the Backend
 Run the root helper command:
