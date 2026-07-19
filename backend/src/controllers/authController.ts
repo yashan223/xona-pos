@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import userRepository from '../repositories/userRepository.js';
 import { hashPassword, verifyPassword } from '../lib/crypto.js';
+import { logActivity } from '../lib/logger.js';
 
 class AuthController {
   private _generateId(): string {
@@ -37,6 +38,8 @@ class AuthController {
       const chosenRole = role && ['admin', 'cashier', 'owner'].includes(role) ? role : 'cashier';
 
       const user = await userRepository.createUser(id, trimmedUsername, pwHash, email || '', createdAt, chosenRole);
+
+      await logActivity(req, 'CREATE', 'User', user.id, { username: user.username, role: user.role });
 
       res.status(201).json({
         message: 'User registered successfully',
@@ -99,6 +102,7 @@ class AuthController {
       if (!success) {
         return res.status(404).json({ error: 'User not found' });
       }
+      await logActivity(req, 'DELETE', 'User', id);
       res.json({ message: 'User deleted successfully' });
     } catch (err) {
       console.error('[auth] deleteUser error:', err);
@@ -117,6 +121,7 @@ class AuthController {
       if (!success) {
         return res.status(404).json({ error: 'User not found' });
       }
+      await logActivity(req, 'UPDATE_ROLE', 'User', id, { newRole: role });
       res.json({ message: 'User role updated successfully' });
     } catch (err) {
       console.error('[auth] updateUserRole error:', err);
@@ -165,6 +170,8 @@ class AuthController {
       if (!success) {
         return res.status(404).json({ error: 'User not found' });
       }
+
+      await logActivity(req, 'UPDATE', 'User', id, { updates: Object.keys(updateData) });
 
       res.json({ message: 'User updated successfully' });
     } catch (err) {

@@ -148,6 +148,16 @@ export interface SyncStatus {
   lastSyncTime: string | null;
 }
 
+export interface ActivityRecord {
+  _id: string;
+  action: string;
+  entity: string;
+  entityId?: string;
+  userId?: string;
+  details?: any;
+  createdAt: string;
+}
+
 // ─── Product APIs ──────────────────────────────────────
 
 export const productApi = {
@@ -277,4 +287,10 @@ export const authApi = {
 export const syncApi = {
   getStatus: () => request<SyncStatus>('/sync/status').catch(() => ({ isOnline: false, pendingCount: 0, isSyncing: false, lastSyncTime: null })),
   trigger: () => request<{ success: boolean; status: SyncStatus }>('/sync/trigger').catch(() => ({ success: false, status: { isOnline: false, pendingCount: 0, isSyncing: false, lastSyncTime: null } })),
+};
+
+// ─── Activity APIs ───────────────────────────────────────
+
+export const activityApi = {
+  getAll: () => request<ActivityRecord[]>('/activity'),
 };

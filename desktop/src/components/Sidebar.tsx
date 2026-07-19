@@ -11,13 +11,14 @@ import {
   Shield,
   Settings,
   Database,
+  Activity,
 } from 'lucide-react';
 import type { User } from '@/lib/api';
 import Logo from './Logo';
 import { useTranslation } from '@/lib/translations';
 import SyncBadge from './SyncBadge';
 
-export type Page = 'dashboard' | 'products' | 'checkout' | 'transactions' | 'reports' | 'admin' | 'settings' | 'maintenance';
+export type Page = 'dashboard' | 'products' | 'checkout' | 'transactions' | 'reports' | 'admin' | 'settings' | 'maintenance' | 'activity';
 
 interface SidebarProps {
   currentPage: Page;
@@ -35,6 +36,7 @@ const navItems: { page: Page; label: string; icon: React.ElementType; role?: 'ad
   { page: 'reports', label: 'Sales Reports', icon: BarChart3 },
   { page: 'settings', label: 'System Settings', icon: Settings, role: 'admin' },
   { page: 'maintenance', label: 'Database Maintenance', icon: Database, role: 'admin' },
+  { page: 'activity', label: 'System Activity', icon: Activity, role: 'admin' },
 ];
 
 export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout }: SidebarProps) {
@@ -51,6 +53,7 @@ export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout
       case 'reports': return t('salesReports');
       case 'settings': return t('systemSettings');
       case 'maintenance': return t('databaseMaintenance');
+      case 'activity': return 'System Activity';
       default: return page;
     }
   };

@@ -9,6 +9,7 @@ import LoginPage from '@/pages/LoginPage';
 import AdminPage from '@/pages/AdminPage';
 import SettingsPage from '@/pages/SettingsPage';
 import MaintenancePage from '@/pages/MaintenancePage';
+import ActivityPage from '@/pages/ActivityPage';
 import type { User } from '@/lib/api';
 import DarkVeil from '@/components/DarkVeil';
 import { startWebSocketListener } from '@/lib/websocket';
@@ -85,6 +86,9 @@ export default function App() {
       case 'admin':
         if (!isAdminOrOwner) return <DashboardPage />;
         return <AdminPage />;
+      case 'activity':
+        if (!isAdminOrOwner) return <DashboardPage />;
+        return <ActivityPage />;
       default:
         return <DashboardPage />;
     }

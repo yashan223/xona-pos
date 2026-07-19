@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import transactionRepository from '../repositories/transactionRepository.js';
 import { generateReceiptPDF } from '../lib/pdfGenerator.js';
 import { broadcast } from '../lib/websocket.js';
+import { logActivity } from '../lib/logger.js';
 
 class TransactionController {
   create = async (req: Request, res: Response) => {
@@ -75,6 +76,8 @@ class TransactionController {
       broadcast('TRANSACTIONS_UPDATED', tx);
       broadcast('PRODUCTS_UPDATED');
       broadcast('CUSTOMERS_UPDATED');
+
+      await logActivity(req, 'REFUND', 'Transaction', tx.id, { totalAmount: tx.totalAmount });
 
       res.json({ message: 'Transaction refunded successfully', transaction: tx });
     } catch (err) {

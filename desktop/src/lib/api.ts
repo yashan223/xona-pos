@@ -595,3 +595,19 @@ export const syncApi = {
     }
   },
 };
+
+// ─── Activity APIs ───────────────────────────────────────
+
+export interface ActivityRecord {
+  _id: string;
+  action: string;
+  entity: string;
+  entityId?: string;
+  userId?: string;
+  details?: any;
+  createdAt: string;
+}
+
+export const activityApi = {
+  getAll: () => request<ActivityRecord[]>('/activity'),
+};

@@ -9,6 +9,7 @@ import graphRoutes from './routes/graph.js';
 import reportRoutes from './routes/reports.js';
 import authRoutes from './routes/auth.js';
 import syncRoutes from './routes/sync.js';
+import activityRoutes from './routes/activity.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -69,6 +70,7 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/graph', graphRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/sync', syncRoutes);
+app.use('/api/activity', activityRoutes);
 
 import http from 'http';
 import { initWebSocketServer } from './lib/websocket.js';

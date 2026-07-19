@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import productRepository from '../repositories/productRepository.js';
 import { broadcast } from '../lib/websocket.js';
+import { logActivity } from '../lib/logger.js';
 
 class ProductController {
   create = async (req: Request, res: Response) => {
@@ -23,6 +24,7 @@ class ProductController {
       });
 
       broadcast('PRODUCTS_UPDATED');
+      await logActivity(req, 'CREATE', 'Product', record.id, { name: record.name, sku: record.sku });
       res.status(201).json(record);
     } catch (err) {
       console.error('[products] POST error:', err);
@@ -51,6 +53,7 @@ class ProductController {
       }
 
       broadcast('PRODUCTS_UPDATED');
+      await logActivity(req, 'UPDATE', 'Product', record.id, { name: record.name, updates: req.body });
       res.json(record);
     } catch (err) {
       console.error('[products] PUT error:', err);
@@ -102,6 +105,7 @@ class ProductController {
         return res.status(404).json({ error: 'Product record not found' });
       }
       broadcast('PRODUCTS_UPDATED');
+      await logActivity(req, 'DELETE', 'Product', req.params.id);
       res.json({ message: 'Product record deleted' });
     } catch (err) {
       console.error('[products] DELETE error:', err);
