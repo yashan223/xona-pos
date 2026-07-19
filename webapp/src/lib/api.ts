@@ -58,8 +58,18 @@ export interface ProductRecord {
   description: string;
   imageUrl?: string;
   salesCount: number;
+  lastStockUpdatedBy?: string;
+  lastStockUpdatedAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface StockPresetRecord {
+  _id: string;
+  name: string;
+  items: { productId: string; qty: number }[];
+  createdBy: string;
+  createdAt: string;
 }
 
 export interface TransactionItem {
@@ -291,4 +301,12 @@ export const syncApi = {
 
 export const activityApi = {
   getAll: () => request<ActivityRecord[]>('/activity'),
+};
+
+
+export const inventoryApi = {
+  getPresets: () => request<StockPresetRecord[]>('/inventory/presets'),
+  createPreset: (data: { name: string; items: { productId: string; qty: number }[] }) => request<{ message: string; preset: StockPresetRecord }>('/inventory/presets', { method: 'POST', body: JSON.stringify(data) }),
+  applyPreset: (id: string, data: { updatedBy: string }) => request<{ message: string }>(`/inventory/presets/${id}/apply`, { method: 'POST', body: JSON.stringify(data) }),
+  deletePreset: (id: string) => request<{ message: string }>(`/inventory/presets/${id}`, { method: 'DELETE' }),
 };

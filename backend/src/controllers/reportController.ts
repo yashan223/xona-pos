@@ -102,6 +102,21 @@ class ReportController {
       const filePath = path.join(reportsDir, filename);
       fs.writeFileSync(filePath, pdfBuffer);
 
+      // Save to custom location on HDD if requested
+      const customSavePath = req.query.savePath as string;
+      if (customSavePath) {
+        try {
+          if (!fs.existsSync(customSavePath)) {
+            fs.mkdirSync(customSavePath, { recursive: true });
+          }
+          const customFilePath = path.join(customSavePath, filename);
+          fs.writeFileSync(customFilePath, pdfBuffer);
+        } catch (err) {
+          console.error('[reports] Failed to save to custom path:', err);
+        }
+      }
+
+
       // Save metadata entry in MongoDB
       await SavedReportModel.create({
         _id: reportId,

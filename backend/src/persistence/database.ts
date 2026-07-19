@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { hashPassword } from '../lib/crypto.js';
-import { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeModel, GraphEdgeModel, SavedReportModel } from '../models/index.js';
+import { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeModel, GraphEdgeModel, SavedReportModel, StockPresetModel } from '../models/index.js';
 import db from './sqliteDb.js';
 import { startAutoSync, pullCloudToLocal } from './syncEngine.js';
 
@@ -18,7 +18,7 @@ mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 })
   });
 
 // Re-export models for external usage in repositories
-export { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeModel, GraphEdgeModel, SavedReportModel };
+export { UserModel, ProductModel, CustomerModel, TransactionModel, GraphNodeModel, GraphEdgeModel, SavedReportModel, StockPresetModel };
 
 // ─── Database Initialization ──────────────────────────────
 

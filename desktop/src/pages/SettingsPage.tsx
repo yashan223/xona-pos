@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, Cloud, RefreshCw, CheckCircle2, CloudOff, HardDrive, FolderOpen, Save, Printer, Wifi, Usb, TestTube, Globe, Calculator, Database } from 'lucide-react';
+import { Settings, Cloud, RefreshCw, CheckCircle2, CloudOff, HardDrive, FolderOpen, Save, Printer, Wifi, Usb, TestTube, Globe, Calculator, Database, Folder } from 'lucide-react';
 import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
 import { syncApi, SyncStatus } from '@/lib/api';
@@ -17,13 +17,14 @@ export default function SettingsPage() {
   const { t, lang, setLanguage } = useTranslation();
   const { toast } = useNotification();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'tax' | 'db' | 'printer'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'tax' | 'db' | 'printer' | 'reports'>('general');
 
   const tabs = [
     { id: 'general', label: t('appLanguage') || 'General', icon: Globe },
     { id: 'tax', label: t('taxVatSettings') || 'Tax & VAT', icon: Calculator },
     { id: 'db', label: 'Database & Sync', icon: Database },
     { id: 'printer', label: 'Receipt Printer', icon: Printer },
+    { id: 'reports', label: 'Reports', icon: Folder },
   ];
 
   const [vatEnabled, setVatEnabled] = useState(() => {
@@ -34,6 +35,21 @@ export default function SettingsPage() {
     const saved = localStorage.getItem('vatPercentage');
     return saved !== null ? parseFloat(saved) : 15;
   });
+  const [customReportPath, setCustomReportPath] = useState(() => {
+    return localStorage.getItem('customReportPath') || '';
+  });
+
+  const handleBrowseReportFolder = async () => {
+    if (!window.electronDB?.browseDbFolder) {
+      toast.error('Folder picker is only available in the desktop app.');
+      return;
+    }
+    const selected = await window.electronDB.browseDbFolder();
+    if (selected) {
+      setCustomReportPath(selected);
+      localStorage.setItem('customReportPath', selected);
+    }
+  };
 
   const [forceOffline, setForceOffline] = useState(() => isForceOfflineEnabled());
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
@@ -698,6 +714,42 @@ export default function SettingsPage() {
                   {l === 'en' ? 'English' : 'සිංහල (si)'}
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+        )}
+
+        {/* Reports Settings Card */}
+        {activeTab === 'reports' && (
+        <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
+          <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
+            Report Settings
+          </h3>
+
+          <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
+            <div>
+              <h4 className="text-sm font-semibold">Custom Generation Path</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Set a custom location on your local HDD where PDF sales reports will be saved. Leave empty to use the default location.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 max-w-md">
+              <input
+                type="text"
+                value={customReportPath}
+                readOnly={true}
+                placeholder="Default Location"
+                className="flex-1 bg-secondary/40 border border-border/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-primary transition-all text-foreground cursor-not-allowed opacity-80"
+              />
+              <button
+                type="button"
+                onClick={handleBrowseReportFolder}
+                title="Browse folder"
+                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary/50 border border-border/50 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all cursor-pointer"
+              >
+                <FolderOpen className="w-4 h-4" />
+                Browse
+              </button>
             </div>
           </div>
         </div>

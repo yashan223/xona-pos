@@ -6,3 +6,4 @@ export { GraphNodeModel } from './GraphNode.js';
 export { GraphEdgeModel } from './GraphEdge.js';
 export { SavedReportModel } from './SavedReport.js';
 export { ActivityLogModel } from './ActivityLog.js';
+export { StockPresetModel } from './StockPreset.js';

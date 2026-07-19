@@ -11,6 +11,8 @@ const ProductSchema = new mongoose.Schema({
   description: { type: String, default: '' },
   imageUrl: { type: String, default: '' },
   salesCount: { type: Number, default: 0 },
+  lastStockUpdatedBy: { type: String, default: null },
+  lastStockUpdatedAt: { type: String, default: null },
   createdAt: { type: String, required: true },
   updatedAt: { type: String, required: true },
 });

@@ -5,6 +5,7 @@ import { useNotification } from '@/context/NotificationContext';
 import { productApi } from '@/lib/api';
 import type { ProductRecord, User } from '@/lib/api';
 import { useTranslation } from '@/lib/translations';
+import StockPresetsTab from '@/components/StockPresetsTab';
 
 let cachedProducts: ProductRecord[] | null = null;
 
@@ -20,6 +21,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
   const [loading, setLoading] = useState(!cachedProducts);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'presets'>('inventory');
   
 
   
@@ -257,6 +259,26 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
         )}
       </div>
 
+      <div className="flex border-b border-border/40">
+        <button
+          onClick={() => setActiveTab('inventory')}
+          className={`px-4 py-2 font-medium text-sm transition-colors ${
+            activeTab === 'inventory' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Inventory List
+        </button>
+        <button
+          onClick={() => setActiveTab('presets')}
+          className={`px-4 py-2 font-medium text-sm transition-colors ${
+            activeTab === 'presets' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Stock Presets
+        </button>
+      </div>
+
+      {activeTab === 'inventory' ? (
       <div className="space-y-4 w-full">
         {/* Controls: Search and Category Filter */}
         <div className="flex flex-col sm:flex-row gap-3">
@@ -357,6 +379,14 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                         <p className="font-medium text-sm text-muted-foreground">{formatCurrency(prod.cost)}</p>
                       </div>
                     )}
+                    {prod.lastStockUpdatedBy && (
+                      <div className="hidden xl:block">
+                        <p className="text-[10px] text-muted-foreground">Last Stock Update</p>
+                        <p className="font-medium text-[11px] text-muted-foreground" title={prod.lastStockUpdatedAt ? new Date(prod.lastStockUpdatedAt).toLocaleString() : ''}>
+                          {prod.lastStockUpdatedBy}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
@@ -389,6 +419,9 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
           </div>
         )}
       </div>
+      ) : (
+        <StockPresetsTab currentUser={currentUser} />
+      )}
       </div>
 
       {/* Editor Modal / Inline Form */}
