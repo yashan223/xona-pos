@@ -26,11 +26,16 @@ app.use(cors({
     } else {
       callback(new Error('Not allowed by CORS'));
     }
-  }
+  },
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key', 'x-user-id', 'x-user-role']
 }));
 
 // Device API Key Middleware
 app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+  
   const apiKey = req.headers['x-api-key'];
   const expectedKey = process.env.DEVICE_API_KEY;
 
