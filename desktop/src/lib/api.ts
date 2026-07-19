@@ -35,6 +35,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     headers['Content-Type'] = 'application/json';
   }
 
+  const apiKey = import.meta.env.VITE_DEVICE_API_KEY;
+  if (apiKey) {
+    headers['x-api-key'] = apiKey;
+  }
+
   const saved = localStorage.getItem('currentUser');
   if (saved) {
     try {

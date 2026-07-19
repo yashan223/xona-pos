@@ -15,7 +15,32 @@ const PORT = process.env.PORT || 3000;
 
 const backendDir = process.cwd().endsWith('backend') ? process.cwd() : path.join(process.cwd(), 'backend');
 
-app.use(cors());
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',') 
+  : ['http://localhost:5173'];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+}));
+
+// Device API Key Middleware
+app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+  const apiKey = req.headers['x-api-key'];
+  const expectedKey = process.env.DEVICE_API_KEY;
+
+  // Allow requests if no key is configured on server (for backward compat), 
+  // but if configured, enforce it.
+  if (expectedKey && apiKey !== expectedKey) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid Device API Key' });
+  }
+  next();
+});
 app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(path.join(backendDir, 'uploads')));
 app.use('/receipts', express.static(path.join(backendDir, 'receipts')));
