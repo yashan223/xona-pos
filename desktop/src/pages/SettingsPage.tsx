@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, Cloud, RefreshCw, CheckCircle2, CloudOff, HardDrive, FolderOpen, Save, Printer, Wifi, Usb, TestTube } from 'lucide-react';
+import { Settings, Cloud, RefreshCw, CheckCircle2, CloudOff, HardDrive, FolderOpen, Save, Printer, Wifi, Usb, TestTube, Globe, Calculator, Database } from 'lucide-react';
 import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
 import { syncApi, SyncStatus } from '@/lib/api';
@@ -16,6 +16,15 @@ import {
 export default function SettingsPage() {
   const { t, lang, setLanguage } = useTranslation();
   const { toast } = useNotification();
+
+  const [activeTab, setActiveTab] = useState<'general' | 'tax' | 'db' | 'printer'>('general');
+
+  const tabs = [
+    { id: 'general', label: t('appLanguage') || 'General', icon: Globe },
+    { id: 'tax', label: t('taxVatSettings') || 'Tax & VAT', icon: Calculator },
+    { id: 'db', label: 'Database & Sync', icon: Database },
+    { id: 'printer', label: 'Receipt Printer', icon: Printer },
+  ];
 
   const [vatEnabled, setVatEnabled] = useState(() => {
     const saved = localStorage.getItem('vatEnabled');
@@ -177,9 +186,31 @@ export default function SettingsPage() {
         </p>
       </div>
 
+      {/* Settings Navigation Tabs */}
+      <div className="flex items-center gap-2 border-b border-border/50 pb-2 overflow-x-auto">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-t-xl text-sm font-medium transition-all cursor-pointer ${
+                activeTab === tab.id
+                  ? 'bg-primary/10 text-primary border-b-2 border-primary'
+                  : 'text-muted-foreground hover:bg-secondary/40 hover:text-foreground'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
         {/* VAT & Tax Settings Card */}
-        <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl">
+        {activeTab === 'tax' && (
+        <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
             {t('taxVatSettings')}
           </h3>
@@ -239,8 +270,11 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Cloud Sync & Offline Mode Card */}
+        {activeTab === 'db' && (
+          <>
         <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
             <Cloud className="w-4 h-4 text-primary" />
@@ -330,7 +364,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Local Database Storage Card */}
-        <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
+        <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
             <HardDrive className="w-4 h-4 text-primary" />
             Local Database Storage
@@ -388,8 +422,11 @@ export default function SettingsPage() {
             </button>
           </div>
         </div>
+        </>
+        )}
 
         {/* Receipt Printer Card */}
+        {activeTab === 'printer' && (
         <div className="glass-card p-6 space-y-5 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
             <Printer className="w-4 h-4 text-primary" />
@@ -630,8 +667,10 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Language Settings Card */}
+        {activeTab === 'general' && (
         <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
             {t('appLanguage')}
@@ -662,6 +701,7 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
