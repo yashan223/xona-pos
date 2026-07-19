@@ -42,27 +42,13 @@ Stores product item details, pricing records, cost, stocks, and sales popularity
 
 ---
 
-### 3. `customers` (CRM)
-Maintains customer profile records for customer relationship management.
-
-| Field | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `_id` | `String` | Yes | Unique customer identifier. |
-| `name` | `String` | Yes | Full name. |
-| `phone` | `String` | No | Phone contact index number. |
-| `email` | `String` | No | Email contact address. |
-| `createdAt` | `String` | Yes | ISO datetime of customer profile creation. |
-
----
-
-### 4. `transactions` (Invoices & Audits)
+### 3. `transactions` (Invoices & Audits)
 Stores finalized checkouts, payment preferences, line-item arrays, taxes, discounts, and audit statuses.
 
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
 | `_id` | `String` | Yes | Unique transaction receipt ID. |
 | `cashierId` | `String` | Yes | Link to the cashier user ID who processed checkout. |
-| `customerId` | `String` | No | Optional link to CRM loyalty customer ID. |
 | `items` | `Array` | Yes | Nested array of `TransactionItem` structures (see below). |
 | `subtotal` | `Number` | Yes | Gross aggregate amount before tax/discounts. |
 | `discount` | `Number` | Yes | Discount amount subtracted from subtotal. |
@@ -82,7 +68,7 @@ Each line item contains:
 
 ---
 
-### 5. `graphnodes` (Recommendation Net Nodes)
+### 4. `graphnodes` (Recommendation Net Nodes)
 Matches products or categories as vertices in the recommendation graph structures.
 
 | Field | Type | Required | Description |
@@ -94,7 +80,7 @@ Matches products or categories as vertices in the recommendation graph structure
 
 ---
 
-### 6. `graphedges` (Bought-Together Co-occurrences)
+### 5. `graphedges` (Bought-Together Co-occurrences)
 Captures connection pathways and increments transaction co-occurrence weights.
 
 | Field | Type | Required | Description |
@@ -112,8 +98,7 @@ When operating in local/offline mode, the system uses WAL-enabled SQLite (`pos_l
 
 * `local_users` (`id`, `username`, `passwordHash`, `email`, `role`, `synced`, `createdAt`)
 * `local_products` (`id`, `name`, `sku`, `category`, `price`, `cost`, `stock`, `description`, `imageUrl`, `salesCount`, `synced`, `createdAt`, `updatedAt`)
-* `local_customers` (`id`, `name`, `phone`, `email`, `synced`, `createdAt`)
-* `local_transactions` (`id`, `cashierId`, `customerId`, `itemsJson`, `subtotal`, `discount`, `tax`, `totalAmount`, `paymentMethod`, `paymentStatus`, `synced`, `createdAt`)
+* `local_transactions` (`id`, `cashierId`, `itemsJson`, `subtotal`, `discount`, `tax`, `totalAmount`, `paymentMethod`, `paymentStatus`, `synced`, `createdAt`)
 * `local_graph_nodes` (`id`, `type`, `label`, `metadataJson`, `synced`)
 * `local_graph_edges` (`id`, `source`, `target`, `type`, `metadataJson`, `synced`)
 
@@ -124,7 +109,6 @@ When operating in local/offline mode, the system uses WAL-enabled SQLite (`pos_l
 ```mermaid
 erDiagram
     users ||--o{ transactions : "processes"
-    customers ||--o{ transactions : "owns"
     transactions ||--|{ transaction_items : "contains"
     products ||--o{ transaction_items : "referenced_by"
     

@@ -1,8 +1,8 @@
 # 🛒 Xona POS System
 
-Xona POS is a modern, high-performance, **offline-first Point of Sale (POS) system** built for retail management, fast checkout registers, inventory control, customer CRM, and analytical business reports.
+Xona POS is a modern, high-performance, **offline-first Point of Sale (POS) system** built for retail management, fast checkout registers, inventory control, and analytical business reports.
 
-It is designed with a **dual-layer architecture**: the Desktop Client runs **100% locally on the Cashier PC** with an embedded local database (`offlineStore.ts`) that guarantees 0-latency checkouts even when completely disconnected from the internet, while automatically synchronizing queued transactions, catalog updates, and customer profiles to a **Cloud MongoDB** cluster whenever online connectivity is active.
+It is designed with a **dual-layer architecture**: the Desktop Client runs **100% locally on the Cashier PC** with an embedded local database (`offlineStore.ts`) that guarantees 0-latency checkouts even when completely disconnected from the internet, while automatically synchronizing queued transactions and catalog updates to a **Cloud MongoDB** cluster whenever online connectivity is active.
 
 ---
 
@@ -21,12 +21,12 @@ It is designed with a **dual-layer architecture**: the Desktop Client runs **100
 
 ## ⚡ Key Features
 
-* **🛒 Offline-First POS Register:** Fast product lookup, customer selection, cash payment handling, instant discount calculations, tax handling, and instant receipt printing. Operates 100% offline without requiring a local backend server.
-* **🔄 Automatic Cloud Synchronization:** Background flusher that queues offline products, customers, and transactions locally, then uploads pending records to Cloud MongoDB in strict dependency order (Customers $\rightarrow$ Products $\rightarrow$ Transactions).
+* **🛒 Offline-First POS Register:** Fast product lookup, cash payment handling, instant discount calculations, tax handling, and instant receipt printing. Operates 100% offline without requiring a local backend server.
+* **🔄 Automatic Cloud Synchronization:** Background flusher that queues offline products and transactions locally, then uploads pending records to Cloud MongoDB in strict dependency order (Products $\rightarrow$ Transactions).
 * **🔒 Seamless Offline Login:** Offline user credentials caching allows cashiers and admins to log in and operate the app even when disconnected from the internet.
 * **⚡ Always Offline Mode Toggle:** Setting switch that forces the app to run strictly from local disk storage without issuing remote cloud network requests or error notifications.
 * **📦 Catalog Management:** Full inventory CRUD controls, SKU management, stock tracking, price/cost adjustments, and product image uploads.
-* **👥 Customer CRM:** Customer profile management and transaction association.
+
 * **🕸️ Product Co-Occurrence Net:** Graph relationship visualization (powered by ECharts) highlighting items frequently purchased together using BFS & DFS graph algorithms.
 * **🇱🇰 Multi-Language & Sinhala Typography:** Integrated Google Font `Noto Sans Sinhala` for proper Sinhala text shaping across all views, menus, and receipts.
 * **🧾 Transaction & Audit Logs:** Detailed transaction history, line-item audit views, and instant refund processing with inventory reversal.
@@ -86,7 +86,7 @@ Run the root helper command:
 ## 🖥️ Application Modules
 
 * **Dashboard:** Real-time revenue metrics, transaction counts, Average Order Value (AOV), and top-selling product lists.
-* **Checkout Register:** Cashier terminal with category filtering, instant cart calculations, customer selector, and product co-occurrence recommendation panel.
+* **Checkout Register:** Cashier terminal with category filtering, instant cart calculations, and product co-occurrence recommendation panel.
 * **Products Catalog:** Inventory catalog manager supporting live search, price/stock updates, and image asset uploads.
 * **Transactions:** Complete history log with search filters, transaction status badges, and one-click refund capabilities.
 * **Co-Occurrence Net:** Interactive visual graph mapping connections between categories and items commonly purchased in single checkouts.

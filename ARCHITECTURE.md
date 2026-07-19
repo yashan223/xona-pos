@@ -10,7 +10,7 @@ This document details the system design, network boundaries, database topology, 
 flowchart TD
     subgraph ClientPC ["💻 Cashier Computer (Client PC)"]
         UI["🖥️ Desktop Frontend (React + Vite + Electron)"]
-        LocalDB[("💾 Frontend Local DB Engine\n(products, customers, transactions, sync_queue)")]
+        LocalDB[("💾 Frontend Local DB Engine\n(products, transactions, sync_queue)")]
         SyncEngine["🔄 Frontend Auto-Sync Engine\n(Online/Offline Detector & Dependency Flusher)"]
         ReceiptGen["🧾 Local Receipt Generator\n(Instant PDF / Thermal Print)"]
 
@@ -75,7 +75,7 @@ sequenceDiagram
         Note over Desktop,LocalDB: POS operates 100% locally without errors
         Note over Network,Cloud: Internet connection restored later
         Desktop->>Network: Trigger Background Flusher
-        Network->>Cloud: POST /api/customers -> /api/products -> /api/transactions
+        Network->>Cloud: POST /api/products -> /api/transactions
         Cloud-->>Desktop: All pending records synced to Cloud MongoDB
     end
 ```
@@ -86,8 +86,8 @@ sequenceDiagram
 
 ### 1. Client PC Desktop Application (`desktop/`)
 * **Technology**: React 19, Vite, Electron, Tailwind CSS, Lucide Icons, ECharts.
-* **Role**: Runs directly on the cashier's computer. Manages UI registers, catalog search, receipt generation, and customer management.
-* **Offline Resilience**: Features an embedded client database store (`offlineStore.ts`) that persists products, customers, transactions, and user credentials locally on disk.
+* **Role**: Runs directly on the cashier's computer. Manages UI registers, catalog search, and receipt generation.
+* **Offline Resilience**: Features an embedded client database store (`offlineStore.ts`) that persists products, transactions, and user credentials locally on disk.
 
 ### 2. Remote Cloud Infrastructure (`backend/`)
 * **Technology**: Node.js, Express.js, Mongoose, WebSocket (`ws`).
@@ -111,6 +111,5 @@ sequenceDiagram
 
 ### 6. Sync Engine Pipeline
 * **Dependency-Ordered Flushing**:
-  1. **Customers First**: Syncs new customer profiles to generate valid Cloud IDs.
-  2. **Products Second**: Syncs newly created/edited catalog items.
-  3. **Transactions Third**: Syncs offline checkouts referencing valid customer and product IDs.
+  1. **Products First**: Syncs newly created/edited catalog items.
+  2. **Transactions Second**: Syncs offline checkouts referencing valid product IDs.
