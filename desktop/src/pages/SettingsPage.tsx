@@ -4,6 +4,8 @@ import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
 import { syncApi, SyncStatus } from '@/lib/api';
 import { isForceOfflineEnabled, setForceOfflineEnabled } from '@/lib/offlineStore';
+import { getConfig, setConfig } from '@/lib/configStore';
+
 import {
   getPrinterConfig,
   savePrinterConfig,
@@ -24,15 +26,15 @@ export default function SettingsPage() {
     { id: 'reports', label: 'Reports', icon: Folder },
   ];
   const [vatEnabled, setVatEnabled] = useState(() => {
-    const saved = localStorage.getItem('vatEnabled');
+    const saved = getConfig('vatEnabled');
     return saved !== null ? saved === 'true' : true;
   });
   const [vatPercentage, setVatPercentage] = useState(() => {
-    const saved = localStorage.getItem('vatPercentage');
+    const saved = getConfig('vatPercentage');
     return saved !== null ? parseFloat(saved) : 15;
   });
   const [customReportPath, setCustomReportPath] = useState(() => {
-    return localStorage.getItem('customReportPath') || '';
+    return getConfig('customReportPath') || '';
   });
   const handleBrowseReportFolder = async () => {
     if (!window.electronDB?.browseDbFolder) {
@@ -42,7 +44,7 @@ export default function SettingsPage() {
     const selected = await window.electronDB.browseDbFolder();
     if (selected) {
       setCustomReportPath(selected);
-      localStorage.setItem('customReportPath', selected);
+      setConfig('customReportPath', selected);
     }
   };
   const [forceOffline, setForceOffline] = useState(() => isForceOfflineEnabled());
@@ -217,7 +219,7 @@ export default function SettingsPage() {
                   checked={vatEnabled}
                   onChange={(e) => {
                     const val = e.target.checked;
-                    localStorage.setItem('vatEnabled', String(val));
+                    setConfig('vatEnabled', String(val));
                     setVatEnabled(val);
                     toast.success(`VAT calculations ${val ? 'enabled' : 'disabled'} successfully.`);
                     window.dispatchEvent(new CustomEvent('products_updated'));
@@ -243,7 +245,7 @@ export default function SettingsPage() {
                   value={vatPercentage}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value) || 0;
-                    localStorage.setItem('vatPercentage', String(val));
+                    setConfig('vatPercentage', String(val));
                     setVatPercentage(val);
                     window.dispatchEvent(new CustomEvent('products_updated'));
                   }}

@@ -6,6 +6,11 @@ contextBridge.exposeInMainWorld('electronDB', {
   setDbPath: (dirPath: string) => ipcRenderer.invoke('db-set-path', dirPath),
   browseDbFolder: () => ipcRenderer.invoke('db-browse-folder'),
 });
+contextBridge.exposeInMainWorld('electronConfig', {
+  get: (key: string) => ipcRenderer.sendSync('config-get', key),
+  set: (key: string, value: any) => ipcRenderer.sendSync('config-set', key, value),
+  getAll: () => ipcRenderer.sendSync('config-get-all'),
+});
 contextBridge.exposeInMainWorld('electronPrinter', {
   listPrinters: () =>
     ipcRenderer.invoke('printer-list'),

@@ -65,6 +65,49 @@ ipcMain.handle('db-set-path', async (_event, dirPath: string) => {
     return { success: false, error: err.message };
   }
 });
+
+
+const getConfigFile = () => {
+  const dir = getCustomDbDir() ?? app.getPath('userData');
+  return path.join(dir, 'xona_config.json');
+};
+
+function loadConfig() {
+  try {
+    const file = getConfigFile();
+    if (fs.existsSync(file)) {
+      return JSON.parse(fs.readFileSync(file, 'utf-8'));
+    }
+  } catch (err) {
+    console.error('[Config] Failed to load config:', err);
+  }
+  return {};
+}
+
+function saveConfig(config: any) {
+  try {
+    const file = getConfigFile();
+    fs.writeFileSync(file, JSON.stringify(config, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[Config] Failed to save config:', err);
+  }
+}
+
+ipcMain.on('config-get', (event, key: string) => {
+  const config = loadConfig();
+  event.returnValue = config[key];
+});
+
+ipcMain.on('config-get-all', (event) => {
+  event.returnValue = loadConfig();
+});
+
+ipcMain.on('config-set', (event, key: string, value: any) => {
+  const config = loadConfig();
+  config[key] = value;
+  saveConfig(config);
+  event.returnValue = true;
+});
 ipcMain.handle('db-browse-folder', async () => {
   const win = BrowserWindow.getFocusedWindow();
   const result = await dialog.showOpenDialog(win!, {

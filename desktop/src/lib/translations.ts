@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { getConfig, setConfig } from '@/lib/configStore';
+
 export type Language = 'en' | 'si';
 export const translations = {
   en: {
@@ -311,7 +313,7 @@ export const translations = {
   }
 };
 export const getLanguage = (): Language => {
-  const saved = localStorage.getItem('appLanguage');
+  const saved = getConfig('appLanguage');
   return (saved === 'si' ? 'si' : 'en') as Language;
 };
 export const useTranslation = () => {
@@ -329,7 +331,7 @@ export const useTranslation = () => {
     return translations[lang][key] || translations.en[key] || String(key);
   };
   const setLanguage = (newLang: Language) => {
-    localStorage.setItem('appLanguage', newLang);
+    setConfig('appLanguage', newLang);
     window.dispatchEvent(new CustomEvent('language_changed'));
   };
   return { t, lang, setLanguage };

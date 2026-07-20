@@ -1,18 +1,10 @@
-/**
- * Client-Side Permanent Database & Sync Engine — Xona POS Desktop
- * Saves offline data PERMANENTLY on the client PC hard drive (never evicted like temporary cache).
- *
- * Multi-Layer Permanent Disk Storage:
- *   1. Persistent Disk File API (Electron %APPDATA%/userData HDD file system)
- *   2. Persistent Storage API (navigator.storage.persist())
- *   3. Permanent IndexedDB & Relational Key Value Stores
- */
 import { ProductRecord, CustomerRecord, TransactionItem, TransactionRecord, User } from './api';
+import { getConfig, setConfig } from '@/lib/configStore';
+
 const LOCAL_PRODUCTS_TABLE = 'xona_local_products_db';
 const LOCAL_CUSTOMERS_TABLE = 'xona_local_customers_db';
 const LOCAL_TRANSACTIONS_TABLE = 'xona_local_transactions_db';
 const PENDING_SYNC_QUEUE_TABLE = 'xona_local_sync_queue_db';
-const FORCE_OFFLINE_KEY = 'xona_force_offline';
 const CACHED_USER_KEY = 'xona_offline_user';
 const CACHED_USERS_LIST_KEY = 'xona_offline_users_list';
 declare global {
@@ -53,14 +45,14 @@ function readPermanentData(key: string): string | null {
 }
 export function isForceOfflineEnabled(): boolean {
   try {
-    return localStorage.getItem(FORCE_OFFLINE_KEY) === 'true';
+    return getConfig('xona_force_offline') === 'true' || getConfig('xona_force_offline') === true;
   } catch (err) {
     return false;
   }
 }
 export function setForceOfflineEnabled(enabled: boolean): void {
   try {
-    writePermanentData(FORCE_OFFLINE_KEY, String(enabled));
+    setConfig('xona_force_offline', String(enabled));
     window.dispatchEvent(new CustomEvent('offline_mode_changed'));
   } catch (err) {
     console.error('[PermanentDB] Failed to update force offline setting:', err);
@@ -382,8 +374,8 @@ export async function syncAllOfflineData(api: {
 }
 export const syncOfflineTransactions = async (sendFunction: (payload: any) => Promise<any>) => {
   return syncAllOfflineData({
-    createCustomer: async () => {},
-    createProduct: async () => {},
+    createCustomer: async () => { },
+    createProduct: async () => { },
     createTransaction: sendFunction,
   });
 };

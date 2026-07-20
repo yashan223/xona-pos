@@ -1,9 +1,11 @@
+import { getConfig } from '@/lib/configStore';
 import { useEffect, useState } from 'react';
 import { RefreshCw, FileText } from 'lucide-react';
 import { reportApi, BASE_HOST } from '@/lib/api';
 import type { User, SavedReportRecord } from '@/lib/api';
 import { useNotification } from '@/context/NotificationContext';
 import { useTranslation } from '@/lib/translations';
+
 interface ReportsPageProps {
   currentUser: User | null;
 }
@@ -39,7 +41,7 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
   async function generatePdfReport() {
     setExporting(true);
     try {
-      const saved = localStorage.getItem('currentUser');
+      const saved = getConfig('currentUser');
       const headers: Record<string, string> = {};
       let role = currentUser?.role || 'cashier';
       const apiKey = import.meta.env.VITE_DEVICE_API_KEY;
@@ -54,7 +56,7 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
           role = user.role;
         }
       }
-      const customPath = localStorage.getItem('customReportPath') || '';
+      const customPath = getConfig('customReportPath') || '';
       let url = `${BASE_HOST}/api/reports/pdf?type=${selectedReportType}&role=${role}`;
       if (customPath) {
         url += `&savePath=${encodeURIComponent(customPath)}`;
