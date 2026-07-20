@@ -12,13 +12,10 @@ import {
   type PrinterConfig,
   type PrintMethod,
 } from '@/lib/printerStore';
-
 export default function SettingsPage() {
   const { t, lang, setLanguage } = useTranslation();
   const { toast } = useNotification();
-
   const [activeTab, setActiveTab] = useState<'general' | 'tax' | 'db' | 'printer' | 'reports'>('general');
-
   const tabs = [
     { id: 'general', label: t('appLanguage') || 'General', icon: Globe },
     { id: 'tax', label: t('taxVatSettings') || 'Tax & VAT', icon: Calculator },
@@ -26,7 +23,6 @@ export default function SettingsPage() {
     { id: 'printer', label: 'Receipt Printer', icon: Printer },
     { id: 'reports', label: 'Reports', icon: Folder },
   ];
-
   const [vatEnabled, setVatEnabled] = useState(() => {
     const saved = localStorage.getItem('vatEnabled');
     return saved !== null ? saved === 'true' : true;
@@ -38,7 +34,6 @@ export default function SettingsPage() {
   const [customReportPath, setCustomReportPath] = useState(() => {
     return localStorage.getItem('customReportPath') || '';
   });
-
   const handleBrowseReportFolder = async () => {
     if (!window.electronDB?.browseDbFolder) {
       toast.error('Folder picker is only available in the desktop app.');
@@ -50,16 +45,12 @@ export default function SettingsPage() {
       localStorage.setItem('customReportPath', selected);
     }
   };
-
   const [forceOffline, setForceOffline] = useState(() => isForceOfflineEnabled());
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [syncing, setSyncing] = useState(false);
-
   const [dbPath, setDbPath] = useState('');
   const [dbPathInput, setDbPathInput] = useState('');
   const [savingPath, setSavingPath] = useState(false);
-
-  // Load current DB storage path
   useEffect(() => {
     const load = async () => {
       if (window.electronDB?.getDbPath) {
@@ -70,13 +61,11 @@ export default function SettingsPage() {
     };
     load();
   }, []);
-
   const handleBrowseDbFolder = async () => {
     if (!window.electronDB?.browseDbFolder) return;
     const selected = await window.electronDB.browseDbFolder();
     if (selected) setDbPathInput(selected);
   };
-
   const handleSaveDbPath = async () => {
     if (!window.electronDB?.setDbPath) {
       toast.error('Folder picker is only available in the desktop app.');
@@ -100,23 +89,18 @@ export default function SettingsPage() {
       setSavingPath(false);
     }
   };
-
-  // ─── Printer Settings State ───────────────────────────────────
   const [printerCfg, setPrinterCfg] = useState<PrinterConfig>(() => getPrinterConfig());
   const [availablePrinters, setAvailablePrinters] = useState<string[]>([]);
   const [savingPrinter, setSavingPrinter] = useState(false);
   const [testingPrinter, setTestingPrinter] = useState(false);
-
   useEffect(() => {
     if (printerCfg.method === 'queue') {
       listWindowsPrinters().then(setAvailablePrinters);
     }
   }, [printerCfg.method]);
-
   const updatePrinterCfg = (partial: Partial<PrinterConfig>) => {
     setPrinterCfg((prev) => ({ ...prev, ...partial }));
   };
-
   const handleSavePrinter = () => {
     setSavingPrinter(true);
     try {
@@ -128,7 +112,6 @@ export default function SettingsPage() {
       setSavingPrinter(false);
     }
   };
-
   const handleTestPrint = async () => {
     savePrinterConfig(printerCfg);
     setTestingPrinter(true);
@@ -150,7 +133,6 @@ export default function SettingsPage() {
       setTestingPrinter(false);
     }
   };
-
   const fetchSyncStatus = async () => {
     try {
       const data = await syncApi.getStatus();
@@ -159,20 +141,16 @@ export default function SettingsPage() {
       setSyncStatus({ isOnline: false, pendingCount: 0, isSyncing: false, lastSyncTime: null });
     }
   };
-
   useEffect(() => {
     fetchSyncStatus();
     const interval = setInterval(fetchSyncStatus, 5000);
-
     const handleOfflineModeChange = () => fetchSyncStatus();
     window.addEventListener('offline_mode_changed', handleOfflineModeChange);
-
     return () => {
       clearInterval(interval);
       window.removeEventListener('offline_mode_changed', handleOfflineModeChange);
     };
   }, []);
-
   const handleManualSync = async () => {
     if (forceOffline) {
       toast.error('Cannot sync to cloud while Always Offline Mode is enabled.');
@@ -189,7 +167,6 @@ export default function SettingsPage() {
       setSyncing(false);
     }
   };
-
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 animate-fade-in text-left">
       <div>
@@ -201,8 +178,6 @@ export default function SettingsPage() {
           Configure application defaults, offline storage preferences, VAT rates, and localization
         </p>
       </div>
-
-      {/* Settings Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-border/50 pb-2 overflow-x-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -222,17 +197,13 @@ export default function SettingsPage() {
           );
         })}
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
-        {/* VAT & Tax Settings Card */}
         {activeTab === 'tax' && (
         <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
             {t('taxVatSettings')}
           </h3>
-
           <div className="space-y-4">
-            {/* VAT Toggle */}
             <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/20 border border-border/50">
               <div>
                 <h4 className="text-sm font-semibold text-foreground">{t('enableVat')}</h4>
@@ -256,8 +227,6 @@ export default function SettingsPage() {
                 <div className="w-9 h-5 bg-secondary/60 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
               </label>
             </div>
-
-            {/* VAT Percentage */}
             <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
               <div>
                 <h4 className="text-sm font-semibold">{t('vatPercentage')}</h4>
@@ -287,8 +256,6 @@ export default function SettingsPage() {
           </div>
         </div>
         )}
-
-        {/* Cloud Sync & Offline Mode Card */}
         {activeTab === 'db' && (
           <>
         <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl">
@@ -296,9 +263,7 @@ export default function SettingsPage() {
             <Cloud className="w-4 h-4 text-primary" />
             Cloud Sync & Offline Mode
           </h3>
-
           <div className="space-y-4">
-            {/* Always Offline Mode Toggle */}
             <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/20 border border-border/50">
               <div>
                 <h4 className="text-sm font-semibold text-foreground">Always Offline Mode</h4>
@@ -322,8 +287,6 @@ export default function SettingsPage() {
                 <div className="w-9 h-5 bg-secondary/60 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
               </label>
             </div>
-
-            {/* Connection Status Box */}
             <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
               <div className="flex justify-between items-center">
                 <div>
@@ -351,21 +314,18 @@ export default function SettingsPage() {
                   )}
                 </div>
               </div>
-
               <div className="pt-2 border-t border-border/30 flex justify-between items-center text-xs">
                 <span className="text-muted-foreground">Pending Unsynced Items:</span>
                 <span className="font-mono font-bold text-foreground bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">
                   {syncStatus?.pendingCount ?? 0} items
                 </span>
               </div>
-
               {syncStatus?.lastSyncTime && !forceOffline && (
                 <div className="flex justify-between items-center text-[11px] text-muted-foreground">
                   <span>Last Successful Sync:</span>
                   <span>{new Date(syncStatus.lastSyncTime).toLocaleTimeString()}</span>
                 </div>
               )}
-
               <button
                 type="button"
                 onClick={handleManualSync}
@@ -378,14 +338,11 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-
-        {/* Local Database Storage Card */}
         <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
             <HardDrive className="w-4 h-4 text-primary" />
             Local Database Storage
           </h3>
-
           <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
             <div>
               <h4 className="text-sm font-semibold">Storage Folder Location</h4>
@@ -394,16 +351,12 @@ export default function SettingsPage() {
                 Changes take effect after restarting the app.
               </p>
             </div>
-
-            {/* Current active path */}
             {dbPath && dbPath !== dbPathInput && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground bg-secondary/30 px-3 py-2 rounded-lg border border-border/40">
                 <span className="shrink-0 font-medium">Active:</span>
                 <span className="font-mono truncate">{dbPath}</span>
               </div>
             )}
-
-            {/* Path input + browse button */}
             <div className="flex gap-2 items-center">
               <input
                 id="db-path-input"
@@ -425,7 +378,6 @@ export default function SettingsPage() {
                 Browse
               </button>
             </div>
-
             <button
               id="db-save-path-btn"
               type="button"
@@ -440,16 +392,12 @@ export default function SettingsPage() {
         </div>
         </>
         )}
-
-        {/* Receipt Printer Card */}
         {activeTab === 'printer' && (
         <div className="glass-card p-6 space-y-5 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
             <Printer className="w-4 h-4 text-primary" />
             Receipt Printer
           </h3>
-
-          {/* Enable / disable toggle */}
           <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/20 border border-border/50">
             <div>
               <h4 className="text-sm font-semibold text-foreground">Enable POS Printer</h4>
@@ -468,10 +416,8 @@ export default function SettingsPage() {
               <div className="w-9 h-5 bg-secondary/60 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary" />
             </label>
           </div>
-
           {printerCfg.enabled && (
             <div className="space-y-4">
-              {/* Connection method */}
               <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
                 <h4 className="text-sm font-semibold">Connection Method</h4>
                 <div className="flex gap-2 flex-wrap">
@@ -495,8 +441,6 @@ export default function SettingsPage() {
                     </button>
                   ))}
                 </div>
-
-                {/* Network fields */}
                 {printerCfg.method === 'network' && (
                   <div className="flex gap-3 pt-1">
                     <div className="flex-1 space-y-1">
@@ -522,8 +466,6 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 )}
-
-                {/* Windows queue fields */}
                 {printerCfg.method === 'queue' && (
                   <div className="space-y-2 pt-1">
                     <div className="flex gap-2 items-end">
@@ -555,8 +497,6 @@ export default function SettingsPage() {
                     )}
                   </div>
                 )}
-
-                {/* Serial fields */}
                 {printerCfg.method === 'serial' && (
                   <div className="flex gap-3 pt-1">
                     <div className="flex-1 space-y-1">
@@ -586,8 +526,6 @@ export default function SettingsPage() {
                   </div>
                 )}
               </div>
-
-              {/* Paper width + Store info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
                   <h4 className="text-sm font-semibold">Paper Width</h4>
@@ -609,7 +547,6 @@ export default function SettingsPage() {
                     ))}
                   </div>
                 </div>
-
                 <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
                   <h4 className="text-sm font-semibold">Auto-Print after Checkout</h4>
                   <div className="flex items-center justify-between">
@@ -627,8 +564,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Store info for receipt header */}
               <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
                 <h4 className="text-sm font-semibold">Receipt Header</h4>
                 <div className="space-y-2">
@@ -656,8 +591,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Actions */}
               <div className="flex gap-3">
                 <button
                   id="printer-save-btn"
@@ -684,14 +617,11 @@ export default function SettingsPage() {
           )}
         </div>
         )}
-
-        {/* Language Settings Card */}
         {activeTab === 'general' && (
         <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
             {t('appLanguage')}
           </h3>
-
           <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
             <div>
               <h4 className="text-sm font-semibold">{t('appLanguage')}</h4>
@@ -718,14 +648,11 @@ export default function SettingsPage() {
           </div>
         </div>
         )}
-
-        {/* Reports Settings Card */}
         {activeTab === 'reports' && (
         <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
             Report Settings
           </h3>
-
           <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
             <div>
               <h4 className="text-sm font-semibold">Custom Generation Path</h4>

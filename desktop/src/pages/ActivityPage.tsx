@@ -5,13 +5,11 @@ import { useNotification } from '@/context/NotificationContext';
 import { format } from 'date-fns';
 import { useTranslation } from '@/lib/translations';
 import { User } from '@/lib/api';
-
 export default function ActivityPage({ currentUser: user }: { currentUser: User | null }) {
   const { t } = useTranslation();
   const { toast } = useNotification();
   const [logs, setLogs] = useState<ActivityRecord[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     async function fetchLogs() {
       try {
@@ -23,12 +21,10 @@ export default function ActivityPage({ currentUser: user }: { currentUser: User 
         setLoading(false);
       }
     }
-
     if (user?.role === 'admin') {
       fetchLogs();
     }
   }, [user, toast]);
-
   if (user?.role !== 'admin') {
     return (
       <div className="p-6 text-center mt-20">
@@ -37,7 +33,6 @@ export default function ActivityPage({ currentUser: user }: { currentUser: User 
       </div>
     );
   }
-
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-fade-in text-left">
       <div>
@@ -49,7 +44,6 @@ export default function ActivityPage({ currentUser: user }: { currentUser: User 
           {t('activityLogDesc')}
         </p>
       </div>
-
       <div className="glass-card bg-card/30 border border-border/40 rounded-2xl overflow-hidden">
         {loading ? (
           <div className="p-10 text-center text-muted-foreground animate-pulse">{t('loadingActivity')}</div>

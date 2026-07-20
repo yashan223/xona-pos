@@ -1,9 +1,8 @@
 /**
- * Printer Configuration Store — Xona POS Desktop
+ * Printer Configuration Store ï¿½ Xona POS Desktop
  * Manages POS printer settings and dispatches receipt print jobs
  * to the appropriate IPC channel (Network / Windows Queue / Serial).
  */
-
 declare global {
   interface Window {
     electronPrinter?: {
@@ -23,11 +22,7 @@ declare global {
     };
   }
 }
-
-// --- Types ---
-
 export type PrintMethod = 'network' | 'queue' | 'serial';
-
 export interface PrinterConfig {
   enabled: boolean;
   method: PrintMethod;
@@ -41,7 +36,6 @@ export interface PrinterConfig {
   storeAddress: string;
   autoPrint: boolean;
 }
-
 export interface ReceiptPayload {
   storeName: string;
   storeAddress: string;
@@ -56,11 +50,7 @@ export interface ReceiptPayload {
   paymentMethod: string;
   paperWidth: 48 | 32;
 }
-
-// --- Config Persistence ---
-
 const CONFIG_KEY = 'xona_printer_config';
-
 const DEFAULTS: PrinterConfig = {
   enabled: false,
   method: 'network',
@@ -74,7 +64,6 @@ const DEFAULTS: PrinterConfig = {
   storeAddress: '',
   autoPrint: false,
 };
-
 export function getPrinterConfig(): PrinterConfig {
   try {
     const raw = localStorage.getItem(CONFIG_KEY);
@@ -83,21 +72,14 @@ export function getPrinterConfig(): PrinterConfig {
     return { ...DEFAULTS };
   }
 }
-
 export function savePrinterConfig(partial: Partial<PrinterConfig>): void {
   const current = getPrinterConfig();
   localStorage.setItem(CONFIG_KEY, JSON.stringify({ ...current, ...partial }));
 }
-
-// --- List available Windows printers ---
-
 export async function listWindowsPrinters(): Promise<string[]> {
   if (!window.electronPrinter) return [];
   return window.electronPrinter.listPrinters();
 }
-
-// --- Build receipt payload from a transaction result ---
-
 export function buildReceiptPayload(
   tx: {
     id: string;
@@ -132,23 +114,17 @@ export function buildReceiptPayload(
     paperWidth: config.paperWidth,
   };
 }
-
-// --- Core print dispatcher ---
-
 export async function printReceipt(
   tx: Parameters<typeof buildReceiptPayload>[0]
 ): Promise<{ success: boolean; error?: string }> {
   const config = getPrinterConfig();
-
   if (!config.enabled) {
     return { success: false, error: 'Printer is not enabled in Settings.' };
   }
   if (!window.electronPrinter) {
     return { success: false, error: 'Printer IPC bridge not available.' };
   }
-
   const payload = buildReceiptPayload(tx, config);
-
   switch (config.method) {
     case 'network':
       return window.electronPrinter.printNetwork(

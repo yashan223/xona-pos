@@ -1,7 +1,6 @@
 import { useRef, useEffect } from 'react';
 import * as echarts from 'echarts';
 import type { GraphNode, GraphEdge } from '@/lib/api';
-
 interface GraphCanvasProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
@@ -9,29 +8,21 @@ interface GraphCanvasProps {
   height?: number;
   onNodeClick?: (node: GraphNode) => void;
 }
-
 const NODE_COLORS: Record<string, { fill: string; stroke: string; text: string }> = {
-  product: { fill: '#8b5cf6', stroke: '#a78bfa', text: '#f5f3ff' },   // violet
-  category: { fill: '#10b981', stroke: '#34d399', text: '#ecfdf5' },  // emerald
+  product: { fill: '#8b5cf6', stroke: '#a78bfa', text: '#f5f3ff' },   
+  category: { fill: '#10b981', stroke: '#34d399', text: '#ecfdf5' },  
 };
-
 const EDGE_COLORS: Record<string, string> = {
   BOUGHT_WITH: '#8b5cf6',
   BELONGS_TO: '#10b981',
 };
-
 export default function GraphCanvas({ nodes, edges, onNodeClick }: GraphCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartInstanceRef = useRef<echarts.ECharts | null>(null);
-
   useEffect(() => {
-    if (!containerRef.current || nodes.length === 0) return;
-
-    // Initialize ECharts instance
+    if (!containerRef.current || nodes.length === 0) return;
     const chart = echarts.init(containerRef.current);
-    chartInstanceRef.current = chart;
-
-    // Map nodes to ECharts format
+    chartInstanceRef.current = chart;
     const chartNodes = nodes.map(node => {
       const colors = NODE_COLORS[node.type] || NODE_COLORS.product;
       const cleanLabel = node.label.length > 18 ? node.label.substring(0, 16) + '…' : node.label;
@@ -60,9 +51,7 @@ export default function GraphCanvas({ nodes, edges, onNodeClick }: GraphCanvasPr
           textBorderWidth: 3,
         },
       };
-    });
-
-    // Map edges to ECharts format
+    });
     const chartLinks = edges.map(edge => {
       const color = EDGE_COLORS[edge.type] || '#4b5563';
       return {
@@ -76,14 +65,12 @@ export default function GraphCanvas({ nodes, edges, onNodeClick }: GraphCanvasPr
           curveness: 0.08,
         },
       };
-    });
-
-    // Configure options
+    });
     const option: any = {
       backgroundColor: 'transparent',
       tooltip: {
         trigger: 'item',
-        backgroundColor: 'rgba(30, 41, 59, 0.9)', // Slate-800 glass style
+        backgroundColor: 'rgba(30, 41, 59, 0.9)', 
         borderColor: 'rgba(255, 255, 255, 0.1)',
         borderWidth: 1,
         textStyle: {
@@ -121,7 +108,7 @@ export default function GraphCanvas({ nodes, edges, onNodeClick }: GraphCanvasPr
           layout: 'force',
           data: chartNodes,
           links: chartLinks,
-          roam: true, // enables dragging and zooming
+          roam: true, 
           draggable: true,
           label: {
             show: true,
@@ -140,7 +127,7 @@ export default function GraphCanvas({ nodes, edges, onNodeClick }: GraphCanvasPr
             friction: 0.6,
           },
           emphasis: {
-            focus: 'adjacency', // highlight connected edges & nodes on hover
+            focus: 'adjacency', 
             label: {
               show: true,
               fontSize: 11,
@@ -155,10 +142,7 @@ export default function GraphCanvas({ nodes, edges, onNodeClick }: GraphCanvasPr
         },
       ],
     };
-
-    chart.setOption(option);
-
-    // Click handler
+    chart.setOption(option);
     chart.on('click', (params: any) => {
       if (params.dataType === 'node') {
         const clickedNode = params.data.originalNode as GraphNode;
@@ -166,21 +150,17 @@ export default function GraphCanvas({ nodes, edges, onNodeClick }: GraphCanvasPr
           onNodeClick(clickedNode);
         }
       }
-    });
-
-    // Handle container resize
+    });
     const resizeObserver = new ResizeObserver(() => {
       chart.resize();
     });
     resizeObserver.observe(containerRef.current);
-
     return () => {
       resizeObserver.disconnect();
       chart.dispose();
       chartInstanceRef.current = null;
     };
   }, [nodes, edges, onNodeClick]);
-
   if (nodes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground bg-sidebar/20 border border-border/40 rounded-xl p-6 min-h-[450px]">
@@ -189,13 +169,9 @@ export default function GraphCanvas({ nodes, edges, onNodeClick }: GraphCanvasPr
       </div>
     );
   }
-
   return (
     <div className="w-full h-full relative border border-border/40 rounded-xl overflow-hidden bg-sidebar/20 min-h-[450px]">
-      {/* Target element for ECharts graph */}
       <div ref={containerRef} className="w-full h-full absolute inset-0" />
-
-      {/* Legend Overlay */}
       <div className="absolute bottom-3 left-3 glass-card p-2.5 flex items-center gap-4 text-xs z-10 shadow-lg pointer-events-none select-none">
         {Object.entries(NODE_COLORS).map(([type, colors]) => (
           <div key={type} className="flex items-center gap-1.5">

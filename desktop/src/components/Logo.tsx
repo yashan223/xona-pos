@@ -2,7 +2,6 @@ interface LogoProps {
   collapsed?: boolean;
   className?: string;
 }
-
 export default function Logo({ collapsed = false, className = 'h-10 w-auto' }: LogoProps) {
   if (collapsed) {
     return (
@@ -12,7 +11,6 @@ export default function Logo({ collapsed = false, className = 'h-10 w-auto' }: L
         xmlns="http://www.w3.org/2000/svg"
         className={className}
       >
-        {/* Sleek X shape for Xona collapsed logo */}
         <path
           d="M 20 20 L 60 60"
           stroke="var(--color-primary, #6366f1)"
@@ -29,7 +27,6 @@ export default function Logo({ collapsed = false, className = 'h-10 w-auto' }: L
       </svg>
     );
   }
-
   return (
     <svg
       viewBox="0 0 260 80"
@@ -37,7 +34,6 @@ export default function Logo({ collapsed = false, className = 'h-10 w-auto' }: L
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      {/* Sleek logo mark on the left */}
       <path
         d="M 20 15 L 50 65"
         stroke="var(--color-primary, #6366f1)"
@@ -51,8 +47,6 @@ export default function Logo({ collapsed = false, className = 'h-10 w-auto' }: L
         strokeLinecap="round"
       />
       <circle cx="35" cy="40" r="5" fill="#ffffff" stroke="var(--color-primary, #6366f1)" strokeWidth="2" />
-
-      {/* Xona text */}
       <text
         x="68"
         y="52"
@@ -64,8 +58,6 @@ export default function Logo({ collapsed = false, className = 'h-10 w-auto' }: L
       >
         XONA
       </text>
-
-      {/* POS tag */}
       <text
         x="180"
         y="52"
@@ -78,8 +70,6 @@ export default function Logo({ collapsed = false, className = 'h-10 w-auto' }: L
       >
         POS
       </text>
-      
-      {/* Decorative dots/line under POS */}
       <line
         x1="68"
         y1="60"

@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
-
 export type Language = 'en' | 'si';
-
 export const translations = {
   en: {
-    // Navigation & Roles
     dashboard: 'Dashboard',
     userPanel: 'User Panel',
     productsCatalog: 'Products Catalog',
@@ -16,8 +13,6 @@ export const translations = {
     systemAdmin: 'System Admin',
     cashier: 'Cashier',
     owner: 'Owner',
-
-    // Dashboard
     revenue: 'Revenue',
     todaySales: "Today's Sales",
     productsCount: 'Products Count',
@@ -26,8 +21,6 @@ export const translations = {
     recentTransactions: 'Recent Transactions',
     totalSales: 'Total Sales',
     avgOrderValue: 'Avg Order Value',
-
-    // Products Catalog
     addProduct: 'Add Product',
     editProduct: 'Edit Product',
     deleteProduct: 'Delete Product',
@@ -52,8 +45,6 @@ export const translations = {
     confirmDelete: 'Confirm Delete',
     confirmDeleteProductMsg: 'Are you sure you want to delete this product?',
     unitsSold: 'units sold',
-
-    // Checkout Register
     currentBasket: 'Current Basket',
     emptyBasket: 'Your basket is empty',
     subtotal: 'Subtotal',
@@ -79,8 +70,6 @@ export const translations = {
     clearBasket: 'Clear Basket',
     boughtTogether: 'Frequently Bought Together',
     noRecommendations: 'No recommendations available',
-
-    // Transactions Log
     searchTransactions: 'Search by ID, cashier, or customer...',
     transactionId: 'Transaction ID',
     dateTime: 'Date & Time',
@@ -91,8 +80,6 @@ export const translations = {
     refund: 'Refund',
     confirmRefund: 'Confirm Refund',
     confirmRefundMsg: 'Are you sure you want to refund this transaction?',
-
-    // Recommendation Net / Graph
     graphTitle: 'Co-Occurrence Relationship Net',
     graphSubtitle: 'Visual graph connecting items bought together in transactions',
     refreshGraph: 'Refresh Network',
@@ -100,8 +87,6 @@ export const translations = {
     belongsTo: 'Belongs To',
     boughtWith: 'Bought With',
     nodeDetails: 'Node Details',
-
-    // Settings
     systemSettings: 'System Settings',
     taxVatSettings: 'Tax & VAT Settings',
     enableVat: 'Enable VAT Calculation',
@@ -113,8 +98,6 @@ export const translations = {
     databaseMaintenance: 'DB Maintenance',
     english: 'English',
     sinhala: 'Sinhala (සිංහල)',
-
-    // Maintenance
     createBackup: 'Create Local Backup',
     uploadBackup: 'Upload & Restore Backup File',
     availableBackups: 'Available Server Backups',
@@ -122,16 +105,12 @@ export const translations = {
     download: 'Download',
     clearDatabase: 'Clear Database',
     confirmClearDb: 'Clear Database Confirmation',
-
-    // Login
     welcomeBack: 'Welcome Back',
     loginSubtitle: 'Enter your credentials to access the Xona POS terminal.',
     username: 'Username',
     password: 'Password',
     login: 'Log In',
     invalidCredentials: 'Invalid username or password',
-
-    // Admin, Activity, Maintenance
     manageUsersDesc: 'Manage system users, cashier accounts, and admin roles',
     addUser: 'Add User',
     refreshCashiers: 'Refresh Cashiers',
@@ -149,7 +128,6 @@ export const translations = {
     roleLabel: 'Role',
     createUserBtn: 'Create User',
     saveChangesBtn: 'Save Changes',
-
     activityLogTitle: 'System Activity Log',
     activityLogDesc: 'Audit trail of administrative and structural changes made to the system',
     loadingActivity: 'Loading activity logs...',
@@ -161,7 +139,6 @@ export const translations = {
     detailsCol: 'Details',
     unauthorized: 'Unauthorized',
     noPermActivity: 'You do not have permission to view the activity log.',
-
     maintenanceDesc: 'Perform administrative DB operations, manage Cloud MongoDB data, and handle backups',
     cloudDbTitle: 'Cloud MongoDB Database',
     connected: 'Connected',
@@ -179,7 +156,6 @@ export const translations = {
     deleteBtn: 'Delete',
   },
   si: {
-    // Navigation & Roles
     dashboard: 'ප්‍රධාන පුවරුව',
     userPanel: 'පරිශීලක පුවරුව',
     productsCatalog: 'භාණ්ඩ නාමාවලිය',
@@ -191,8 +167,6 @@ export const translations = {
     systemAdmin: 'පද්ධති පරිපාලක',
     cashier: 'කැෂියර්',
     owner: 'අයිතිකරු',
-
-    // Dashboard
     revenue: 'සමස්ත ආදායම',
     todaySales: 'අද විකුණුම්',
     productsCount: 'භාණ්ඩ ප්‍රමාණය',
@@ -201,8 +175,6 @@ export const translations = {
     recentTransactions: 'මෑත ගනුදෙනු',
     totalSales: 'මුළු විකුණුම්',
     avgOrderValue: 'සාමාන්‍ය ඇණවුම් අගය',
-
-    // Products Catalog
     addProduct: 'අලුත් භාණ්ඩයක් එක් කරන්න',
     editProduct: 'භාණ්ඩය සංස්කරණය කරන්න',
     deleteProduct: 'භාණ්ඩය මකන්න',
@@ -227,8 +199,6 @@ export const translations = {
     confirmDelete: 'මකාදැමීම තහවුරු කරන්න',
     confirmDeleteProductMsg: 'ඔබට විශ්වාසද මෙම භාණ්ඩය මකා දැමීමට අවශ්‍ය බව?',
     unitsSold: 'අලෙවි වූ ප්‍රමාණය',
-
-    // Checkout Register
     currentBasket: 'වත්මන් කූඩය',
     emptyBasket: 'ඔබගේ කූඩය හිස් ය',
     subtotal: 'අනු එකතුව',
@@ -254,8 +224,6 @@ export const translations = {
     clearBasket: 'කූඩය හිස් කරන්න',
     boughtTogether: 'එකට මිලදී ගත් භාණ්ඩ',
     noRecommendations: 'නිර්දේශිත භාණ්ඩ නොමැත',
-
-    // Transactions Log
     searchTransactions: 'ගනුදෙනු අංකය, කැෂියර් හෝ පාරිභෝගිකයා සොයන්න...',
     transactionId: 'ගනුදෙනු අංකය',
     dateTime: 'දිනය සහ වේලාව',
@@ -266,8 +234,6 @@ export const translations = {
     refund: 'මුදල් ආපසු දෙන්න',
     confirmRefund: 'මුදල් ආපසු දීම තහවුරු කරන්න',
     confirmRefundMsg: 'මෙම ගනුදෙනුව සඳහා මුදල් ආපසු ලබා දීමට ඔබට විශ්වාසද?',
-
-    // Recommendation Net / Graph
     graphTitle: 'සම්බන්ධතා සහ නිර්දේශ ජාලය',
     graphSubtitle: 'එකට මිලදී ගත් භාණ්ඩ අතර සම්බන්ධතා පෙන්වන ජාලය',
     refreshGraph: 'ජාලය යාවත්කාලීන කරන්න',
@@ -275,8 +241,6 @@ export const translations = {
     belongsTo: 'අයත් කාණ්ඩය',
     boughtWith: 'එකට මිලදී ගත්',
     nodeDetails: 'විස්තර',
-
-    // Settings
     systemSettings: 'පද්ධති සැකසුම්',
     taxVatSettings: 'බදු සහ වැට් සැකසුම්',
     enableVat: 'වැට් බද්ද සක්‍රිය කරන්න',
@@ -288,8 +252,6 @@ export const translations = {
     databaseMaintenance: 'දත්ත සමුදාය නඩත්තුව',
     english: 'ඉංග්‍රීසි (English)',
     sinhala: 'සිංහල (Sinhala)',
-
-    // Maintenance
     createBackup: 'දත්ත සමුදායේ පිටපතක් සාදන්න (Backup)',
     uploadBackup: 'පිටපත් ගොනුවක් අප්ලෝඩ් කර යථා තත්ත්වයට පත්කරන්න',
     availableBackups: 'පවතින දත්ත පිටපත් (Backups)',
@@ -297,16 +259,12 @@ export const translations = {
     download: 'බාගත කරන්න',
     clearDatabase: 'දත්ත සමුදාය හිස් කරන්න',
     confirmClearDb: 'දත්ත සමුදාය හිස් කිරීම තහවුරු කරන්න',
-
-    // Login
     welcomeBack: 'නැවත සාදරයෙන් පිළිගනිමු',
     loginSubtitle: 'Xona POS පද්ධතියට ඇතුළු වීමට ඔබගේ තොරතුරු ඇතුළත් කරන්න.',
     username: 'පරිශීලක නාමය',
     password: 'මුරපදය',
     login: 'ඇතුළු වන්න',
     invalidCredentials: 'පරිශීලක නාමය හෝ මුරපදය වැරදියි',
-
-    // Admin, Activity, Maintenance
     manageUsersDesc: 'පද්ධති පරිශීලකයින් සහ ඔවුන්ගේ අවසර කළමනාකරණය කරන්න',
     addUser: 'පරිශීලකයෙකු එක් කරන්න',
     refreshCashiers: 'කැෂියර්වරුන් යාවත්කාලීන කරන්න',
@@ -324,7 +282,6 @@ export const translations = {
     roleLabel: 'තනතුර',
     createUserBtn: 'පරිශීලක සාදන්න',
     saveChangesBtn: 'වෙනස්කම් සුරකින්න',
-
     activityLogTitle: 'පද්ධති ක්‍රියාකාරකම් වාර්තාව',
     activityLogDesc: 'පද්ධතියට කළ වෙනස්කම් වල විගණන වාර්තාව',
     loadingActivity: 'ක්‍රියාකාරකම් වාර්තා ලබාගනිමින් පවතී...',
@@ -336,7 +293,6 @@ export const translations = {
     detailsCol: 'විස්තර',
     unauthorized: 'අනවසරයි',
     noPermActivity: 'මෙම වාර්තාව බැලීමට ඔබට අවසර නොමැත.',
-
     maintenanceDesc: 'පරිපාලන දත්ත සමුදාය මෙහෙයුම් සහ දත්ත පිටපත් කළමනාකරණය කරන්න',
     cloudDbTitle: 'Cloud MongoDB දත්ත සමුදාය',
     connected: 'සම්බන්ධයි',
@@ -354,15 +310,12 @@ export const translations = {
     deleteBtn: 'මකන්න',
   }
 };
-
 export const getLanguage = (): Language => {
   const saved = localStorage.getItem('appLanguage');
   return (saved === 'si' ? 'si' : 'en') as Language;
 };
-
 export const useTranslation = () => {
   const [lang, setLang] = useState<Language>(getLanguage());
-
   useEffect(() => {
     const handleLangChange = () => {
       setLang(getLanguage());
@@ -372,15 +325,12 @@ export const useTranslation = () => {
       window.removeEventListener('language_changed', handleLangChange);
     };
   }, []);
-
   const t = (key: keyof typeof translations.en) => {
     return translations[lang][key] || translations.en[key] || String(key);
   };
-
   const setLanguage = (newLang: Language) => {
     localStorage.setItem('appLanguage', newLang);
     window.dispatchEvent(new CustomEvent('language_changed'));
   };
-
   return { t, lang, setLanguage };
 };

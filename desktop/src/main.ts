@@ -3,15 +3,10 @@ import path from 'node:path';
 import fs from 'node:fs';
 import net from 'node:net';
 import started from 'electron-squirrel-startup';
-
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
 }
-
-// ─── Custom DB Path Config ────────────────────────────────────
 const CONFIG_FILE = path.join(app.getPath('userData'), 'xona-db-config.json');
-
 function getCustomDbDir(): string | null {
   try {
     if (fs.existsSync(CONFIG_FILE)) {
@@ -23,11 +18,9 @@ function getCustomDbDir(): string | null {
   } catch (_) {}
   return null;
 }
-
 function setCustomDbDir(dirPath: string): void {
   fs.writeFileSync(CONFIG_FILE, JSON.stringify({ dbPath: dirPath }), 'utf-8');
 }
-
 const getStoragePath = (key: string) => {
   const customDir = getCustomDbDir();
   const storageDir = customDir ?? app.getPath('userData');
@@ -36,8 +29,6 @@ const getStoragePath = (key: string) => {
   }
   return path.join(storageDir, `${key}.json`);
 };
-
-// Permanent Disk File IPC Handlers
 ipcMain.handle('db-read-file', async (_event, key: string) => {
   try {
     const filePath = getStoragePath(key);
@@ -49,7 +40,6 @@ ipcMain.handle('db-read-file', async (_event, key: string) => {
   }
   return null;
 });
-
 ipcMain.handle('db-write-file', async (_event, key: string, data: string) => {
   try {
     const filePath = getStoragePath(key);
@@ -60,13 +50,10 @@ ipcMain.handle('db-write-file', async (_event, key: string, data: string) => {
     return false;
   }
 });
-
-// ─── Custom DB Path IPC Handlers ─────────────────────────────
 ipcMain.handle('db-get-path', async () => {
   const custom = getCustomDbDir();
   return custom ?? app.getPath('userData');
 });
-
 ipcMain.handle('db-set-path', async (_event, dirPath: string) => {
   try {
     if (!fs.existsSync(dirPath)) {
@@ -78,7 +65,6 @@ ipcMain.handle('db-set-path', async (_event, dirPath: string) => {
     return { success: false, error: err.message };
   }
 });
-
 ipcMain.handle('db-browse-folder', async () => {
   const win = BrowserWindow.getFocusedWindow();
   const result = await dialog.showOpenDialog(win!, {
@@ -88,12 +74,6 @@ ipcMain.handle('db-browse-folder', async () => {
   if (result.canceled || result.filePaths.length === 0) return null;
   return result.filePaths[0];
 });
-
-
-// ═══════════════════════════════════════════════════════════════
-//  POS PRINTER SUPPORT
-// ═══════════════════════════════════════════════════════════════
-
 interface ReceiptData {
   storeName: string;
   storeAddress: string;
@@ -108,12 +88,9 @@ interface ReceiptData {
   paymentMethod: string;
   paperWidth: 48 | 32;
 }
-
-// ─── ESC/POS Buffer Builder ───────────────────────────────────
 function buildReceiptBuffer(data: ReceiptData): Buffer {
-  const W = data.paperWidth; // chars per line: 48 = 80mm, 32 = 58mm
+  const W = data.paperWidth; 
   const chunks: Buffer[] = [];
-
   const push = (...bytes: number[]) => chunks.push(Buffer.from(bytes));
   const text = (s: string) => chunks.push(Buffer.from(s, 'latin1'));
   const lf = () => push(0x0a);
@@ -126,7 +103,6 @@ function buildReceiptBuffer(data: ReceiptData): Buffer {
   const doubleSize = () => push(0x1d, 0x21, 0x11);
   const normalSize = () => push(0x1d, 0x21, 0x00);
   const fullCut = () => push(0x1d, 0x56, 0x41, 0x00);
-
   const hLine = (c = '-') => text(c.repeat(W) + '\n');
   const padRow = (left: string, right: string) => {
     const gap = W - left.length - right.length;
@@ -136,9 +112,7 @@ function buildReceiptBuffer(data: ReceiptData): Buffer {
     const p = Math.max(0, Math.floor((W - s.length) / 2));
     return ' '.repeat(p) + s;
   };
-
   init();
-  // ── Header ──
   alignCenter();
   boldOn(); doubleSize();
   text(centeredStr(data.storeName.substring(0, Math.floor(W / 2))) + '\n');
@@ -147,19 +121,14 @@ function buildReceiptBuffer(data: ReceiptData): Buffer {
   lf();
   alignLeft();
   hLine();
-
-  // ── Meta ──
   text(`Receipt : ${data.receiptId}\n`);
   text(`Date    : ${data.date}\n`);
   text(`Cashier : ${data.cashier}\n`);
   hLine();
-
-  // ── Items ──
   boldOn();
   text(padRow('ITEM', 'AMOUNT') + '\n');
   boldOff();
   hLine('-');
-
   for (const item of data.items) {
     const label = `${item.name.substring(0, W - 8)} x${item.quantity}`;
     text(label + '\n');
@@ -168,8 +137,6 @@ function buildReceiptBuffer(data: ReceiptData): Buffer {
     alignLeft();
   }
   hLine();
-
-  // ── Totals ──
   text(padRow('Subtotal:', `Rs.${data.subtotal.toFixed(2)}`) + '\n');
   if (data.discount > 0) {
     text(padRow('Discount:', `-Rs.${data.discount.toFixed(2)}`) + '\n');
@@ -183,18 +150,13 @@ function buildReceiptBuffer(data: ReceiptData): Buffer {
   normalSize(); boldOff();
   hLine('=');
   text(padRow('Payment:', data.paymentMethod.toUpperCase()) + '\n');
-
-  // ── Footer ──
   lf(); lf();
   alignCenter();
   text('Thank you for your purchase!\n');
   lf(); lf(); lf();
   fullCut();
-
   return Buffer.concat(chunks);
 }
-
-// ─── Receipt HTML Builder (Windows Print Queue) ───────────────
 function buildReceiptHtml(data: ReceiptData): string {
   const pageW = data.paperWidth === 48 ? '80mm' : '58mm';
   const itemRows = data.items
@@ -205,7 +167,6 @@ function buildReceiptHtml(data: ReceiptData): string {
       </tr>`
     )
     .join('');
-
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
 <style>
   @page { size: ${pageW} auto; margin: 4mm 3mm; }
@@ -247,9 +208,6 @@ function buildReceiptHtml(data: ReceiptData): string {
   <p class="footer">Thank you for your purchase!</p>
 </body></html>`;
 }
-
-// ─── Printer IPC Handlers ─────────────────────────────────────
-
 /** List Windows print queues */
 ipcMain.handle('printer-list', async () => {
   try {
@@ -261,7 +219,6 @@ ipcMain.handle('printer-list', async () => {
     return [];
   }
 });
-
 /** Print via TCP/IP network socket (ESC/POS) */
 ipcMain.handle('printer-print-network', async (_e, config: { ip: string; port: number }, receipt: ReceiptData) => {
   return new Promise<{ success: boolean; error?: string }>((resolve) => {
@@ -282,7 +239,6 @@ ipcMain.handle('printer-print-network', async (_e, config: { ip: string; port: n
     }
   });
 });
-
 /** Print via Windows print queue (silent, uses receipt HTML) */
 ipcMain.handle('printer-print-queue', async (_e, printerName: string, receipt: ReceiptData) => {
   return new Promise<{ success: boolean; error?: string }>((resolve) => {
@@ -308,13 +264,11 @@ ipcMain.handle('printer-print-queue', async (_e, printerName: string, receipt: R
     }
   });
 });
-
 /** Print via Serial/COM port (ESC/POS raw bytes) */
 ipcMain.handle('printer-print-serial', async (_e, config: { port: string; baud: number }, receipt: ReceiptData) => {
   return new Promise<{ success: boolean; error?: string }>((resolve) => {
     try {
       const buf = buildReceiptBuffer(receipt);
-      // Windows COM port path: \\.\COM3
       const portPath = config.port.match(/^COM\d+$/i)
         ? `\\\\.\\${config.port}`
         : config.port;
@@ -331,9 +285,7 @@ ipcMain.handle('printer-print-serial', async (_e, config: { port: string; baud: 
     }
   });
 });
-
 const createWindow = () => {
-  // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1280,
     height: 720,
@@ -343,28 +295,21 @@ const createWindow = () => {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
-
-  // Remove the default native menu bar
   mainWindow.setMenu(null);
-
-  // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
     mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
 };
-
 app.whenReady().then(() => {
   createWindow();
-
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
 });
-
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();

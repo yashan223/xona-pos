@@ -4,28 +4,23 @@ import { reportApi, syncApi, BASE_HOST, SyncStatus } from '@/lib/api';
 import { getCachedProducts, getCachedCustomers, getPendingOfflineTransactions, saveCachedProducts, saveCachedCustomers } from '@/lib/offlineStore';
 import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
-
 export default function MaintenancePage() {
   const { t } = useTranslation();
   const { confirm, toast } = useNotification();
   const [backups, setBackups] = useState<{ filename: string; size: number; createdAt: string }[]>([]);
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [loading, setLoading] = useState(false);
-
   const [cachedProdCount, setCachedProdCount] = useState(0);
   const [cachedCustCount, setCachedCustCount] = useState(0);
   const [pendingTxCount, setPendingTxCount] = useState(0);
-
   useEffect(() => {
     loadBackups();
     loadLocalDbStats();
   }, []);
-
   const loadLocalDbStats = async () => {
     setCachedProdCount(getCachedProducts().length);
     setCachedCustCount(getCachedCustomers().length);
     setPendingTxCount(getPendingOfflineTransactions().length);
-
     try {
       const status = await syncApi.getStatus();
       setSyncStatus(status);
@@ -33,7 +28,6 @@ export default function MaintenancePage() {
       setSyncStatus({ isOnline: false, pendingCount: 0, isSyncing: false, lastSyncTime: null });
     }
   };
-
   const loadBackups = async () => {
     try {
       const list = await reportApi.listBackups();
@@ -42,7 +36,6 @@ export default function MaintenancePage() {
       console.error('Failed to load database backups:', err);
     }
   };
-
   const handleCreateBackup = async () => {
     setLoading(true);
     try {
@@ -55,13 +48,11 @@ export default function MaintenancePage() {
       setLoading(false);
     }
   };
-
   const handleExportLocalJsonBackup = () => {
     try {
       const products = getCachedProducts();
       const customers = getCachedCustomers();
       const pendingTx = getPendingOfflineTransactions();
-
       const backupObj = {
         version: 1,
         timestamp: new Date().toISOString(),
@@ -72,7 +63,6 @@ export default function MaintenancePage() {
           transactions: pendingTx.map((t) => t.payload),
         },
       };
-
       const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupObj, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute('href', dataStr);
@@ -80,13 +70,11 @@ export default function MaintenancePage() {
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
-
       toast.success('Exported local client offline database backup JSON file.');
     } catch (e) {
       toast.error('Failed to export local backup JSON file.');
     }
   };
-
   const handleClearLocalCache = async () => {
     const isConfirmed = await confirm({
       title: 'Clear Local Client Cache',
@@ -96,13 +84,11 @@ export default function MaintenancePage() {
       type: 'warning',
     });
     if (!isConfirmed) return;
-
     saveCachedProducts([]);
     saveCachedCustomers([]);
     loadLocalDbStats();
     toast.success('Local client cache cleared successfully.');
   };
-
   const handleRestoreBackup = async (filename: string) => {
     const isConfirmed = await confirm({
       title: 'Restore Database',
@@ -112,7 +98,6 @@ export default function MaintenancePage() {
       type: 'warning',
     });
     if (!isConfirmed) return;
-
     setLoading(true);
     try {
       const res = await reportApi.restoreBackup(filename);
@@ -124,7 +109,6 @@ export default function MaintenancePage() {
       setLoading(false);
     }
   };
-
   const handleDeleteBackup = async (filename: string) => {
     const isConfirmed = await confirm({
       title: 'Delete Backup',
@@ -134,7 +118,6 @@ export default function MaintenancePage() {
       type: 'danger',
     });
     if (!isConfirmed) return;
-
     setLoading(true);
     try {
       const res = await reportApi.deleteBackup(filename);
@@ -146,22 +129,18 @@ export default function MaintenancePage() {
       setLoading(false);
     }
   };
-
   const handleUploadBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
         const text = event.target?.result as string;
         const backupData = JSON.parse(text);
-
         if (!backupData || !backupData.data) {
           toast.error('Invalid backup file format.');
           return;
         }
-
         const isConfirmed = await confirm({
           title: 'Restore from Upload',
           message: 'Are you sure you want to restore the database from this uploaded file? All current records will be overwritten.',
@@ -170,7 +149,6 @@ export default function MaintenancePage() {
           type: 'warning',
         });
         if (!isConfirmed) return;
-
         setLoading(true);
         const res = await reportApi.uploadBackup(backupData);
         toast.success(res.message || 'Database restored from uploaded backup successfully');
@@ -185,7 +163,6 @@ export default function MaintenancePage() {
     };
     reader.readAsText(file);
   };
-
   const formatBytes = (bytes: number, decimals = 2) => {
     if (!+bytes) return '0 Bytes';
     const k = 1024;
@@ -194,7 +171,6 @@ export default function MaintenancePage() {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
   };
-
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 animate-fade-in text-left">
       <div>
@@ -206,10 +182,7 @@ export default function MaintenancePage() {
           {t('maintenanceDesc')}
         </p>
       </div>
-
-      {/* Database Engines Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Local Disk & Client Storage Card */}
         <div className="glass-card p-5 bg-card/30 border border-border/40 rounded-2xl space-y-3">
           <div className="flex justify-between items-center border-b border-border/40 pb-2">
             <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
@@ -251,8 +224,6 @@ export default function MaintenancePage() {
             </button>
           </div>
         </div>
-
-        {/* Cloud MongoDB Engine Card */}
         <div className="glass-card p-5 bg-card/30 border border-border/40 rounded-2xl space-y-3">
           <div className="flex justify-between items-center border-b border-border/40 pb-2">
             <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
@@ -288,14 +259,11 @@ export default function MaintenancePage() {
           </button>
         </div>
       </div>
-
-      {/* Backup & Restore Controls */}
       <div className="glass-card p-5 space-y-4 bg-card/30 border border-border/40 rounded-2xl">
         <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2">
           <Database className="w-4 h-4 text-primary" />
           {t('dbManagerTitle')}
         </h3>
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-4">
           <div className="p-4 rounded-lg bg-secondary/20 border border-border/50 space-y-2 flex flex-col justify-between">
             <div>
@@ -313,7 +281,6 @@ export default function MaintenancePage() {
               {t('createBackup')}
             </button>
           </div>
-
           <div className="p-4 rounded-lg bg-secondary/20 border border-border/50 space-y-2 flex flex-col justify-between col-span-2">
             <div>
               <h4 className="text-sm font-semibold text-foreground text-left">{t('uploadBackup')}</h4>
@@ -332,8 +299,6 @@ export default function MaintenancePage() {
             </div>
           </div>
         </div>
-
-        {/* Backups List Table */}
         <div className="pt-2 border-t border-border/20">
           <h4 className="text-sm font-semibold text-foreground mb-3 text-left">{t('availableBackups')}</h4>
           {backups.length === 0 ? (

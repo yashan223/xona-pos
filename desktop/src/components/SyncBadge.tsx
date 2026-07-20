@@ -2,15 +2,12 @@ import { useEffect, useState } from 'react';
 import { Cloud, CloudOff, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { syncApi } from '@/lib/api';
 import type { SyncStatus } from '@/lib/api';
-
 interface SyncBadgeProps {
   collapsed?: boolean;
 }
-
 export default function SyncBadge({ collapsed = false }: SyncBadgeProps) {
   const [status, setStatus] = useState<SyncStatus | null>(null);
   const [loading, setLoading] = useState(false);
-
   const fetchStatus = async () => {
     try {
       const data = await syncApi.getStatus();
@@ -19,22 +16,18 @@ export default function SyncBadge({ collapsed = false }: SyncBadgeProps) {
       setStatus({ isOnline: false, pendingCount: 0, isSyncing: false, lastSyncTime: null });
     }
   };
-
   useEffect(() => {
     fetchStatus();
     const interval = setInterval(fetchStatus, 5000);
-
     const handleSyncEvent = () => fetchStatus();
     window.addEventListener('transactions_updated', handleSyncEvent);
     window.addEventListener('products_updated', handleSyncEvent);
-
     return () => {
       clearInterval(interval);
       window.removeEventListener('transactions_updated', handleSyncEvent);
       window.removeEventListener('products_updated', handleSyncEvent);
     };
   }, []);
-
   const handleManualSync = async () => {
     setLoading(true);
     try {
@@ -46,12 +39,9 @@ export default function SyncBadge({ collapsed = false }: SyncBadgeProps) {
       setLoading(false);
     }
   };
-
   if (!status) return null;
-
   const isOnline = status.isOnline;
   const pending = status.pendingCount;
-
   if (collapsed) {
     return (
       <button
@@ -75,7 +65,6 @@ export default function SyncBadge({ collapsed = false }: SyncBadgeProps) {
       </button>
     );
   }
-
   return (
     <button
       onClick={handleManualSync}
@@ -112,7 +101,6 @@ export default function SyncBadge({ collapsed = false }: SyncBadgeProps) {
           </>
         )}
       </div>
-
       {pending > 0 && (
         <span className="px-1.5 py-0.2 text-[10px] rounded-full bg-foreground/10 font-bold ml-1">
           {pending}

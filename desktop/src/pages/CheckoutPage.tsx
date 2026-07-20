@@ -5,43 +5,30 @@ import { productApi, transactionApi, graphApi, BASE_HOST } from '@/lib/api';
 import type { ProductRecord, TransactionItem, User, GraphNode } from '@/lib/api';
 import { useTranslation } from '@/lib/translations';
 import { printReceipt, getPrinterConfig } from '@/lib/printerStore';
-
 interface CheckoutPageProps {
   currentUser: User | null;
   onSuccess?: () => void;
 }
-
 export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
   const { t } = useTranslation();
   const { toast } = useNotification();
   const [catalog, setCatalog] = useState<ProductRecord[]>([]);
   const [filteredCatalog, setFilteredCatalog] = useState<ProductRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-
-  // Cart state
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState<(TransactionItem & { product: ProductRecord })[]>([]);
   const [discountPercent, setDiscountPercent] = useState<number>(0);
-  const paymentMethod = 'cash';
-
-  // Recommendations state (powered by co-occurrence Graph BFS)
-  const [recommendations, setRecommendations] = useState<GraphNode[]>([]);
-
-  // UI states
+  const paymentMethod = 'cash';
+  const [recommendations, setRecommendations] = useState<GraphNode[]>([]);
   const [loading, setLoading] = useState(true);
-  const [checkoutResult, setCheckoutResult] = useState<any | null>(null); // receipt modal
-
-  // Derived categories list
+  const [checkoutResult, setCheckoutResult] = useState<any | null>(null); 
   const categories = ['All', ...Array.from(new Set(catalog.map(p => p.category)))];
-
   const filterRef = useRef({ searchQuery, selectedCategory });
   useEffect(() => {
     filterRef.current = { searchQuery, selectedCategory };
   }, [searchQuery, selectedCategory]);
-
   useEffect(() => {
     loadData();
-
     const handleProductsUpdate = async () => {
       try {
         const data = await productApi.getAll();
@@ -60,14 +47,11 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
         console.error('Failed to reload products:', err);
       }
     };
-
     window.addEventListener('products_updated', handleProductsUpdate);
-
     return () => {
       window.removeEventListener('products_updated', handleProductsUpdate);
     };
   }, []);
-
   async function loadData() {
     setLoading(true);
     try {
@@ -79,9 +63,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
     } finally {
       setLoading(false);
     }
-  }
-
-  // Handle product filter
+  }
   const filterCatalog = (query: string, category: string) => {
     let list = [...catalog];
     if (category !== 'All') {
@@ -93,25 +75,20 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
     }
     setFilteredCatalog(list);
   };
-
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     filterCatalog(val, selectedCategory);
   };
-
   const handleCategorySelect = (cat: string) => {
     setSelectedCategory(cat);
     filterCatalog(searchQuery, cat);
-  };
-
-  // Add to cart
+  };
   const addToCart = (product: ProductRecord) => {
     const isUnlimited = product.stock === -1;
     if (!isUnlimited && product.stock <= 0) {
       toast.warning('Product is out of stock!');
       return;
     }
-
     setCart(prev => {
       const existing = prev.find(item => item.productId === product.id);
       let updated;
@@ -134,15 +111,11 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
           subtotal: product.price,
           product
         }];
-      }
-
-      // Fetch Bought-Together Recommendations based on the last added product
+      }
       loadRecommendations(product.id);
-
       return updated;
     });
   };
-
   const updateCartQty = (productId: string, delta: number) => {
     setCart(prev => {
       return prev.map(item => {
@@ -162,16 +135,12 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
       }).filter(Boolean) as any[];
     });
   };
-
   const removeFromCart = (productId: string) => {
     setCart(prev => prev.filter(item => item.productId !== productId));
-  };
-
-  // Recommendations loader using Graph API
+  };
   async function loadRecommendations(productId: string) {
     try {
-      const graphData = await graphApi.getRelated(productId, 2);
-      // Filter out products already in the cart and only show 'product' nodes
+      const graphData = await graphApi.getRelated(productId, 2);
       const cartProductIds = cart.map(i => i.productId).concat([productId]);
       const filteredRecs = graphData.nodes.filter(n =>
         n.type === 'product' && !cartProductIds.includes(n.id)
@@ -180,11 +149,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
     } catch (err) {
       console.error('Recommendations load error:', err);
     }
-  }
-
-
-
-  // Checkout process
+  }
   const processCheckout = async () => {
     if (cart.length === 0) {
       toast.warning('Cart is empty.');
@@ -194,7 +159,6 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
       toast.warning('Cashier is not logged in.');
       return;
     }
-
     try {
       const tx = await transactionApi.create({
         cashierId: currentUser.username,
@@ -212,47 +176,36 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
         totalAmount: cartTotal,
         paymentMethod: paymentMethod,
       });
-
       setCheckoutResult(tx);
       setCart([]);
       setDiscountPercent(0);
       setRecommendations([]);
-      toast.success('Checkout completed successfully!');
-
-      // Auto-print receipt if enabled
+      toast.success('Checkout completed successfully!');
       const printerCfg = getPrinterConfig();
       if (printerCfg.enabled && printerCfg.autoPrint) {
         const printResult = await printReceipt(tx);
         if (!printResult.success) {
           toast.warning(`Auto-print failed: ${printResult.error}`);
         }
-      }
-
-      // Reload stock catalogs
+      }
       const updatedCatalog = await productApi.getAll();
       setCatalog(updatedCatalog);
       setFilteredCatalog(updatedCatalog);
     } catch (err: any) {
       toast.error(err.message || 'Checkout process failed.');
     }
-  };
-
-  // Calculations
+  };
   const vatEnabled = localStorage.getItem('vatEnabled') !== 'false';
   const vatPercentage = parseFloat(localStorage.getItem('vatPercentage') || '8');
   const cartSubtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
   const discountAmount = parseFloat((cartSubtotal * (discountPercent / 100)).toFixed(2));
   const cartTax = vatEnabled ? parseFloat(((cartSubtotal - discountAmount) * (vatPercentage / 100)).toFixed(2)) : 0;
   const cartTotal = parseFloat((cartSubtotal - discountAmount + cartTax).toFixed(2));
-
   const formatCurrency = (val: number) => {
     return `Rs. ${Number(val).toFixed(2)}`;
   };
-
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-10px)] overflow-hidden animate-fade-in relative">
-
-      {/* Catalog / Left Panel */}
       <div className="flex-1 flex flex-col p-6 overflow-y-auto space-y-4 border-r border-border/20">
         <div className="flex justify-between items-center">
           <div>
@@ -263,8 +216,6 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
         </div>
-
-        {/* Search */}
         <div className="relative">
           <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -275,8 +226,6 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
             className="w-full bg-card border border-border/50 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-primary shadow-sm"
           />
         </div>
-
-        {/* Categories Tab */}
         <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-thin">
           {categories.map(cat => (
             <button
@@ -291,8 +240,6 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
             </button>
           ))}
         </div>
-
-        {/* Catalog Grid */}
         {loading ? (
           <div className="flex items-center justify-center flex-1">
             <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
@@ -334,8 +281,6 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
             ))}
           </div>
         )}
-
-        {/* Graph recommendations */}
         {recommendations.length > 0 && (
           <div className="p-3.5 bg-primary/5 border border-primary/20 rounded-xl space-y-2">
             <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5 mb-2">
@@ -364,11 +309,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
           </div>
         )}
       </div>
-
-      {/* Cart / Right Panel */}
       <div className="w-full lg:w-[360px] bg-sidebar border-t lg:border-t-0 border-sidebar-border p-6 flex flex-col justify-between h-[calc(100vh-10px)]">
-
-        {/* Cart Title & Customer Selection */}
         <div className="space-y-4">
           <div className="flex justify-between items-center border-b border-sidebar-border pb-3">
             <h2 className="text-base font-bold flex items-center gap-2">
@@ -379,11 +320,7 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
               {cart.reduce((sum, item) => sum + item.quantity, 0)} Items
             </span>
           </div>
-
-
         </div>
-
-        {/* Cart Items List */}
         <div className="flex-1 overflow-y-auto py-4 space-y-2.5 pr-1 scrollbar-thin">
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
@@ -413,16 +350,12 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
             ))
           )}
         </div>
-
-        {/* Checkout Summary & Pay Buttons */}
         <div className="border-t border-sidebar-border pt-4 space-y-4">
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{t('subtotal')}</span>
               <span>{formatCurrency(cartSubtotal)}</span>
             </div>
-
-            {/* Discount row */}
             <div className="flex justify-between text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Tag className="w-3 h-3 text-success" />
@@ -437,19 +370,15 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
                 className="w-12 bg-secondary/40 border border-sidebar-border rounded px-1.5 py-0.5 text-center text-xs text-foreground focus:outline-none"
               />
             </div>
-
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>VAT ({vatEnabled ? `${vatPercentage}%` : 'Disabled'})</span>
               <span>{formatCurrency(cartTax)}</span>
             </div>
-
             <div className="flex justify-between text-sm font-bold text-foreground pt-1.5 border-t border-sidebar-border/30">
               <span>{t('totalAmount')}</span>
               <span className="text-primary">{formatCurrency(cartTotal)}</span>
             </div>
           </div>
-
-          {/* Checkout Button */}
           <button
             onClick={processCheckout}
             disabled={cart.length === 0}
@@ -460,21 +389,14 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
           </button>
         </div>
       </div>
-
-
-
-      {/* Checkout Receipt Modal (Fixed and Scrollable layout) */}
       {checkoutResult && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="glass-card w-full max-w-sm max-h-[90vh] bg-card border border-border rounded-2xl shadow-xl flex flex-col overflow-hidden animate-scale-in">
-            {/* Header */}
             <div className="text-center p-6 border-b border-border/40 flex-shrink-0 space-y-2">
               <CheckCircle2 className="w-12 h-12 text-success mx-auto" />
               <h2 className="text-lg font-bold">{t('transactionComplete')}</h2>
               <p className="text-xs text-muted-foreground">Receipt #{checkoutResult.id}</p>
             </div>
-
-            {/* Scrollable Receipt details */}
             <div className="flex-1 overflow-y-auto p-6 space-y-3 font-mono text-xs scrollbar-thin">
               <div className="flex justify-between">
                 <span>Date:</span>
@@ -484,8 +406,6 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
                 <span>Cashier:</span>
                 <span>{checkoutResult.cashierId}</span>
               </div>
-
-
               <div className="border-t border-border/40 pt-2 border-dotted">
                 <p className="font-bold mb-1 border-b border-border/20 pb-1">Items List</p>
                 {checkoutResult.items.map((item: any) => (
@@ -495,7 +415,6 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
                   </div>
                 ))}
               </div>
-
               <div className="border-t border-border/40 pt-2 border-dotted space-y-1">
                 <div className="flex justify-between text-[11px]">
                   <span>Subtotal:</span>
@@ -516,14 +435,11 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
                   <span>{formatCurrency(checkoutResult.totalAmount)}</span>
                 </div>
               </div>
-
               <div className="flex justify-between pt-2 border-t border-border/40 border-dotted">
                 <span>Pay Method:</span>
                 <span className="uppercase">{checkoutResult.paymentMethod}</span>
               </div>
             </div>
-
-            {/* Actions Footer */}
             <div className="flex gap-2 p-6 border-t border-border/40 flex-shrink-0">
               {checkoutResult.pdfUrl ? (
                 <button

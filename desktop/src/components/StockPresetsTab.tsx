@@ -4,23 +4,18 @@ import { Package, Plus, Play, Trash2, X } from 'lucide-react';
 import { inventoryApi, productApi, StockPresetRecord, ProductRecord } from '@/lib/api';
 import { useNotification } from '@/context/NotificationContext';
 import SearchBar from './SearchBar';
-
 export function StockPresetsTab({ currentUser }: { currentUser: any }) {
   const { toast, confirm } = useNotification();
   const [presets, setPresets] = useState<StockPresetRecord[]>([]);
   const [products, setProducts] = useState<ProductRecord[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [presetName, setPresetName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItems, setSelectedItems] = useState<{ productId: string; qty: number }[]>([]);
-
   useEffect(() => {
     loadData();
   }, []);
-
   async function loadData() {
     setLoading(true);
     try {
@@ -37,11 +32,9 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
       setLoading(false);
     }
   }
-
   const handleCreatePreset = async () => {
     if (!presetName.trim()) return toast.error('Please enter a preset name');
     if (selectedItems.length === 0) return toast.error('Please select at least one product');
-
     try {
       await inventoryApi.createPreset({ name: presetName, items: selectedItems });
       toast.success('Preset saved successfully');
@@ -53,7 +46,6 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
       toast.error('Failed to save preset');
     }
   };
-
   const handleApplyPreset = async (presetId: string) => {
     const isConfirmed = await confirm({
       title: 'Apply Preset',
@@ -62,17 +54,14 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
       cancelText: 'Cancel'
     });
     if (!isConfirmed) return;
-
     try {
       await inventoryApi.applyPreset(presetId, { updatedBy: currentUser?.username || currentUser?.role || 'Unknown' });
       toast.success('Stock updated successfully');
-      // Broadcast an event so ProductsPage list will reload
       window.dispatchEvent(new CustomEvent('products_updated'));
     } catch (err) {
       toast.error('Failed to apply preset');
     }
   };
-
   const handleDeletePreset = async (presetId: string) => {
     const isConfirmed = await confirm({
       title: 'Delete Preset',
@@ -82,7 +71,6 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
       type: 'danger'
     });
     if (!isConfirmed) return;
-
     try {
       await inventoryApi.deletePreset(presetId);
       toast.success('Preset deleted');
@@ -91,7 +79,6 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
       toast.error('Failed to delete preset');
     }
   };
-
   const toggleProductSelection = (productId: string) => {
     if (selectedItems.find(i => i.productId === productId)) {
       setSelectedItems(selectedItems.filter(i => i.productId !== productId));
@@ -99,16 +86,13 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
       setSelectedItems([...selectedItems, { productId, qty: 0 }]);
     }
   };
-
   const updateProductQty = (productId: string, qty: number) => {
     setSelectedItems(selectedItems.map(i => i.productId === productId ? { ...i, qty } : i));
   };
-
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     p.sku.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -124,7 +108,6 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
           <span>New Preset</span>
         </button>
       </div>
-
       {loading ? (
         <div className="flex items-center justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -179,7 +162,6 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
           ))}
         </div>
       )}
-
       {isModalOpen && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
           <div className="w-full max-w-2xl bg-card border border-border/50 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -189,7 +171,6 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
                 <X size={20} />
               </button>
             </div>
-            
             <div className="p-4 border-b border-border/30">
               <label className="block text-sm font-medium text-foreground mb-1">Preset Name</label>
               <input
@@ -200,11 +181,9 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
                 className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
               />
             </div>
-
             <div className="p-4 border-b border-border/30 bg-secondary/10">
               <SearchBar onSearch={setSearchQuery} placeholder="Search products to add..." />
             </div>
-
             <div className="flex-1 overflow-y-auto p-4 space-y-2 min-h-0">
               {filteredProducts.map(product => {
                 const isSelected = selectedItems.find(i => i.productId === product.id);
@@ -238,7 +217,6 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
                 );
               })}
             </div>
-
             <div className="p-4 border-t border-border/30 bg-card/50 flex justify-end space-x-3">
               <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Cancel
@@ -254,5 +232,4 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
     </div>
   );
 }
-
 export default StockPresetsTab;

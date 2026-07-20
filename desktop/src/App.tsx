@@ -15,19 +15,16 @@ import type { User } from '@/lib/api';
 import DarkVeil from '@/components/DarkVeil';
 import { startWebSocketListener } from '@/lib/websocket';
 import { NotificationProvider } from '@/context/NotificationContext';
-
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
-
   useEffect(() => {
     const stopWS = startWebSocketListener();
     return () => {
       stopWS();
     };
   }, []);
-
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -37,15 +34,13 @@ export default function App() {
           setCurrentUser(parsed);
           setCurrentPage('dashboard');
         }
-      } catch (e) {
-        // ignore JSON parse error
+      } catch (e) {
       } finally {
         setIsInitializing(false);
       }
     };
     checkAuth();
   }, []);
-
   const handleLoginSuccess = (user: User, rememberMe: boolean) => {
     setCurrentUser(user);
     if (rememberMe) {
@@ -58,13 +53,11 @@ export default function App() {
     }
     setCurrentPage('dashboard');
   };
-
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('currentUser');
     sessionStorage.removeItem('currentUser');
   };
-
   const renderPage = () => {
     const isAdminOrOwner = currentUser?.role === 'admin' || currentUser?.role === 'owner';
     switch (currentPage) {
@@ -94,12 +87,10 @@ export default function App() {
         return <DashboardPage />;
     }
   };
-
   const renderContent = () => {
     if (isInitializing) {
       return <div className="flex w-full h-full items-center justify-center text-foreground/50">Initializing...</div>;
     }
-
     if (!currentUser) {
       return (
         <LoginPage
@@ -107,7 +98,6 @@ export default function App() {
         />
       );
     }
-
     return (
       <div className="flex w-full h-full relative z-10">
         <Sidebar
@@ -122,11 +112,9 @@ export default function App() {
       </div>
     );
   };
-
   return (
     <NotificationProvider>
       <div className="relative w-screen h-screen overflow-hidden bg-background text-foreground z-10 flex">
-        {/* DarkVeil Background */}
         <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden" style={{ width: '100%', height: '100%', opacity: 0.65 }}>
           <DarkVeil
             hueShift={0}

@@ -6,13 +6,10 @@ import { productApi } from '@/lib/api';
 import type { ProductRecord, User } from '@/lib/api';
 import { useTranslation } from '@/lib/translations';
 import StockPresetsTab from '@/components/StockPresetsTab';
-
 let cachedProducts: ProductRecord[] | null = null;
-
 interface ProductsPageProps {
   currentUser: User | null;
 }
-
 export default function ProductsPage({ currentUser }: ProductsPageProps) {
   const { t } = useTranslation();
   const { confirm, toast } = useNotification();
@@ -21,12 +18,8 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
   const [loading, setLoading] = useState(!cachedProducts);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All');
-  const [activeTab, setActiveTab] = useState<'inventory' | 'presets'>('inventory');
-  
-
-  
-  // Form states
-  const [isEditing, setIsEditing] = useState<string | null>(null); // product ID or 'new'
+  const [activeTab, setActiveTab] = useState<'inventory' | 'presets'>('inventory');
+  const [isEditing, setIsEditing] = useState<string | null>(null); 
   const [formName, setFormName] = useState('');
   const [formSku, setFormSku] = useState('');
   const [formCategory, setFormCategory] = useState('');
@@ -37,15 +30,11 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
   const [formImageUrl, setFormImageUrl] = useState('');
   const [formError, setFormError] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [formTrackStock, setFormTrackStock] = useState(true);
-  
-  // Inline category input state for select dropdown
+  const [formTrackStock, setFormTrackStock] = useState(true);
   const [showNewCatInput, setShowNewCatInput] = useState(false);
   const [newCatName, setNewCatName] = useState('');
-
   useEffect(() => {
     loadProducts();
-
     const handleUpdate = () => {
       loadProducts();
     };
@@ -54,7 +43,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
       window.removeEventListener('products_updated', handleUpdate);
     };
   }, []);
-
   async function loadProducts() {
     if (!cachedProducts) {
       setLoading(true);
@@ -62,9 +50,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
     try {
       const data = await productApi.getAll();
       setProducts(data);
-      cachedProducts = data;
-      
-      // Sync and load categories
+      cachedProducts = data;
       const savedCats = localStorage.getItem('product_categories');
       const customCats = savedCats ? JSON.parse(savedCats) : ['General', 'Electronics', 'Beverages', 'Snacks'];
       const productCats = Array.from(new Set(data.map(p => p.category)));
@@ -76,7 +62,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
       setLoading(false);
     }
   }
-
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query);
     if (!query.trim()) {
@@ -90,7 +75,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
       console.error('Search failed:', err);
     }
   }, []);
-
   async function handleDelete(id: string) {
     const isConfirmed = await confirm({
       title: 'Delete Product',
@@ -100,7 +84,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
       type: 'danger'
     });
     if (!isConfirmed) return;
-
     try {
       await productApi.delete(id);
       setProducts(prev => {
@@ -108,14 +91,12 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
         cachedProducts = updated;
         return updated;
       });
-      toast.success('Product deleted successfully.');
-      // Broadcast WebSocket-style reload event locally
+      toast.success('Product deleted successfully.');
       window.dispatchEvent(new CustomEvent('products_updated'));
     } catch (err: any) {
       toast.error(err.message || 'Failed to delete product.');
     }
   }
-
   const startEdit = (prod: ProductRecord) => {
     setIsEditing(prod.id);
     setFormName(prod.name);
@@ -131,7 +112,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
     setShowNewCatInput(false);
     setNewCatName('');
   };
-
   const startAddNew = () => {
     setIsEditing('new');
     setFormName('');
@@ -147,13 +127,9 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
     setShowNewCatInput(false);
     setNewCatName('');
   };
-
-
-
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setUploading(true);
     setFormError('');
     try {
@@ -166,14 +142,11 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
       setUploading(false);
     }
   };
-
   const cancelEdit = () => {
     setIsEditing(null);
   };
-
   const saveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     let activeCategory = formCategory;
     if (showNewCatInput && newCatName.trim()) {
       activeCategory = newCatName.trim();
@@ -184,7 +157,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
         localStorage.setItem('product_categories', JSON.stringify(customCats));
       }
     }
-
     if (!formName || !formSku || !formPrice) {
       setFormError('Name, SKU and Price are required.');
       return;
@@ -193,7 +165,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
       setFormError('Please select or specify a category.');
       return;
     }
-
     const payload = {
       name: formName,
       sku: formSku,
@@ -204,7 +175,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
       description: formDescription,
       imageUrl: formImageUrl,
     };
-
     try {
       if (isEditing === 'new') {
         const created = await productApi.create(payload);
@@ -221,26 +191,20 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
           return revised;
         });
       }
-      setIsEditing(null);
-      // Trigger update and category reload
+      setIsEditing(null);
       loadProducts();
       window.dispatchEvent(new CustomEvent('products_updated'));
     } catch (err: any) {
       setFormError(err.message || 'Failed to save product.');
     }
   };
-
   const formatCurrency = (val: number) => {
     return `Rs. ${Number(val).toFixed(2)}`;
-  };
-
-  // Filter products by selected category
+  };
   const filteredGridProducts = products.filter(p => selectedCategoryFilter === 'All' || p.category === selectedCategoryFilter);
-
   return (
     <>
       <div className="p-6 max-w-6xl mx-auto space-y-6 animate-fade-in">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('productsCatalog')}</h1>
@@ -258,7 +222,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
           </button>
         )}
       </div>
-
       <div className="flex border-b border-border/40">
         <button
           onClick={() => setActiveTab('inventory')}
@@ -277,10 +240,8 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
           Stock Presets
         </button>
       </div>
-
       {activeTab === 'inventory' ? (
       <div className="space-y-4 w-full">
-        {/* Controls: Search and Category Filter */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
             <SearchBar
@@ -313,8 +274,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
             </select>
           </div>
         </div>
-
-        {/* Products Grid */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
@@ -360,7 +319,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                     <p className="text-xs text-muted-foreground line-clamp-2">{prod.description || 'No description provided.'}</p>
                   </div>
                 </div>
-
                 <div className="flex justify-between items-center mt-5 pt-3 border-t border-border/20">
                   <div className="flex gap-6">
                     <div>
@@ -388,7 +346,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                       </div>
                     )}
                   </div>
-
                   {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && (
                     <div className="flex gap-2">
                       <button
@@ -423,12 +380,9 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
         <StockPresetsTab currentUser={currentUser} />
       )}
       </div>
-
-      {/* Editor Modal / Inline Form */}
       {isEditing && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto md:py-12 animate-fade-in">
           <form onSubmit={saveProduct} className="glass-card w-full max-w-3xl bg-card border border-border rounded-2xl shadow-xl p-6 animate-scale-in space-y-4 my-8">
-            {/* Header */}
             <div className="flex justify-between items-center pb-3 border-b border-border/40">
               <h3 className="text-lg font-bold text-foreground">
                 {isEditing === 'new' ? 'Add New Product' : 'Edit Product'}
@@ -437,12 +391,8 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
-            {/* Form Content */}
             {formError && <p className="text-xs text-destructive bg-destructive/10 p-2.5 rounded-lg font-medium">{formError}</p>}
-            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column: Info & Media */}
               <div className="space-y-4 w-full">
                 <div>
                   <label className="text-xs text-muted-foreground font-semibold mb-1 block">Product Name *</label>
@@ -454,7 +404,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                     placeholder="Product Name"
                   />
                 </div>
-
                 <div>
                   <label className="text-xs text-muted-foreground font-semibold mb-1 block">Image URL</label>
                   <div className="flex gap-2">
@@ -477,7 +426,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                     </label>
                   </div>
                 </div>
-
                 <div>
                   <label className="text-xs text-muted-foreground font-semibold mb-1 block">Description</label>
                   <textarea
@@ -488,8 +436,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                   />
                 </div>
               </div>
-
-              {/* Right Column: Pricing & Inventory */}
               <div className="space-y-4 w-full">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -502,7 +448,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                       placeholder="SKU-Code"
                     />
                   </div>
-
                   <div>
                     <label className="text-xs text-muted-foreground font-semibold mb-1 block">Category *</label>
                     <select
@@ -529,7 +474,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                     </select>
                   </div>
                 </div>
-
                 {showNewCatInput && (
                   <div className="animate-fade-in">
                     <label className="text-xs text-muted-foreground font-semibold mb-1 block">New Category Name *</label>
@@ -544,7 +488,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                     />
                   </div>
                 )}
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs text-muted-foreground font-semibold mb-1 block">Price (LKR) *</label>
@@ -557,7 +500,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                       placeholder="Price"
                     />
                   </div>
-
                   <div>
                     <label className="text-xs text-muted-foreground font-semibold mb-1 block">Cost (LKR)</label>
                     <input
@@ -570,7 +512,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                     />
                   </div>
                 </div>
-
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <label className="text-xs text-muted-foreground font-semibold">Stock Quantity</label>
@@ -595,8 +536,6 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                 </div>
               </div>
             </div>
-
-            {/* Fixed Footer Buttons */}
             <div className="flex justify-end gap-3 pt-3 border-t border-border/40">
               <button
                 type="button"

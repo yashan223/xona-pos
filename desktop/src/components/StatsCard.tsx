@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
-
 interface StatsCardProps {
   title: string;
   value: number | string;
@@ -11,7 +10,6 @@ interface StatsCardProps {
   color?: 'teal' | 'violet' | 'amber' | 'red' | 'green';
   delay?: number;
 }
-
 const colorMap = {
   teal: {
     bg: 'bg-primary/8',
@@ -44,7 +42,6 @@ const colorMap = {
     badge: 'badge-green',
   },
 };
-
 export default function StatsCard({
   title,
   value,
@@ -58,35 +55,27 @@ export default function StatsCard({
   const [displayValue, setDisplayValue] = useState<number | string>(typeof value === 'number' ? 0 : value);
   const ref = useRef<HTMLDivElement>(null);
   const colors = colorMap[color];
-
   useEffect(() => {
     if (typeof value !== 'number') {
       setDisplayValue(value);
       return;
     }
-
     const timeout = setTimeout(() => {
       const duration = 800;
       const start = performance.now();
-
       const animate = (now: number) => {
         const elapsed = now - start;
-        const progress = Math.min(elapsed / duration, 1);
-        // Ease out cubic
+        const progress = Math.min(elapsed / duration, 1);
         const eased = 1 - Math.pow(1 - progress, 3);
         setDisplayValue(Math.round(value * eased));
-
         if (progress < 1) {
           requestAnimationFrame(animate);
         }
       };
-
       requestAnimationFrame(animate);
     }, delay);
-
     return () => clearTimeout(timeout);
   }, [value, delay]);
-
   return (
     <div
       ref={ref}
