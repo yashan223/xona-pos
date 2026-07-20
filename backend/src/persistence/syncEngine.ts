@@ -2,14 +2,11 @@ import mongoose from 'mongoose';
 import db from './sqliteDb.js';
 import { ProductModel, TransactionModel, CustomerModel, GraphNodeModel, GraphEdgeModel } from './database.js';
 import { broadcast } from '../lib/websocket.js';
-
 let isSyncing = false;
 let lastSyncTime: string | null = null;
-
 export function isCloudOnline(): boolean {
   return mongoose.connection.readyState === 1;
 }
-
 export function getPendingCount(): number {
   try {
     const products = (db.prepare('SELECT COUNT(*) as count FROM local_products WHERE synced = 0').get() as any)?.count || 0;
@@ -23,7 +20,6 @@ export function getPendingCount(): number {
     return 0;
   }
 }
-
 export function getSyncStatus() {
   return {
     isOnline: isCloudOnline(),
@@ -32,15 +28,11 @@ export function getSyncStatus() {
     lastSyncTime,
   };
 }
-
 export async function syncPendingToCloud(): Promise<boolean> {
   if (!isCloudOnline() || isSyncing) return false;
-
   isSyncing = true;
   let syncedAny = false;
-
   try {
-    // 1. Sync pending Products
     const unsyncedProducts = db.prepare('SELECT * FROM local_products WHERE synced = 0').all() as any[];
     for (const p of unsyncedProducts) {
       await ProductModel.findOneAndUpdate(
@@ -65,8 +57,6 @@ export async function syncPendingToCloud(): Promise<boolean> {
       db.prepare('UPDATE local_products SET synced = 1 WHERE id = ?').run(p.id);
       syncedAny = true;
     }
-
-    // 2. Sync pending Customers
     const unsyncedCustomers = db.prepare('SELECT * FROM local_customers WHERE synced = 0').all() as any[];
     for (const c of unsyncedCustomers) {
       await CustomerModel.findOneAndUpdate(
@@ -80,8 +70,6 @@ export async function syncPendingToCloud(): Promise<boolean> {
       db.prepare('UPDATE local_customers SET synced = 1 WHERE id = ?').run(c.id);
       syncedAny = true;
     }
-
-    // 3. Sync pending Transactions
     const unsyncedTx = db.prepare('SELECT * FROM local_transactions WHERE synced = 0').all() as any[];
     for (const tx of unsyncedTx) {
       const items = JSON.parse(tx.itemsJson || '[]');
@@ -106,8 +94,6 @@ export async function syncPendingToCloud(): Promise<boolean> {
       db.prepare('UPDATE local_transactions SET synced = 1 WHERE id = ?').run(tx.id);
       syncedAny = true;
     }
-
-    // 4. Sync pending Graph Nodes & Edges
     const unsyncedNodes = db.prepare('SELECT * FROM local_graph_nodes WHERE synced = 0').all() as any[];
     for (const n of unsyncedNodes) {
       const metadata = n.metadataJson ? JSON.parse(n.metadataJson) : {};
@@ -119,7 +105,6 @@ export async function syncPendingToCloud(): Promise<boolean> {
       db.prepare('UPDATE local_graph_nodes SET synced = 1 WHERE id = ?').run(n.id);
       syncedAny = true;
     }
-
     const unsyncedEdges = db.prepare('SELECT * FROM local_graph_edges WHERE synced = 0').all() as any[];
     for (const e of unsyncedEdges) {
       const metadata = e.metadataJson ? JSON.parse(e.metadataJson) : {};
@@ -131,7 +116,6 @@ export async function syncPendingToCloud(): Promise<boolean> {
       db.prepare('UPDATE local_graph_edges SET synced = 1 WHERE id = ?').run(e.id);
       syncedAny = true;
     }
-
     if (syncedAny) {
       lastSyncTime = new Date().toISOString();
       console.log('[SyncEngine] Cloud sync completed successfully. All pending local changes uploaded.');
@@ -139,7 +123,6 @@ export async function syncPendingToCloud(): Promise<boolean> {
       broadcast('PRODUCTS_UPDATED');
       broadcast('TRANSACTIONS_UPDATED');
     }
-
     return true;
   } catch (err) {
     console.error('[SyncEngine] Error during cloud sync:', err);
@@ -148,12 +131,9 @@ export async function syncPendingToCloud(): Promise<boolean> {
     isSyncing = false;
   }
 }
-
 export async function pullCloudToLocal(): Promise<void> {
   if (!isCloudOnline()) return;
-
   try {
-    // Populate/refresh local SQLite from MongoDB
     const cloudProducts = await ProductModel.find().lean();
     const insertProduct = db.prepare(`
       INSERT INTO local_products (id, name, sku, category, price, cost, stock, description, imageUrl, salesCount, synced, createdAt, updatedAt)
@@ -171,7 +151,6 @@ export async function pullCloudToLocal(): Promise<void> {
         synced=1,
         updatedAt=excluded.updatedAt
     `);
-
     for (const p of cloudProducts as any[]) {
       insertProduct.run(
         p._id,
@@ -188,7 +167,6 @@ export async function pullCloudToLocal(): Promise<void> {
         p.updatedAt || new Date().toISOString()
       );
     }
-
     const cloudCustomers = await CustomerModel.find().lean();
     const insertCustomer = db.prepare(`
       INSERT INTO local_customers (id, name, phone, email, synced, createdAt)
@@ -199,11 +177,9 @@ export async function pullCloudToLocal(): Promise<void> {
         email=excluded.email,
         synced=1
     `);
-
     for (const c of cloudCustomers as any[]) {
       insertCustomer.run(c._id, c.name, c.phone || '', c.email || '', c.createdAt || new Date().toISOString());
     }
-
     const cloudTransactions = await TransactionModel.find().lean();
     const insertTx = db.prepare(`
       INSERT INTO local_transactions (id, cashierId, customerId, itemsJson, subtotal, discount, tax, totalAmount, paymentMethod, paymentStatus, synced, createdAt)
@@ -212,7 +188,6 @@ export async function pullCloudToLocal(): Promise<void> {
         paymentStatus=excluded.paymentStatus,
         synced=1
     `);
-
     for (const tx of cloudTransactions as any[]) {
       insertTx.run(
         tx._id,
@@ -228,22 +203,17 @@ export async function pullCloudToLocal(): Promise<void> {
         tx.createdAt || new Date().toISOString()
       );
     }
-
     console.log('[SyncEngine] Pulled latest cloud data to local SQLite database.');
   } catch (err) {
     console.error('[SyncEngine] Error pulling cloud data to local:', err);
   }
 }
-
 export function startAutoSync(): void {
-  // Try sync every 10 seconds
   setInterval(async () => {
     if (isCloudOnline()) {
       await syncPendingToCloud();
     }
   }, 10000);
-
-  // Also sync on MongoDB connection open
   mongoose.connection.on('open', async () => {
     console.log('[SyncEngine] MongoDB reconnected. Triggering cloud sync...');
     await syncPendingToCloud();

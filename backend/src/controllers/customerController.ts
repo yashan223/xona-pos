@@ -1,22 +1,18 @@
 import { Request, Response } from 'express';
 import customerRepository from '../repositories/customerRepository.js';
 import { broadcast } from '../lib/websocket.js';
-
 class CustomerController {
   create = async (req: Request, res: Response) => {
     try {
       const { name, phone, email } = req.body;
-
       if (!name) {
         return res.status(400).json({ error: 'Customer name is required' });
       }
-
       const customer = await customerRepository.addCustomer({
         name,
         phone,
         email,
       });
-
       broadcast('CUSTOMERS_UPDATED');
       res.status(201).json(customer);
     } catch (err) {
@@ -24,7 +20,6 @@ class CustomerController {
       res.status(500).json({ error: 'Failed to create customer record' });
     }
   };
-
   getAll = async (req: Request, res: Response) => {
     try {
       const customers = await customerRepository.getAllCustomers();
@@ -34,7 +29,6 @@ class CustomerController {
       res.status(500).json({ error: 'Failed to retrieve customers' });
     }
   };
-
   getById = async (req: Request, res: Response) => {
     try {
       const customer = await customerRepository.getCustomerById(req.params.id as string);
@@ -47,7 +41,6 @@ class CustomerController {
       res.status(500).json({ error: 'Failed to retrieve customer' });
     }
   };
-
   delete = async (req: Request, res: Response) => {
     try {
       const success = await customerRepository.deleteCustomer(req.params.id as string);
@@ -62,6 +55,5 @@ class CustomerController {
     }
   };
 }
-
 export const customerController = new CustomerController();
 export default customerController;

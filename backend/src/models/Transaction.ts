@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-
 const TransactionItemSchema = new mongoose.Schema({
   productId: { type: String, required: true },
   name: { type: String, required: true },
@@ -7,7 +6,6 @@ const TransactionItemSchema = new mongoose.Schema({
   quantity: { type: Number, required: true },
   subtotal: { type: Number, required: true },
 }, { _id: false });
-
 const TransactionSchema = new mongoose.Schema({
   _id: { type: String, required: true },
   cashierId: { type: String, required: true },
@@ -21,5 +19,4 @@ const TransactionSchema = new mongoose.Schema({
   paymentStatus: { type: String, enum: ['paid', 'refunded', 'voided'], required: true },
   createdAt: { type: String, required: true },
 });
-
 export const TransactionModel = mongoose.model('Transaction', TransactionSchema);

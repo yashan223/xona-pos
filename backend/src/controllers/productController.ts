@@ -2,16 +2,13 @@ import { Request, Response } from 'express';
 import productRepository from '../repositories/productRepository.js';
 import { broadcast } from '../lib/websocket.js';
 import { logActivity } from '../lib/logger.js';
-
 class ProductController {
   create = async (req: Request, res: Response) => {
     try {
       const { name, sku, category, price, cost, stock, description, imageUrl } = req.body;
-
       if (!name || !sku || price === undefined) {
         return res.status(400).json({ error: 'name, sku and price are required' });
       }
-
       const record = await productRepository.addProduct({
         name,
         sku,
@@ -22,7 +19,6 @@ class ProductController {
         description,
         imageUrl,
       });
-
       broadcast('PRODUCTS_UPDATED');
       await logActivity(req, 'CREATE', 'Product', record.id, { name: record.name, sku: record.sku });
       res.status(201).json(record);
@@ -31,12 +27,10 @@ class ProductController {
       res.status(500).json({ error: 'Failed to create product record' });
     }
   };
-
   update = async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string;
       const { name, sku, category, price, cost, stock, description, imageUrl } = req.body;
-
       const record = await productRepository.updateProduct(id, {
         name,
         sku,
@@ -47,11 +41,9 @@ class ProductController {
         description,
         imageUrl,
       });
-
       if (!record) {
         return res.status(404).json({ error: 'Product not found' });
       }
-
       broadcast('PRODUCTS_UPDATED');
       await logActivity(req, 'UPDATE', 'Product', record.id, { name: record.name, updates: req.body });
       res.json(record);
@@ -60,7 +52,6 @@ class ProductController {
       res.status(500).json({ error: 'Failed to update product record' });
     }
   };
-
   getAll = async (req: Request, res: Response) => {
     try {
       const products = await productRepository.getAllProducts();
@@ -70,7 +61,6 @@ class ProductController {
       res.status(500).json({ error: 'Failed to retrieve products' });
     }
   };
-
   search = async (req: Request, res: Response) => {
     try {
       const query = (req.query.q as string) || '';
@@ -84,7 +74,6 @@ class ProductController {
       res.status(500).json({ error: 'Search failed' });
     }
   };
-
   getById = async (req: Request, res: Response) => {
     try {
       const product = await productRepository.getProduct(req.params.id as string);
@@ -97,7 +86,6 @@ class ProductController {
       res.status(500).json({ error: 'Failed to retrieve product' });
     }
   };
-
   delete = async (req: Request, res: Response) => {
     try {
       const success = await productRepository.deleteProduct(req.params.id as string);
@@ -113,6 +101,5 @@ class ProductController {
     }
   };
 }
-
 export const productController = new ProductController();
 export default productController;

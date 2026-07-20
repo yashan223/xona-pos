@@ -2,16 +2,13 @@ import { TransactionModel, ProductModel, GraphEdgeModel } from '../persistence/d
 import db from '../persistence/sqliteDb.js';
 import { isCloudOnline } from '../persistence/syncEngine.js';
 import { TransactionRecord } from '../types/index.js';
-
 class TransactionRepository {
   private _generateId(): string {
     return `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   }
-
   async createTransaction(txData: Partial<TransactionRecord>): Promise<TransactionRecord> {
     const now = new Date().toISOString();
     const id = txData.id || this._generateId();
-    
     const record: TransactionRecord = {
       id,
       cashierId: txData.cashierId || '',
@@ -25,10 +22,7 @@ class TransactionRepository {
       paymentStatus: txData.paymentStatus || 'paid',
       createdAt: now,
     };
-
     const online = isCloudOnline();
-
-    // 1. Save Transaction to local SQLite
     db.prepare(`
       INSERT INTO local_transactions (id, cashierId, customerId, itemsJson, subtotal, discount, tax, totalAmount, paymentMethod, paymentStatus, synced, createdAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -46,8 +40,6 @@ class TransactionRepository {
       online ? 1 : 0,
       record.createdAt
     );
-
-    // 2. Process local inventory stock decrement in SQLite
     for (const item of record.items) {
       db.prepare(`
         UPDATE local_products
@@ -57,15 +49,12 @@ class TransactionRepository {
         WHERE id = ?
       `).run(item.quantity, item.quantity, online ? 1 : 0, item.productId);
     }
-
-    // 3. Update Co-occurrence Graph (Bought Together) in SQLite
     const itemIds = record.items.map(i => i.productId);
     for (let i = 0; i < itemIds.length; i++) {
       for (let j = i + 1; j < itemIds.length; j++) {
         const [source, target] = [itemIds[i], itemIds[j]].sort();
         const edgeId = `edge:${source}:${target}:BOUGHT_WITH`;
         const existingRow = db.prepare('SELECT metadataJson FROM local_graph_edges WHERE source = ? AND target = ? AND type = "BOUGHT_WITH"').get(source, target) as any;
-
         let weight = 1;
         if (existingRow && existingRow.metadataJson) {
           try {
@@ -74,7 +63,6 @@ class TransactionRepository {
             weight = 2;
           }
         }
-
         db.prepare(`
           INSERT INTO local_graph_edges (id, source, target, type, metadataJson, synced)
           VALUES (?, ?, ?, 'BOUGHT_WITH', ?, ?)
@@ -82,8 +70,6 @@ class TransactionRepository {
         `).run(edgeId, source, target, JSON.stringify({ weight }), online ? 1 : 0);
       }
     }
-
-    // 4. Save to Cloud MongoDB if online
     if (online) {
       try {
         await TransactionModel.create({
@@ -99,7 +85,6 @@ class TransactionRepository {
           paymentStatus: record.paymentStatus,
           createdAt: record.createdAt,
         });
-
         for (const item of record.items) {
           const prod = await ProductModel.findById(item.productId);
           let updateObj: any = { $inc: { salesCount: item.quantity } };
@@ -108,7 +93,6 @@ class TransactionRepository {
           }
           await ProductModel.findByIdAndUpdate(item.productId, updateObj, { new: true });
         }
-
         for (let i = 0; i < itemIds.length; i++) {
           for (let j = i + 1; j < itemIds.length; j++) {
             const [source, target] = [itemIds[i], itemIds[j]].sort();
@@ -133,48 +117,35 @@ class TransactionRepository {
         console.error('[TransactionRepository] Error saving transaction to Cloud MongoDB (saved locally):', err);
       }
     }
-
     return record;
   }
-
   async getTransactionById(id: string): Promise<TransactionRecord | null> {
     const row = db.prepare('SELECT * FROM local_transactions WHERE id = ?').get(id) as any;
     if (row) {
       return this.rowToTransaction(row);
     }
-
     if (isCloudOnline()) {
       const doc = await TransactionModel.findById(id).lean() as any;
       if (doc) return this.docToTransaction(doc);
     }
-
     return null;
   }
-
   async getAllTransactions(): Promise<TransactionRecord[]> {
     const rows = db.prepare('SELECT * FROM local_transactions ORDER BY createdAt DESC').all() as any[];
     if (rows.length > 0) {
       return rows.map((row: any) => this.rowToTransaction(row));
     }
-
     if (isCloudOnline()) {
       const docs = await TransactionModel.find().sort({ createdAt: -1 }).lean();
       return docs.map((doc: any) => this.docToTransaction(doc));
     }
-
     return [];
   }
-
   async refundTransaction(id: string): Promise<TransactionRecord | null> {
     const tx = await this.getTransactionById(id);
     if (!tx || tx.paymentStatus === 'refunded') return null;
-
     const online = isCloudOnline();
-
-    // 1. Update status in local SQLite
     db.prepare('UPDATE local_transactions SET paymentStatus = "refunded", synced = ? WHERE id = ?').run(online ? 1 : 0, id);
-
-    // Revert inventory in SQLite
     for (const item of tx.items) {
       db.prepare(`
         UPDATE local_products
@@ -184,8 +155,6 @@ class TransactionRepository {
         WHERE id = ?
       `).run(item.quantity, item.quantity, online ? 1 : 0, item.productId);
     }
-
-    // 2. Update status in Cloud MongoDB if online
     if (online) {
       try {
         const refundedDoc = await TransactionModel.findByIdAndUpdate(
@@ -193,7 +162,6 @@ class TransactionRepository {
           { $set: { paymentStatus: 'refunded' } },
           { new: true }
         ).lean() as any;
-
         if (refundedDoc) {
           for (const item of refundedDoc.items) {
             const prod = await ProductModel.findById(item.productId);
@@ -208,10 +176,8 @@ class TransactionRepository {
         console.error('[TransactionRepository] Error updating refund in Cloud MongoDB (saved locally):', err);
       }
     }
-
     return { ...tx, paymentStatus: 'refunded' };
   }
-
   rowToTransaction(row: any): TransactionRecord {
     let items = [];
     try {
@@ -219,7 +185,6 @@ class TransactionRepository {
     } catch (e) {
       items = [];
     }
-
     return {
       id: row.id,
       cashierId: row.cashierId,
@@ -234,7 +199,6 @@ class TransactionRepository {
       createdAt: row.createdAt,
     };
   }
-
   docToTransaction(doc: any): TransactionRecord {
     return {
       id: doc._id,
@@ -251,6 +215,5 @@ class TransactionRepository {
     };
   }
 }
-
 export const transactionRepository = new TransactionRepository();
 export default transactionRepository;

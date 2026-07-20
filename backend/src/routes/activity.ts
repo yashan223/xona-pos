@@ -1,9 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { ActivityLogModel } from '../models/index.js';
-
 const router = Router();
-
-// GET /api/activity — Get all activity logs
 router.get('/', async (req: Request, res: Response) => {
   try {
     const logs = await ActivityLogModel.find()
@@ -16,5 +13,4 @@ router.get('/', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to retrieve activity logs' });
   }
 });
-
 export default router;

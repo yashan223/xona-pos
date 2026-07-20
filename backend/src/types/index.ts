@@ -12,7 +12,6 @@ export interface ProductRecord {
   createdAt: string;
   updatedAt: string;
 }
-
 export interface TransactionItem {
   productId: string;
   name: string;
@@ -20,7 +19,6 @@ export interface TransactionItem {
   quantity: number;
   subtotal: number;
 }
-
 export interface TransactionRecord {
   id: string;
   cashierId: string;
@@ -34,7 +32,6 @@ export interface TransactionRecord {
   paymentStatus: 'paid' | 'refunded' | 'voided';
   createdAt: string;
 }
-
 export interface CustomerRecord {
   id: string;
   name: string;
@@ -42,7 +39,6 @@ export interface CustomerRecord {
   email: string;
   createdAt: string;
 }
-
 export interface User {
   id: string;
   username: string;
@@ -51,26 +47,22 @@ export interface User {
   createdAt: string;
   role?: string;
 }
-
 export interface GraphNode {
   id: string;
   type: 'product' | 'category';
   label: string;
   metadata?: Record<string, any>;
 }
-
 export interface GraphEdge {
   source: string;
   target: string;
   type: 'BOUGHT_WITH' | 'BELONGS_TO';
 }
-
 export interface SystemStats {
   products: { total: number; treeHeight: number; isBalanced: boolean };
   transactions: { total: number; totalRevenue: number };
   graph: { nodeCount: number; edgeCount: number; nodeTypes: Record<string, number> };
 }
-
 export interface POSPatterns {
   byCategory: { category: string; count: number }[];
   byPaymentMethod: { method: string; count: number }[];

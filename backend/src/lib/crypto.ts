@@ -1,5 +1,4 @@
 import crypto from 'node:crypto';
-
 /**
  * Hashes a plain-text password using PBKDF2.
  * @param password Plain-text password
@@ -10,7 +9,6 @@ export function hashPassword(password: string): string {
   const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
   return `${salt}:${hash}`;
 }
-
 /**
  * Verifies a plain-text password against a stored hash.
  * @param password Plain-text password

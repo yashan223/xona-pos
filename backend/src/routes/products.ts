@@ -3,16 +3,11 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import productController from '../controllers/productController.js';
-
-const router = Router();
-
-// Ensure uploads directory exists
+const router = Router();
 const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
-
-// Multer disk storage configuration
+}
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, UPLOADS_DIR);
@@ -23,10 +18,9 @@ const storage = multer.diskStorage({
     cb(null, 'product-' + uniqueSuffix + ext);
   }
 });
-
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // limit 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }, 
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|webp|gif/;
     const extName = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -37,9 +31,7 @@ const upload = multer({
       cb(new Error('Only images (JPEG, JPG, PNG, WEBP, GIF) are allowed.'));
     }
   }
-});
-
-// POST /api/products/upload — Upload a product image
+});
 router.post('/upload', (req, res, next) => {
   upload.single('image')(req, res, (err) => {
     if (err) {
@@ -52,24 +44,11 @@ router.post('/upload', (req, res, next) => {
     const imageUrl = `http://localhost:${port}/uploads/${req.file.filename}`;
     res.json({ imageUrl });
   });
-});
-
-// POST /api/products — Create a new product
-router.post('/', productController.create);
-
-// GET /api/products — List all products
-router.get('/', productController.getAll);
-
-// GET /api/products/search?q= — Search products by prefix
-router.get('/search', productController.search);
-
-// GET /api/products/:id — Get a specific product
-router.get('/:id', productController.getById);
-
-// PUT /api/products/:id — Update a product
-router.put('/:id', productController.update);
-
-// DELETE /api/products/:id — Delete a product
+});
+router.post('/', productController.create);
+router.get('/', productController.getAll);
+router.get('/search', productController.search);
+router.get('/:id', productController.getById);
+router.put('/:id', productController.update);
 router.delete('/:id', productController.delete);
-
 export default router;

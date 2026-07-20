@@ -1,44 +1,20 @@
 import { Router } from 'express';
 import reportController from '../controllers/reportController.js';
-
-const router = Router();
-
-// GET /api/reports/frequent-errors — Popular products (adapted from frequent errors)
-router.get('/frequent-errors', reportController.getPopularProducts);
-
-// GET /api/reports/effective-solutions — Top selling products (adapted from effective solutions)
-router.get('/effective-solutions', reportController.getEffectiveProducts);
-
-// GET /api/reports/developer-patterns — POS category & sales patterns
-router.get('/developer-patterns', reportController.getPOSPatterns);
-
-// GET /api/reports/timeline — Transaction logs timeline
-router.get('/timeline', reportController.getTimeline);
-
-// GET /api/reports/stats — Store statistics
-router.get('/stats', reportController.getStats);
-
-// GET /api/reports/pdf — Generate PDF sales report
-router.get('/pdf', reportController.generatePdfReport);
-
-// GET /api/reports/saved — List all saved PDF reports
-router.get('/saved', reportController.listSavedReports);
-
-// DELETE /api/reports/saved/:id — Delete a saved PDF report
-router.delete('/saved/:id', reportController.deleteSavedReport);
-
-// POST /api/reports/reset — Reset POS database
-router.post('/reset', reportController.resetDatabase);
-
-// POST /api/reports/clear — Clear database (admin user retained)
-router.post('/clear', reportController.clearDatabase);
-
-// Backup & Restore operations
+const router = Router();
+router.get('/frequent-errors', reportController.getPopularProducts);
+router.get('/effective-solutions', reportController.getEffectiveProducts);
+router.get('/developer-patterns', reportController.getPOSPatterns);
+router.get('/timeline', reportController.getTimeline);
+router.get('/stats', reportController.getStats);
+router.get('/pdf', reportController.generatePdfReport);
+router.get('/saved', reportController.listSavedReports);
+router.delete('/saved/:id', reportController.deleteSavedReport);
+router.post('/reset', reportController.resetDatabase);
+router.post('/clear', reportController.clearDatabase);
 router.get('/backups', reportController.listBackups);
 router.post('/backups', reportController.createBackup);
 router.post('/backups/:filename/restore', reportController.restoreBackup);
 router.get('/backups/:filename/download', reportController.downloadBackup);
 router.delete('/backups/:filename', reportController.deleteBackup);
 router.post('/backups/upload', reportController.uploadBackup);
-
 export default router;

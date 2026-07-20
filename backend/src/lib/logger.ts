@@ -1,6 +1,5 @@
 import { Request } from 'express';
 import { ActivityLogModel } from '../models/index.js';
-
 export async function logActivity(
   req: Request,
   action: string,
@@ -10,7 +9,6 @@ export async function logActivity(
 ) {
   try {
     const userId = req.headers['x-user-id'] as string || 'system';
-    
     await ActivityLogModel.create({
       action,
       entity,

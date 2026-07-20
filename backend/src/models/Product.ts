@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-
 const ProductSchema = new mongoose.Schema({
   _id: { type: String, required: true },
   name: { type: String, required: true },
@@ -16,5 +15,4 @@ const ProductSchema = new mongoose.Schema({
   createdAt: { type: String, required: true },
   updatedAt: { type: String, required: true },
 });
-
 export const ProductModel = mongoose.model('Product', ProductSchema);

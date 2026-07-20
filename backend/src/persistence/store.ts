@@ -1,5 +1,4 @@
 import { ProductRecord } from '../types/index.js';
-
 class Store {
   docToProduct(doc: any): ProductRecord {
     return {
@@ -18,7 +17,6 @@ class Store {
     };
   }
 }
-
 const store = new Store();
 export default store;
 export { store };

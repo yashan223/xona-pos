@@ -1,19 +1,13 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
-
 const dataDir = path.join(process.cwd(), 'data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
-
 const dbPath = path.join(dataDir, 'pos_local.db');
 const db = new Database(dbPath);
-
-// Enable WAL mode for high concurrency & performance
 db.pragma('journal_mode = WAL');
-
-// Initialize database schema tables
 db.exec(`
   CREATE TABLE IF NOT EXISTS local_users (
     id TEXT PRIMARY KEY,
@@ -24,7 +18,6 @@ db.exec(`
     synced INTEGER DEFAULT 0,
     createdAt TEXT NOT NULL
   );
-
   CREATE TABLE IF NOT EXISTS local_products (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -40,7 +33,6 @@ db.exec(`
     createdAt TEXT,
     updatedAt TEXT
   );
-
   CREATE TABLE IF NOT EXISTS local_transactions (
     id TEXT PRIMARY KEY,
     cashierId TEXT NOT NULL,
@@ -55,7 +47,6 @@ db.exec(`
     synced INTEGER DEFAULT 0,
     createdAt TEXT NOT NULL
   );
-
   CREATE TABLE IF NOT EXISTS local_customers (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -64,7 +55,6 @@ db.exec(`
     synced INTEGER DEFAULT 0,
     createdAt TEXT NOT NULL
   );
-
   CREATE TABLE IF NOT EXISTS local_graph_nodes (
     id TEXT PRIMARY KEY,
     type TEXT NOT NULL,
@@ -72,7 +62,6 @@ db.exec(`
     metadataJson TEXT,
     synced INTEGER DEFAULT 0
   );
-
   CREATE TABLE IF NOT EXISTS local_graph_edges (
     id TEXT PRIMARY KEY,
     source TEXT NOT NULL,
@@ -82,8 +71,6 @@ db.exec(`
     synced INTEGER DEFAULT 0
   );
 `);
-
 console.log('[SQLite] Local database initialized successfully at ' + dbPath);
-
 export default db;
 export { db };
