@@ -2,21 +2,17 @@
  * API Client — Centralized typed functions for all POS backend endpoints
  * Cloud-only version for Web Admin Portal (No Offline Support)
  */
-
 export const BASE_HOST = import.meta.env.VITE_API_BASE_URL as string ?? 'http://localhost:3000';
 const BASE_URL = `${BASE_HOST}/api`;
-
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {};
   if (!(options?.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
-
   const apiKey = import.meta.env.VITE_DEVICE_API_KEY;
   if (apiKey) {
     headers['x-api-key'] = apiKey;
   }
-
   const saved = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
   if (saved) {
     try {
@@ -24,29 +20,21 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       if (user?.id) headers['x-user-id'] = user.id;
       if (user?.role) headers['x-user-role'] = user.role;
     } catch (e) {
-      // ignore
     }
   }
-
   if (options?.headers) {
     Object.assign(headers, options.headers);
   }
-
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers,
   });
-
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || `Request failed: ${res.status}`);
   }
-
   return res.json();
 }
-
-// ─── Types ─────────────────────────────────────────────
-
 export interface ProductRecord {
   id: string;
   name: string;
@@ -63,7 +51,6 @@ export interface ProductRecord {
   createdAt: string;
   updatedAt: string;
 }
-
 export interface StockPresetRecord {
   _id: string;
   name: string;
@@ -71,7 +58,6 @@ export interface StockPresetRecord {
   createdBy: string;
   createdAt: string;
 }
-
 export interface TransactionItem {
   productId: string;
   name: string;
@@ -79,7 +65,6 @@ export interface TransactionItem {
   quantity: number;
   subtotal: number;
 }
-
 export interface TransactionRecord {
   id: string;
   cashierId: string;
@@ -94,7 +79,6 @@ export interface TransactionRecord {
   createdAt: string;
   pdfUrl?: string;
 }
-
 export interface CustomerRecord {
   id: string;
   name: string;
@@ -102,21 +86,18 @@ export interface CustomerRecord {
   email: string;
   createdAt: string;
 }
-
 export interface GraphNode {
   id: string;
   type: 'product' | 'category';
   label: string;
   metadata?: any;
 }
-
 export interface GraphEdge {
   source: string;
   target: string;
   type: 'BELONGS_TO' | 'BOUGHT_WITH';
   metadata?: any;
 }
-
 export interface POSPatterns {
   salesByHour: { hour: number; count: number; totalSales: number }[];
   byCategory: { category: string; salesCount: number; revenue: number; count: number }[];
@@ -125,13 +106,11 @@ export interface POSPatterns {
   dailyTimeline: { date: string; salesCount: number; totalRevenue: number; revenue: number }[];
   timeline: { date: string; salesCount: number; totalRevenue: number; revenue: number }[];
 }
-
 export interface SystemStats {
   products: { total: number };
   transactions: { total: number; totalRevenue: number };
   graph: { nodeCount: number; edgeCount: number };
 }
-
 export interface SavedReportRecord {
   _id: string;
   id?: string;
@@ -142,7 +121,6 @@ export interface SavedReportRecord {
   localPath?: string;
   generatedBy?: string;
 }
-
 export interface User {
   id: string;
   username: string;
@@ -150,14 +128,12 @@ export interface User {
   createdAt: string;
   role?: string;
 }
-
 export interface SyncStatus {
   isOnline: boolean;
   pendingCount: number;
   isSyncing: boolean;
   lastSyncTime: string | null;
 }
-
 export interface ActivityRecord {
   _id: string;
   action: string;
@@ -167,9 +143,6 @@ export interface ActivityRecord {
   details?: any;
   createdAt: string;
 }
-
-// ─── Product APIs ──────────────────────────────────────
-
 export const productApi = {
   create: (data: {
     name: string;
@@ -181,17 +154,11 @@ export const productApi = {
     description?: string;
     imageUrl?: string;
   }) => request<ProductRecord>('/products', { method: 'POST', body: JSON.stringify(data) }),
-
   getAll: () => request<ProductRecord[]>('/products'),
-
   search: (query: string) => request<ProductRecord[]>(`/products/search?q=${encodeURIComponent(query)}`),
-
   getById: (id: string) => request<ProductRecord>(`/products/${id}`),
-
   update: (id: string, data: Partial<ProductRecord>) => request<ProductRecord>(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-
   delete: (id: string) => request<{ message: string }>(`/products/${id}`, { method: 'DELETE' }),
-
   uploadImage: (file: File) => {
     const formData = new FormData();
     formData.append('image', file);
@@ -201,9 +168,6 @@ export const productApi = {
     });
   },
 };
-
-// ─── Transaction APIs ──────────────────────────────────
-
 export const transactionApi = {
   create: (data: {
     cashierId: string;
@@ -215,46 +179,27 @@ export const transactionApi = {
     totalAmount: number;
     paymentMethod?: 'cash';
   }) => request<TransactionRecord>('/transactions', { method: 'POST', body: JSON.stringify(data) }),
-
   getAll: () => request<TransactionRecord[]>('/transactions'),
-
   getById: (id: string) => request<TransactionRecord>(`/transactions/${id}`),
-
   refund: (id: string) => request<{ message: string; transaction: TransactionRecord }>(`/transactions/${id}/refund`, { method: 'POST' }),
 };
-
-// ─── Customer APIs ─────────────────────────────────────
-
 export const customerApi = {
   create: (data: { name: string; phone?: string; email?: string }) => request<CustomerRecord>('/customers', { method: 'POST', body: JSON.stringify(data) }),
-
   getAll: () => request<CustomerRecord[]>('/customers'),
-
   getById: (id: string) => request<CustomerRecord>(`/customers/${id}`),
-
   delete: (id: string) => request<{ message: string }>(`/customers/${id}`, { method: 'DELETE' }),
 };
-
-// ─── Graph / Recommendation APIs ───────────────────────
-
 export const graphApi = {
   getVisualization: () => request<{ nodes: GraphNode[]; edges: GraphEdge[]; stats: any }>('/graph/visualization'),
-
   getRecommendations: (productId: string) => request<GraphNode[]>(`/graph/recommendations/${productId}`),
-
   getRelated: (productId: string, depth = 3) =>
     request<{ nodes: GraphNode[]; edges: GraphEdge[] }>(`/graph/subgraph/${productId}?depth=${depth}`),
-
   getSubgraph: (nodeId: string, depth = 2) =>
     request<{ nodes: GraphNode[]; edges: GraphEdge[] }>(`/graph/subgraph/${nodeId}?depth=${depth}`),
 };
-
-// ─── Report APIs ───────────────────────────────────────
-
 export const reportApi = {
   stats: () => request<SystemStats>('/reports/stats'),
   timeline: () => request<TransactionRecord[]>('/reports/timeline'),
-
   generatePdf: (type: 'summary' | 'category' | 'daily' = 'summary') =>
     request<{ message: string; pdfUrl: string; filename: string }>('/reports/generate-pdf', {
       method: 'POST',
@@ -278,9 +223,6 @@ export const reportApi = {
   resetData: (includeAdmin = false) => request<{ message: string }>('/reports/reset', { method: 'POST', body: JSON.stringify({ includeAdmin }) }),
   clearDatabase: () => request<{ message: string }>('/reports/reset', { method: 'POST', body: JSON.stringify({ includeAdmin: false }) }),
 };
-
-// ─── Auth APIs ─────────────────────────────────────────
-
 export const authApi = {
   register: (data: { username: string; password?: string; email?: string; role?: string }) => request<{ message: string; user: User }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   login: (data: { username: string; password?: string }) => request<{ message: string; user: User }>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
@@ -289,21 +231,13 @@ export const authApi = {
   updateRole: (id: string, role: string) => request<{ message: string }>(`/auth/users/${id}/role`, { method: 'POST', body: JSON.stringify({ role }) }),
   update: (id: string, data: { username?: string; password?: string; email?: string; role?: string }) => request<{ message: string }>(`/auth/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 };
-
-// ─── Sync APIs ─────────────────────────────────────────
-
 export const syncApi = {
   getStatus: () => request<SyncStatus>('/sync/status').catch(() => ({ isOnline: false, pendingCount: 0, isSyncing: false, lastSyncTime: null })),
   trigger: () => request<{ success: boolean; status: SyncStatus }>('/sync/trigger').catch(() => ({ success: false, status: { isOnline: false, pendingCount: 0, isSyncing: false, lastSyncTime: null } })),
 };
-
-// ─── Activity APIs ───────────────────────────────────────
-
 export const activityApi = {
   getAll: () => request<ActivityRecord[]>('/activity'),
 };
-
-
 export const inventoryApi = {
   getPresets: () => request<StockPresetRecord[]>('/inventory/presets'),
   createPreset: (data: { name: string; items: { productId: string; qty: number }[] }) => request<{ message: string; preset: StockPresetRecord }>('/inventory/presets', { method: 'POST', body: JSON.stringify(data) }),

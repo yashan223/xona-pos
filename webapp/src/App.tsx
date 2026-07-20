@@ -16,20 +16,17 @@ import { startWebSocketListener } from '@/lib/websocket';
 import { NotificationProvider } from '@/context/NotificationContext';
 import { Menu, X } from 'lucide-react';
 import Logo from '@/components/Logo';
-
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   useEffect(() => {
     const stopWS = startWebSocketListener();
     return () => {
       stopWS();
     };
   }, []);
-
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -39,15 +36,13 @@ export default function App() {
           setCurrentUser(parsed);
           setCurrentPage('dashboard');
         }
-      } catch (e) {
-        // ignore JSON parse error
+      } catch (e) {
       } finally {
         setIsInitializing(false);
       }
     };
     checkAuth();
   }, []);
-
   const handleLoginSuccess = (user: User, rememberMe: boolean) => {
     if (user.role !== 'admin' && user.role !== 'owner') {
       throw new Error('Access Denied: Only Admin or Owner accounts can access the Web Management Portal.');
@@ -62,12 +57,10 @@ export default function App() {
     }
     setCurrentPage('dashboard');
   };
-
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('currentUser');
   };
-
   const renderPage = () => {
     const isAdminOrOwner = currentUser?.role === 'admin' || currentUser?.role === 'owner';
     switch (currentPage) {
@@ -95,12 +88,10 @@ export default function App() {
         return <DashboardPage />;
     }
   };
-
   const renderContent = () => {
     if (isInitializing) {
       return <div className="flex w-full h-full items-center justify-center text-foreground/50">Initializing...</div>;
     }
-
     if (!currentUser) {
       return (
         <LoginPage
@@ -108,10 +99,8 @@ export default function App() {
         />
       );
     }
-
     return (
       <div className="flex w-full h-full relative z-10 flex-col md:flex-row">
-        {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-border/40 bg-background/95 backdrop-blur-sm z-30 flex-shrink-0">
           <Logo className="h-8 w-auto text-foreground" collapsed={false} />
           <button 
@@ -121,16 +110,12 @@ export default function App() {
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
-
-        {/* Sidebar Overlay */}
         {mobileMenuOpen && (
           <div 
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden" 
             onClick={() => setMobileMenuOpen(false)} 
           />
         )}
-
-        {/* Sidebar Container */}
         <div className={`fixed inset-y-0 left-0 z-50 transform ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 transition-transform duration-300 ease-in-out`}>
           <Sidebar
             currentPage={currentPage}
@@ -142,18 +127,15 @@ export default function App() {
             onLogout={handleLogout}
           />
         </div>
-
         <main className="flex-1 min-h-0 min-w-0 overflow-y-auto w-full md:w-auto relative z-10">
           {renderPage()}
         </main>
       </div>
     );
   };
-
   return (
     <NotificationProvider>
       <div className="relative w-screen h-screen overflow-hidden bg-background text-foreground z-10 flex">
-        {/* DarkVeil Background */}
         <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden" style={{ width: '100%', height: '100%', opacity: 0.65 }}>
           <DarkVeil
             hueShift={0}

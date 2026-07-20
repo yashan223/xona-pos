@@ -13,38 +13,26 @@ import { authApi } from '@/lib/api';
 import type { User } from '@/lib/api';
 import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
-
 export default function AdminPage() {
   const { t } = useTranslation();
-  const { confirm, toast } = useNotification();
-  
-  // States
+  const { confirm, toast } = useNotification();
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
-  
-  // Current logged in user info (to prevent self-delete/demote)
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-
-  // Editor Modal / Unified State (matches ProductsPage pattern)
-  const [isEditing, setIsEditing] = useState<'new' | User | null>(null);
-
-  // Form states
+  const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isEditing, setIsEditing] = useState<'new' | User | null>(null);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('cashier');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
-  useEffect(() => {
-    // Load logged in user
+  useEffect(() => {
     const saved = localStorage.getItem('currentUser');
     if (saved) {
       setCurrentUser(JSON.parse(saved));
     }
     loadData();
   }, []);
-
   const loadData = async () => {
     setLoading(true);
     try {
@@ -56,9 +44,7 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // User Actions
+  };
   const handleToggleRole = async (userId: string, currentRole?: string) => {
     const targetUser = users.find(u => u.id === userId);
     if (targetUser?.username === 'admin') {
@@ -73,7 +59,6 @@ export default function AdminPage() {
       toast.error('Owners do not have permission to change user roles.');
       return;
     }
-
     let nextRole = 'cashier';
     if (currentRole === 'cashier') {
       nextRole = 'owner';
@@ -90,7 +75,6 @@ export default function AdminPage() {
       toast.error('Failed to update user role');
     }
   };
-
   const handleDeleteUser = async (userId: string) => {
     const targetUser = users.find(u => u.id === userId);
     if (targetUser?.username === 'admin') {
@@ -105,7 +89,6 @@ export default function AdminPage() {
       toast.error('Owners can only delete cashier accounts.');
       return;
     }
-
     const isConfirmed = await confirm({
       title: 'Delete User',
       message: `Are you sure you want to delete user "${targetUser?.username}"? This action cannot be undone.`,
@@ -114,7 +97,6 @@ export default function AdminPage() {
       type: 'danger'
     });
     if (!isConfirmed) return;
-
     try {
       await authApi.delete(userId);
       toast.success(`User ${targetUser?.username} deleted successfully`);
@@ -123,7 +105,6 @@ export default function AdminPage() {
       toast.error('Failed to delete user');
     }
   };
-
   const startAddNew = () => {
     setUsername('');
     setEmail('');
@@ -133,7 +114,6 @@ export default function AdminPage() {
     setSuccess('');
     setIsEditing('new');
   };
-
   const startEdit = (u: User) => {
     if ((u.username === 'admin' || u.role === 'admin') && currentUser?.role !== 'admin') {
       toast.error('Only a system admin can modify admin accounts.');
@@ -151,28 +131,22 @@ export default function AdminPage() {
     setSuccess('');
     setIsEditing(u);
   };
-
   const cancelEdit = () => {
     setIsEditing(null);
   };
-
   const saveUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isEditing) return;
-
     if (!username.trim()) {
       setError('Username is required.');
       return;
     }
-
     if (isEditing === 'new' && !password.trim()) {
       setError('Password is required.');
       return;
     }
-
     setError('');
     setSuccess('');
-
     try {
       if (isEditing === 'new') {
         await authApi.register({
@@ -189,16 +163,13 @@ export default function AdminPage() {
           password: password || undefined,
           role: role,
         });
-        setSuccess('User updated successfully!');
-
-        // If we edited ourselves, sync localStorage
+        setSuccess('User updated successfully!');
         if (isEditing.id === currentUser?.id) {
           const updatedUser = { ...currentUser, username: username.trim(), email: email.trim(), role: role };
           localStorage.setItem('currentUser', JSON.stringify(updatedUser));
           setCurrentUser(updatedUser);
         }
       }
-
       setTimeout(() => {
         setIsEditing(null);
         loadData();
@@ -207,11 +178,9 @@ export default function AdminPage() {
       setError(err.message || 'Failed to save user.');
     }
   };
-
   return (
     <>
       <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6 animate-fade-in">
-      {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -240,15 +209,11 @@ export default function AdminPage() {
           </button>
         </div>
       </div>
-
-      {/* Loading indicator */}
       {loading && (
         <div className="flex items-center justify-center py-20">
           <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
         </div>
       )}
-
-      {/* Accounts Management — Card Grid */}
       {!loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {users.map((u) => (
@@ -256,7 +221,6 @@ export default function AdminPage() {
               key={u.id}
               className="glass-card p-4 sm:p-5 border border-border/40 rounded-2xl bg-card/30 flex flex-col gap-4 hover:bg-card/60 transition-all hover:border-primary/20"
             >
-              {/* Card Top: Avatar + Name + You badge */}
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-base uppercase flex-shrink-0">
                   {u.username[0]}
@@ -270,7 +234,6 @@ export default function AdminPage() {
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{u.email || 'No email'}</p>
                 </div>
-                {/* Role Badge */}
                 <span
                   className={`badge text-[10px] uppercase font-semibold flex-shrink-0 ${
                     u.role === 'admin' ? 'badge-teal' : (u.role === 'owner' ? 'badge-violet' : 'badge-amber')
@@ -279,14 +242,11 @@ export default function AdminPage() {
                   {t(u.role === 'admin' ? 'systemAdmin' : (u.role === 'owner' ? 'owner' : 'cashier'))}
                 </span>
               </div>
-
-              {/* Card Bottom: Registered date + Actions */}
               <div className="flex items-center justify-between border-t border-border/20 pt-3">
                 <p className="text-[11px] text-muted-foreground">
                   {new Date(u.createdAt).toLocaleString('en-US', { dateStyle: 'medium' })}
                 </p>
                 <div className="flex gap-2">
-                  {/* Edit button */}
                   {!((u.username === 'admin' || u.role === 'admin') && currentUser?.role !== 'admin') &&
                     !(currentUser?.role === 'owner' && u.role !== 'cashier' && u.id !== currentUser?.id) && (
                     <button
@@ -297,7 +257,6 @@ export default function AdminPage() {
                       <Edit3 className="w-4 h-4" />
                     </button>
                   )}
-                  {/* Role toggle + Delete */}
                   {u.username !== 'admin' && u.id !== currentUser?.id && (
                     <>
                       {currentUser?.role === 'admin' && (
@@ -331,12 +290,9 @@ export default function AdminPage() {
         </div>
       )}
       </div>
-
-      {/* Editor Modal Overlay (matches ProductsPage overlay form pattern) */}
       {isEditing && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto md:py-12 animate-fade-in text-left">
           <form onSubmit={saveUser} className="glass-card w-full max-w-md bg-card border border-border rounded-2xl shadow-xl p-6 animate-scale-in space-y-4 my-8">
-            {/* Header */}
             <div className="flex justify-between items-center pb-3 border-b border-border/40">
               <h3 className="text-lg font-bold text-foreground">
                 {isEditing === 'new' ? t('addNewUser') : t('editUserCreds')}
@@ -345,12 +301,8 @@ export default function AdminPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
-            {/* Form status feedback */}
             {error && <p className="text-xs text-destructive bg-destructive/10 p-2.5 rounded-lg font-medium">{error}</p>}
             {success && <p className="text-xs text-success bg-success/10 p-2.5 rounded-lg font-medium">{success}</p>}
-            
-            {/* Input fields */}
             <div className="space-y-4">
               <div>
                 <label className="text-xs text-muted-foreground font-semibold mb-1 block">{t('usernameLabel')} *</label>
@@ -363,7 +315,6 @@ export default function AdminPage() {
                   placeholder="Username"
                 />
               </div>
-
               <div>
                 <label className="text-xs text-muted-foreground font-semibold mb-1 block">{t('emailLabel')}</label>
                 <input
@@ -374,7 +325,6 @@ export default function AdminPage() {
                   placeholder="email@example.com"
                 />
               </div>
-
               <div>
                 <label className="text-xs text-muted-foreground font-semibold mb-1 block">
                   {isEditing === 'new' ? t('passwordLabel') + ' *' : t('passwordLabel')}
@@ -387,7 +337,6 @@ export default function AdminPage() {
                   placeholder={isEditing === 'new' ? '••••••' : t('leaveBlankPw')}
                 />
               </div>
-
               <div>
                 <label className="text-xs text-muted-foreground font-semibold mb-1 block">{t('roleLabel')} *</label>
                 <select
@@ -402,8 +351,6 @@ export default function AdminPage() {
                 </select>
               </div>
             </div>
-
-            {/* Form actions */}
             <div className="flex gap-3 justify-end pt-3 border-t border-border/20">
               <button
                 type="button"

@@ -1,12 +1,10 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { CheckCircle2, AlertTriangle, XCircle, Info, X } from 'lucide-react';
-
 export interface Toast {
   id: string;
   type: 'success' | 'error' | 'info' | 'warning';
   message: string;
 }
-
 export interface ConfirmOptions {
   title: string;
   message: string;
@@ -14,7 +12,6 @@ export interface ConfirmOptions {
   cancelText?: string;
   type?: 'info' | 'warning' | 'danger';
 }
-
 interface NotificationContextType {
   toast: {
     success: (msg: string) => void;
@@ -24,9 +21,7 @@ interface NotificationContextType {
   };
   confirm: (options: ConfirmOptions) => Promise<boolean>;
 }
-
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
-
 export const useNotification = () => {
   const context = useContext(NotificationContext);
   if (!context) {
@@ -34,34 +29,26 @@ export const useNotification = () => {
   }
   return context;
 };
-
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean;
     options: ConfirmOptions;
     resolve: (value: boolean) => void;
-  } | null>(null);
-
-  // Expose toast helpers
+  } | null>(null);
   const addToast = useCallback((type: Toast['type'], message: string) => {
     const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, type, message }]);
-    
-    // Auto-remove toast after 4 seconds
+    setToasts((prev) => [...prev, { id, type, message }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
   }, []);
-
   const toast = useRef({
     success: (msg: string) => addToast('success', msg),
     error: (msg: string) => addToast('error', msg),
     info: (msg: string) => addToast('info', msg),
     warning: (msg: string) => addToast('warning', msg),
-  }).current;
-
-  // Promise-based confirm modal launcher
+  }).current;
   const confirm = useCallback((options: ConfirmOptions): Promise<boolean> => {
     return new Promise<boolean>((resolve) => {
       setConfirmState({
@@ -76,14 +63,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       });
     });
   }, []);
-
   const handleConfirmClose = (result: boolean) => {
     if (confirmState) {
       confirmState.resolve(result);
       setConfirmState(null);
     }
   };
-
   const getToastStyles = (type: Toast['type']) => {
     switch (type) {
       case 'success':
@@ -97,7 +82,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return 'border-primary/30 bg-primary/10 text-primary';
     }
   };
-
   const getToastIcon = (type: Toast['type']) => {
     switch (type) {
       case 'success':
@@ -111,7 +95,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return <Info className="w-5 h-5 text-primary flex-shrink-0" />;
     }
   };
-
   const getConfirmButtonColor = (type: ConfirmOptions['type']) => {
     switch (type) {
       case 'danger':
@@ -123,7 +106,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return 'bg-primary text-primary-foreground hover:bg-primary/90';
     }
   };
-
   const getConfirmIcon = (type: ConfirmOptions['type']) => {
     switch (type) {
       case 'danger':
@@ -135,12 +117,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return <Info className="w-12 h-12 text-primary mx-auto" />;
     }
   };
-
   return (
     <NotificationContext.Provider value={{ toast, confirm }}>
       {children}
-
-      {/* Floating Toast Notification Container */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none max-w-sm w-full">
         {toasts.map((t) => (
           <div
@@ -160,8 +139,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           </div>
         ))}
       </div>
-
-      {/* Confirmation Modal */}
       {confirmState && confirmState.isOpen && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="glass-card w-full max-w-md bg-card border border-border rounded-2xl shadow-xl p-6 animate-scale-in space-y-4">

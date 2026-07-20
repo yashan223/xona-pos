@@ -1,12 +1,10 @@
 import { Search, X } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
-
 interface SearchBarProps {
   placeholder?: string;
   onSearch: (query: string) => void;
   debounceMs?: number;
 }
-
 export default function SearchBar({
   placeholder = 'Search errors...',
   onSearch,
@@ -15,24 +13,20 @@ export default function SearchBar({
   const [query, setQuery] = useState('');
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       onSearch(query);
     }, debounceMs);
-
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [query, debounceMs, onSearch]);
-
   const handleClear = () => {
     setQuery('');
     onSearch('');
     inputRef.current?.focus();
   };
-
   return (
     <div className="relative group">
       <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />

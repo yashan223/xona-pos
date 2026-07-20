@@ -16,16 +16,13 @@ import type { User } from '@/lib/api';
 import Logo from './Logo';
 import { useTranslation } from '@/lib/translations';
 import SyncBadge from './SyncBadge';
-
 export type Page = 'dashboard' | 'products' | 'checkout' | 'transactions' | 'reports' | 'admin' | 'settings' | 'maintenance' | 'activity';
-
 interface SidebarProps {
   currentPage: Page;
   onNavigate: (page: Page) => void;
   currentUser: User | null;
   onLogout: () => void;
 }
-
 const navItems: { page: Page; label: string; icon: React.ElementType; role?: 'admin' | 'user' }[] = [
   { page: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { page: 'admin', label: 'User Panel', icon: Shield, role: 'admin' },
@@ -36,11 +33,9 @@ const navItems: { page: Page; label: string; icon: React.ElementType; role?: 'ad
   { page: 'maintenance', label: 'Database Maintenance', icon: Database, role: 'admin' },
   { page: 'activity', label: 'System Activity', icon: Activity, role: 'admin' },
 ];
-
 export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout }: SidebarProps) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
-
   const getNavLabel = (page: Page) => {
     switch (page) {
       case 'dashboard': return t('dashboard');
@@ -50,11 +45,10 @@ export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout
       case 'reports': return t('salesReports');
       case 'settings': return t('systemSettings');
       case 'maintenance': return t('databaseMaintenance');
-      case 'activity': return 'System Activity'; // Might need translation in the future
+      case 'activity': return 'System Activity'; 
       default: return page;
     }
   };
-
   const filteredNav = navItems.filter((item) => {
     if (!item.role) return true;
     const isAdminOrOwner = currentUser?.role === 'admin' || currentUser?.role === 'owner';
@@ -63,14 +57,12 @@ export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout
     if (item.role === 'user') return !isAdminOrOwner;
     return true;
   });
-
   return (
     <aside
       className={`flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 ${
         collapsed ? 'w-[68px]' : 'w-[220px]'
       }`}
     >
-      {/* Logo */}
       <div
         className={`flex items-center flex-shrink-0 transition-all duration-300 ${
           collapsed
@@ -83,8 +75,6 @@ export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout
           className="text-foreground h-12 w-auto transition-all duration-300"
         />
       </div>
-
-      {/* Navigation */}
       <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
         {filteredNav.map((item) => {
           const isActive = currentPage === item.page;
@@ -108,13 +98,9 @@ export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout
           );
         })}
       </nav>
-
-      {/* Sync Status Badge */}
       <div className="px-2 py-1.5 flex-shrink-0 border-t border-sidebar-border">
         <SyncBadge collapsed={collapsed} />
       </div>
-
-      {/* User profile / Logout */}
       {currentUser && (
         <div className="p-2 border-t border-sidebar-border flex-shrink-0 flex flex-col gap-2 items-center">
           <div className="flex items-center gap-2 w-full px-2 min-w-0 justify-between">
@@ -152,8 +138,6 @@ export default function Sidebar({ currentPage, onNavigate, currentUser, onLogout
           )}
         </div>
       )}
-
-      {/* Collapse Toggle */}
       <div className="p-2 border-t border-sidebar-border flex-shrink-0">
         <button
           onClick={() => setCollapsed(!collapsed)}

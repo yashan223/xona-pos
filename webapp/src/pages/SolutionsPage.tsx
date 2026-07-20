@@ -4,28 +4,21 @@ import { useNotification } from '@/context/NotificationContext';
 import { transactionApi } from '@/lib/api';
 import type { TransactionRecord, User } from '@/lib/api';
 import { useTranslation } from '@/lib/translations';
-
 let cachedTransactions: TransactionRecord[] | null = null;
-
 interface SolutionsPageProps {
   currentUser: User | null;
 }
-
 export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
   const { t } = useTranslation();
   const { confirm, toast } = useNotification();
   const [transactions, setTransactions] = useState<TransactionRecord[]>(cachedTransactions || []);
   const [filteredTransactions, setFilteredTransactions] = useState<TransactionRecord[]>(cachedTransactions || []);
   const [loading, setLoading] = useState(!cachedTransactions);
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // Dialog receipt print modal
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedTx, setSelectedTx] = useState<TransactionRecord | null>(null);
-
   useEffect(() => {
     loadTransactions();
   }, []);
-
   async function loadTransactions() {
     if (!cachedTransactions) {
       setLoading(true);
@@ -41,7 +34,6 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
       setLoading(false);
     }
   }
-
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     if (!query.trim()) {
@@ -56,7 +48,6 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
     );
     setFilteredTransactions(filtered);
   };
-
   const handleRefund = async (id: string) => {
     const isConfirmed = await confirm({
       title: 'Refund Transaction',
@@ -66,32 +57,24 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
       type: 'danger'
     });
     if (!isConfirmed) return;
-
     try {
-      const res = await transactionApi.refund(id);
-      
-      // Update transaction list in state
+      const res = await transactionApi.refund(id);
       setTransactions(prev => {
         const updated = prev.map(t => t.id === id ? res.transaction : t);
         cachedTransactions = updated;
         return updated;
       });
-
       setFilteredTransactions(prev => prev.map(t => t.id === id ? res.transaction : t));
-      
       toast.success(res.message || 'Transaction refunded successfully.');
     } catch (err: any) {
       toast.error(err.message || 'Refund failed');
     }
   };
-
   const formatCurrency = (val: number) => {
     return `Rs. ${Number(val).toFixed(2)}`;
   };
-
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6 animate-fade-in">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('transactionsLog')}</h1>
@@ -107,8 +90,6 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
           <Clock className="w-4 h-4" />
         </button>
       </div>
-
-      {/* Search Bar */}
       <div className="relative">
         <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
         <input
@@ -119,8 +100,6 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
           className="w-full bg-card border border-border/50 rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:border-primary shadow-sm"
         />
       </div>
-
-      {/* Transactions Grid / List */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
@@ -154,8 +133,6 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
                   <p className="font-bold text-base text-primary">{formatCurrency(tx.totalAmount)}</p>
                 </div>
               </div>
-
-              {/* Items List */}
               <div className="space-y-2">
                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Purchase Summary</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
@@ -167,7 +144,6 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
                   ))}
                 </div>
               </div>
-
               <div className="flex justify-between items-center mt-5 pt-3 border-t border-border/20">
                 <div className="flex gap-4 text-[10px] text-muted-foreground">
                   <p>
@@ -180,7 +156,6 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
                     Method: <span className="font-medium text-foreground uppercase">{tx.paymentMethod}</span>
                   </p>
                 </div>
-
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSelectedTx(tx)}
@@ -204,8 +179,6 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
           ))}
         </div>
       )}
-
-      {/* Reprint simulated receipt modal */}
       {selectedTx && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-sm bg-card border border-border rounded-xl shadow-xl p-6 font-mono text-xs text-foreground flex flex-col justify-between h-[450px]">
@@ -214,7 +187,6 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
               <h3 className="text-sm font-bold">XONA POS SYSTEM</h3>
               <p className="text-[10px] text-muted-foreground">Receipt Reprint</p>
             </div>
-            
             <div className="flex-1 overflow-y-auto my-3 space-y-2.5">
               <div className="flex justify-between">
                 <span>Receipt ID:</span>
@@ -232,7 +204,6 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
                 <span>Customer:</span>
                 <span>{selectedTx.customerId || 'Walk-in'}</span>
               </div>
-
               <div className="border-t border-border/30 pt-2 border-dotted">
                 <p className="font-bold border-b border-border/10 pb-1">Items</p>
                 {selectedTx.items.map(item => (
@@ -242,7 +213,6 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
                   </div>
                 ))}
               </div>
-
               <div className="border-t border-border/30 pt-2 border-dotted space-y-1 text-[10px]">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
@@ -263,13 +233,11 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
                   <span>{formatCurrency(selectedTx.totalAmount)}</span>
                 </div>
               </div>
-
               <div className="flex justify-between border-t border-border/30 pt-2 border-dotted">
                 <span>Status / Method:</span>
                 <span className="uppercase">{selectedTx.paymentStatus} / {selectedTx.paymentMethod}</span>
               </div>
             </div>
-
             <div className="flex gap-2">
               <button
                 onClick={() => window.print()}

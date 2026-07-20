@@ -2,19 +2,15 @@ import { useState } from 'react';
 import { Settings, Globe, Calculator, Folder, FolderOpen } from 'lucide-react';
 import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
-
 export default function SettingsPage() {
   const { t, lang, setLanguage } = useTranslation();
   const { toast } = useNotification();
-
   const [activeTab, setActiveTab] = useState<'general' | 'tax' | 'reports'>('general');
-
   const tabs = [
     { id: 'general', label: t('appLanguage') || 'General', icon: Globe },
     { id: 'tax', label: t('taxVatSettings') || 'Tax & VAT', icon: Calculator },
     { id: 'reports', label: 'Reports', icon: Folder },
   ];
-
   const [vatEnabled, setVatEnabled] = useState(() => {
     const saved = localStorage.getItem('vatEnabled');
     return saved !== null ? saved === 'true' : true;
@@ -26,21 +22,17 @@ export default function SettingsPage() {
   const [customReportPath, setCustomReportPath] = useState(() => {
     return localStorage.getItem('customReportPath') || '';
   });
-
   const handleBrowseReportFolder = async () => {
-    // @ts-ignore
     if (!(window as any).electronDB?.browseDbFolder) {
       toast.error('Folder picker is only available in the desktop app.');
       return;
     }
-    // @ts-ignore
     const selected = await (window as any).electronDB.browseDbFolder();
     if (selected) {
       setCustomReportPath(selected);
       localStorage.setItem('customReportPath', selected);
     }
   };
-
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 animate-fade-in text-left">
       <div>
@@ -52,8 +44,6 @@ export default function SettingsPage() {
           Configure application defaults, VAT rates, and localization
         </p>
       </div>
-
-      {/* Settings Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-border/50 pb-2 overflow-x-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -73,17 +63,13 @@ export default function SettingsPage() {
           );
         })}
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
-        {/* VAT & Tax Settings Card */}
         {activeTab === 'tax' && (
         <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
             {t('taxVatSettings')}
           </h3>
-
           <div className="space-y-4">
-            {/* VAT Toggle */}
             <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/20 border border-border/50">
               <div>
                 <h4 className="text-sm font-semibold text-foreground">{t('enableVat')}</h4>
@@ -107,8 +93,6 @@ export default function SettingsPage() {
                 <div className="w-9 h-5 bg-secondary/60 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
               </label>
             </div>
-
-            {/* VAT Percentage */}
             <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
               <div>
                 <h4 className="text-sm font-semibold">{t('vatPercentage')}</h4>
@@ -138,14 +122,11 @@ export default function SettingsPage() {
           </div>
         </div>
         )}
-
-        {/* Language Settings Card */}
         {activeTab === 'general' && (
         <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
             {t('appLanguage')}
           </h3>
-
           <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
             <div>
               <h4 className="text-sm font-semibold">{t('appLanguage')}</h4>
@@ -172,14 +153,11 @@ export default function SettingsPage() {
           </div>
         </div>
         )}
-
-        {/* Reports Settings Card */}
         {activeTab === 'reports' && (
         <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
             Report Settings
           </h3>
-
           <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
             <div>
               <h4 className="text-sm font-semibold">Custom Generation Path</h4>

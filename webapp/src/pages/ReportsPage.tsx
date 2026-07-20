@@ -4,11 +4,9 @@ import { reportApi, BASE_HOST } from '@/lib/api';
 import type { User, SavedReportRecord } from '@/lib/api';
 import { useNotification } from '@/context/NotificationContext';
 import { useTranslation } from '@/lib/translations';
-
 interface ReportsPageProps {
   currentUser: User | null;
 }
-
 export default function ReportsPage({ currentUser }: ReportsPageProps) {
   const { t } = useTranslation();
   const { confirm, toast } = useNotification();
@@ -17,7 +15,6 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
   const [selectedReportType, setSelectedReportType] = useState<'summary' | 'category' | 'daily'>('summary');
   const [savedReports, setSavedReports] = useState<SavedReportRecord[]>([]);
   const [showExportPanel, setShowExportPanel] = useState(false);
-
   useEffect(() => {
     loadReports();
     const handleUpdate = () => loadReports();
@@ -26,7 +23,6 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
       window.removeEventListener('transactions_updated', handleUpdate);
     };
   }, [currentUser]);
-
   async function loadReports() {
     setLoading(true);
     try {
@@ -41,7 +37,6 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
       setLoading(false);
     }
   }
-
   async function generatePdfReport() {
     setExporting(true);
     setShowExportPanel(false);
@@ -49,12 +44,10 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
       const saved = localStorage.getItem('currentUser');
       const headers: Record<string, string> = {};
       let role = currentUser?.role || 'cashier';
-      
       const apiKey = import.meta.env.VITE_DEVICE_API_KEY;
       if (apiKey) {
         headers['x-api-key'] = apiKey;
       }
-
       if (saved) {
         const user = JSON.parse(saved);
         if (user?.id) headers['x-user-id'] = user.id;
@@ -63,19 +56,15 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
           role = user.role;
         }
       }
-
       const customPath = localStorage.getItem('customReportPath') || '';
       let url = `${BASE_HOST}/api/reports/pdf?type=${selectedReportType}&role=${role}`;
       if (customPath) {
         url += `&savePath=${encodeURIComponent(customPath)}`;
       }
-
       const res = await fetch(url, { headers });
-
       if (!res.ok) {
         throw new Error('Failed to generate sales report PDF');
       }
-
       toast.success('Sales report PDF generated and saved successfully!');
       loadReports();
     } catch (err: any) {
@@ -85,7 +74,6 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
       setExporting(false);
     }
   }
-
   const handleDeleteSavedReport = async (id: string) => {
     const isConfirmed = await confirm({
       title: 'Delete Saved Report',
@@ -95,7 +83,6 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
       type: 'danger'
     });
     if (!isConfirmed) return;
-
     try {
       await reportApi.deleteSavedReport(id);
       toast.success('Saved report deleted successfully');
@@ -104,9 +91,7 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
       toast.error(err.message || 'Failed to delete saved report');
     }
   };
-
   const isAdminOrOwner = currentUser?.role === 'admin' || currentUser?.role === 'owner';
-
   if (!isAdminOrOwner) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground p-8">
@@ -114,10 +99,8 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
       </div>
     );
   }
-
   return (
     <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-5 animate-fade-in">
-      {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('salesReports')}</h1>
@@ -177,8 +160,6 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
           </button>
         </div>
       </div>
-
-      {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
@@ -188,17 +169,12 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
           <SavedReportsTab reports={savedReports} onDelete={handleDeleteSavedReport} />
         </div>
       )}
-
-      {/* Export panel backdrop */}
       {showExportPanel && (
         <div className="fixed inset-0 z-40" onClick={() => setShowExportPanel(false)} />
       )}
     </div>
   );
 }
-
-// ─── Empty State ──────────────────────────────────────
-
 function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border border-border/20 rounded-xl bg-card/10">
@@ -207,9 +183,6 @@ function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message:
     </div>
   );
 }
-
-// ─── Saved PDF Reports Tab ────────────────────────────
-
 function SavedReportsTab({
   reports,
   onDelete
@@ -223,16 +196,13 @@ function SavedReportsTab({
     if (type === 'daily') return 'Daily Sales Timeline';
     return type;
   };
-
   if (reports.length === 0) {
     return <EmptyState icon={FileText} message="No saved reports archived in database yet. Try exporting one!" />;
   }
-
   return (
     <div className="space-y-3">
       {reports.map((report) => (
         <div key={report._id} className="glass-card p-4 border border-border/30 rounded-2xl bg-card/10 space-y-3">
-          {/* Type + Date */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold flex-shrink-0 ${
               report.reportType === 'category'
@@ -245,16 +215,12 @@ function SavedReportsTab({
             </span>
             <span className="text-[10px] text-muted-foreground">{new Date(report.createdAt).toLocaleString()}</span>
           </div>
-
-          {/* Filename */}
           <div>
             <p className="text-xs font-mono font-semibold text-foreground truncate">{report.filename}</p>
             <p className="text-[9px] text-muted-foreground font-mono mt-0.5 truncate bg-secondary/30 px-2 py-1 rounded border border-border/20">
               {report.localPath}
             </p>
           </div>
-
-          {/* By + Actions */}
           <div className="flex items-center justify-between gap-2 border-t border-border/20 pt-2">
             <p className="text-[11px] text-muted-foreground uppercase">
               By: <span className="font-semibold text-foreground">{report.generatedBy}</span>

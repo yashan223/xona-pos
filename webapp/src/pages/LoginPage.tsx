@@ -8,11 +8,9 @@ import type { User } from '@/lib/api';
 import { KeyRound, User as UserIcon, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { useTranslation } from '@/lib/translations';
-
 interface LoginPageProps {
   onLoginSuccess: (user: User, rememberMe: boolean) => void;
 }
-
 export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const { t } = useTranslation();
   const [username, setUsername] = useState('');
@@ -23,17 +21,14 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [rememberMe, setRememberMe] = useState(() => {
     return localStorage.getItem('rememberMePreference') === 'true';
   });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
       setError('Please fill in all fields.');
       return;
     }
-
     setLoading(true);
     setError('');
-
     try {
       const response = await authApi.login({
         username: username.trim(),
@@ -46,13 +41,10 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
       setLoading(false);
     }
   };
-
   return (
     <div className="flex w-full h-full items-center justify-center px-4 bg-transparent">
-      {/* Background decoration */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-primary/5 blur-[120px] pointer-events-none animate-pulse-glow" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-accent/5 blur-[120px] pointer-events-none" />
-
       <Card className="w-full max-w-[420px] glass-card border-border/60 shadow-xl animate-fade-in relative z-10 p-2">
         <CardHeader className="flex flex-col items-center text-center pb-4">
           <div className="flex justify-center mb-3 w-full">
@@ -62,18 +54,14 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
             {t('loginSubtitle')}
           </CardDescription>
         </CardHeader>
-
         <CardContent className="space-y-4">
-          {/* Error Alert */}
           {error && (
             <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs animate-fade-in mb-2">
               <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
-
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Username */}
             <div className="space-y-1.5">
               <Label htmlFor="username">{t('username')}</Label>
               <div className="relative group">
@@ -90,8 +78,6 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 />
               </div>
             </div>
-
-            {/* Password */}
             <div className="space-y-1.5">
               <Label htmlFor="password">{t('password')}</Label>
               <div className="relative group">
@@ -114,8 +100,6 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 </button>
               </div>
             </div>
-
-            {/* Remember Me Checkbox */}
             <div className="flex items-center space-x-2 py-1 select-none">
               <input
                 id="rememberMe"
@@ -128,8 +112,6 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 Remember Me
               </Label>
             </div>
-
-            {/* Submit */}
             <Button
               type="submit"
               disabled={loading}

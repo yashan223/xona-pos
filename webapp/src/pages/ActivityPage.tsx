@@ -4,13 +4,11 @@ import { activityApi, ActivityRecord, type User } from '@/lib/api';
 import { useNotification } from '@/context/NotificationContext';
 import { format } from 'date-fns';
 import { useTranslation } from '@/lib/translations';
-
 export default function ActivityPage({ currentUser: user }: { currentUser: User | null }) {
   const { t } = useTranslation();
   const { toast } = useNotification();
   const [logs, setLogs] = useState<ActivityRecord[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     async function fetchLogs() {
       try {
@@ -22,12 +20,10 @@ export default function ActivityPage({ currentUser: user }: { currentUser: User 
         setLoading(false);
       }
     }
-
     if (user?.role === 'admin') {
       fetchLogs();
     }
   }, [user, toast]);
-
   if (user?.role !== 'admin') {
     return (
       <div className="p-6 text-center mt-20">
@@ -36,7 +32,6 @@ export default function ActivityPage({ currentUser: user }: { currentUser: User 
       </div>
     );
   }
-
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-6 animate-fade-in text-left">
       <div>
@@ -48,7 +43,6 @@ export default function ActivityPage({ currentUser: user }: { currentUser: User 
           {t('activityLogDesc')}
         </p>
       </div>
-
       <div className="glass-card bg-card/30 border border-border/40 rounded-2xl overflow-hidden">
         {loading ? (
           <div className="p-10 text-center text-muted-foreground animate-pulse">{t('loadingActivity')}</div>
@@ -56,7 +50,6 @@ export default function ActivityPage({ currentUser: user }: { currentUser: User 
           <div className="p-10 text-center text-muted-foreground">{t('noActivity')}</div>
         ) : (
           <>
-            {/* Mobile Card View */}
             <div className="md:hidden divide-y divide-border/30">
               {logs.map((log) => (
                 <div key={log._id} className="p-4 space-y-2">
@@ -91,8 +84,6 @@ export default function ActivityPage({ currentUser: user }: { currentUser: User 
                 </div>
               ))}
             </div>
-
-            {/* Desktop Table View */}
             <div className="hidden md:block overflow-auto max-h-[calc(100vh-220px)]">
               <table className="w-full text-sm text-left">
                 <thead className="bg-secondary/90 backdrop-blur-sm border-b border-border/50 text-muted-foreground text-xs uppercase sticky top-0 z-10">

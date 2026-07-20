@@ -3,22 +3,16 @@ import { Package, ShoppingCart, DollarSign, TrendingUp, Clock } from 'lucide-rea
 import StatsCard from '@/components/StatsCard';
 import { reportApi } from '@/lib/api';
 import type { SystemStats, TransactionRecord } from '@/lib/api';
-
-import { useTranslation } from '@/lib/translations';
-
-// Module-level cache for Stale-While-Revalidate pattern to eliminate visual flickering
+import { useTranslation } from '@/lib/translations';
 let cachedStats: SystemStats | null = null;
 let cachedTimeline: TransactionRecord[] | null = null;
-
 export default function DashboardPage() {
   const { t } = useTranslation();
   const [stats, setStats] = useState<SystemStats | null>(cachedStats);
   const [timeline, setTimeline] = useState<TransactionRecord[]>(cachedTimeline || []);
   const [loading, setLoading] = useState(!cachedStats);
-
   useEffect(() => {
     loadData();
-
     const handleUpdate = () => {
       loadData();
     };
@@ -27,7 +21,6 @@ export default function DashboardPage() {
       window.removeEventListener('transactions_updated', handleUpdate);
     };
   }, []);
-
   async function loadData() {
     if (!cachedStats) {
       setLoading(true);
@@ -47,7 +40,6 @@ export default function DashboardPage() {
       setLoading(false);
     }
   }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -55,26 +47,20 @@ export default function DashboardPage() {
       </div>
     );
   }
-
   const formatCurrency = (val: number) => {
     return `Rs. ${Number(val).toFixed(2)}`;
   };
-
   const avgOrderValue = (stats?.transactions.total ?? 0) > 0
     ? (stats?.transactions.totalRevenue ?? 0) / stats!.transactions.total
     : 0;
-
   return (
     <div className="p-4 sm:p-6 flex flex-col space-y-6 max-w-6xl mx-auto animate-fade-in text-left">
-      {/* Header */}
       <div className="flex-shrink-0">
         <h1 className="text-2xl font-bold tracking-tight">{t('dashboard')}</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Xona Point of Sale
         </p>
       </div>
-
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0">
         <StatsCard
           title={t('productsCount')}
@@ -105,8 +91,6 @@ export default function DashboardPage() {
           delay={300}
         />
       </div>
-
-      {/* Single Column Layout for Recent Transactions */}
       <div className="flex-1 min-h-0">
         <div className="flex flex-col h-full overflow-hidden">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 flex-shrink-0">
