@@ -132,3 +132,78 @@ If this is a fresh installation and you need to bulk-import initial product cata
    run-items-seeder.cmd
    ```
    *(Or manually `cd items-backend`, `npm install`, and `npm start`)*
+
+
+---
+
+# Configuration & Quick Start
+
+## ⚙️ Main System Configuration & Quick Start
+
+Ensure you have **Node.js** (v18+) and **MongoDB** installed.
+
+### 1. Backend Environment Setup
+Inside the `backend/` directory, configure your `.env` file:
+
+```env
+PORT=3000
+MONGO_URI=mongodb://127.0.0.1:27017/xona-pos
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your_secure_password
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174
+DEVICE_API_KEY=xona_secure_device_key_123
+```
+
+> **Security Note:** The backend enforces strict device authentication. Ensure you copy the `DEVICE_API_KEY` into your `desktop/.env` and `webapp/.env` files as `VITE_DEVICE_API_KEY`.
+> You can generate a new cryptographically secure key by double-clicking the **`generate-api-key.cmd`** utility in the root directory.
+
+### 2. Launch the Backend
+Run the root helper command:
+```powershell
+.\run-backend.cmd
+```
+*Or manually:*
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+### 3. Launch the Desktop Client
+Run the root helper command:
+```powershell
+.\run-frontend.cmd
+```
+
+### 4. Launch the Web Admin Portal (Optional)
+```powershell
+.\run-webapp.cmd
+```
+
+### 5. Run the Items Seeder (Optional)
+```powershell
+.\run-items-seeder.cmd
+```
+
+---
+
+## 🚀 Backend Quick Start
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+---
+
+## 🚀 Desktop Quick Start
+
+```bash
+cd desktop
+npm install
+npm run dev
+```
+
+---
+

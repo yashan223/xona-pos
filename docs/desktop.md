@@ -28,20 +28,12 @@ VITE_DEVICE_API_KEY=xona_secure_device_key_123
 
 ---
 
-## 🚀 Quick Start
 
-```bash
-cd desktop
-npm install
-npm run dev
-```
-
----
 
 ## 🔗 Related Documentation
 
 * [Main Project README](../README.md)
-* [System Architecture Guide](../ARCHITECTURE.md)
-* [Database Schema Guide](../database/README.md)
+* [System Architecture Guide](./architecture.md)
+* [Database Schema Guide](./database.md)
  
-* [Production Deployment Guide](../DEPLOYMENT.md) 
+* [Production Deployment Guide](./deployments.md)

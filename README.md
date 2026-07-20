@@ -8,13 +8,13 @@ It is designed with a **dual-layer architecture**: the Desktop Client runs **100
 
 ## 📚 Documentation Index (Central Navigation Hub)
 
-* [📐 System Architecture Guide](./ARCHITECTURE.md) — Network topology diagrams, component breakdown, and offline auto-sync sequence flow.
-* [🗄️ Database Documentation](./database/README.md) — Comprehensive schema specifications for Cloud MongoDB collections and local SQLite tables (`pos_local.db`).
-* [⚙️ Backend API Server Documentation](./backend/README.md) — Node.js & Express REST API server, WAL SQLite engine, and background sync flusher.
-* [💻 Desktop Client Documentation](./desktop/README.md) — React + Vite + Electron desktop application, client database engine, and Sinhala font integration.
-* [🌐 Web Admin Portal Documentation](./webapp/README.md) — Cloud-only React SPA for remote owners/admins to monitor reports and inventory.
-* [🚀 Production Deployment Guide](./DEPLOYMENT.md) — Instructions for configuring, building, and deploying the backend, web portal, and desktop app to production environments.
-* [🌱 Items Seeding Backend Documentation](./items-backend/README.md) — Lightweight, isolated Node.js script for seeding the product catalog directly to MongoDB.
+* [📐 System Architecture Guide](./docs/architecture.md) — Network topology diagrams, component breakdown, and offline auto-sync sequence flow.
+* [🗄️ Database Documentation](./docs/database.md) — Comprehensive schema specifications for Cloud MongoDB collections and local SQLite tables (`pos_local.db`).
+* [⚙️ Backend API Server Documentation](./docs/backend.md) — Node.js & Express REST API server, WAL SQLite engine, and background sync flusher.
+* [💻 Desktop Client Documentation](./docs/desktop.md) — React + Vite + Electron desktop application, client database engine, and Sinhala font integration.
+* [🌐 Web Admin Portal Documentation](./docs/webapp.md) — Cloud-only React SPA for remote owners/admins to monitor reports and inventory.
+* [🚀 Production Deployment Guide](./docs/deployments.md) — Instructions for configuring, building, and deploying the backend, web portal, and desktop app to production environments.
+* [🌱 Items Seeding Backend Documentation](./docs/items-backend.md) — Lightweight, isolated Node.js script for seeding the product catalog directly to MongoDB.
 
 > **Note:** A utility script `generate-api-key.cmd` is included in the root directory to help you generate secure 256-bit API keys for device authentication.
 
@@ -33,55 +33,6 @@ It is designed with a **dual-layer architecture**: the Desktop Client runs **100
 * **🇱🇰 Multi-Language & Sinhala Typography:** Integrated Google Font `Noto Sans Sinhala` for proper Sinhala text shaping across all views, menus, and receipts.
 * **🧾 Transaction & Audit Logs:** Detailed transaction history, line-item audit views, and instant refund processing with inventory reversal.
 * **📊 Analytics & PDF Reports:** Comprehensive sales charts, top-selling product metrics, downloadable PDF sales reports, and complete database backup/restore capabilities.
-
----
-
-## ⚙️ Configuration & Quick Start
-
-Ensure you have **Node.js** (v18+) and **MongoDB** installed.
-
-### 1. Backend Environment Setup
-Inside the `backend/` directory, configure your `.env` file:
-
-```env
-PORT=3000
-MONGO_URI=mongodb://127.0.0.1:27017/xona-pos
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=your_secure_password
-ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174
-DEVICE_API_KEY=xona_secure_device_key_123
-```
-
-> **Security Note:** The backend enforces strict device authentication. Ensure you copy the `DEVICE_API_KEY` into your `desktop/.env` and `webapp/.env` files as `VITE_DEVICE_API_KEY`.
-> You can generate a new cryptographically secure key by double-clicking the **`generate-api-key.cmd`** utility in the root directory.
-
-### 2. Launch the Backend
-Run the root helper command:
-```powershell
-.\run-backend.cmd
-```
-*Or manually:*
-```bash
-cd backend
-npm install
-npm run dev
-```
-
-### 3. Launch the Desktop Client
-Run the root helper command:
-```powershell
-.\run-frontend.cmd
-```
-
-### 4. Launch the Web Admin Portal (Optional)
-```powershell
-.\run-webapp.cmd
-```
-
-### 5. Run the Items Seeder (Optional)
-```powershell
-.\run-items-seeder.cmd
-```
 
 ---
 

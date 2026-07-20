@@ -31,4 +31,4 @@ npm install
 npm run seed
 ```
  
-* [Production Deployment Guide](../DEPLOYMENT.md) 
+* [Production Deployment Guide](./deployments.md) 

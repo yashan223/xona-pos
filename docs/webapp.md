@@ -41,4 +41,4 @@ npm run build
 ```
 The compiled static files will be located in the `dist/` directory.
  
-* [Production Deployment Guide](../DEPLOYMENT.md) 
+* [Production Deployment Guide](./deployments.md) 
