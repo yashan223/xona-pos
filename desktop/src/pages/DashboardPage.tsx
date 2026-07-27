@@ -50,9 +50,15 @@ export default function DashboardPage() {
   const formatCurrency = (val: number) => {
     return `Rs. ${Number(val).toFixed(2)}`;
   };
-  const avgOrderValue = (stats?.transactions.total ?? 0) > 0
-    ? (stats?.transactions.totalRevenue ?? 0) / stats!.transactions.total
-    : 0;
+  const todaysRevenue = timeline.reduce((acc, tx) => {
+    const txDate = new Date(tx.createdAt).toDateString();
+    const today = new Date().toDateString();
+    if (txDate === today && tx.paymentStatus !== 'refunded') {
+      return acc + Number(tx.totalAmount || 0);
+    }
+    return acc;
+  }, 0);
+
   return (
     <div className="p-6 h-full flex flex-col space-y-6 max-w-6xl mx-auto overflow-hidden animate-fade-in text-left">
       <div className="flex-shrink-0">
@@ -84,8 +90,8 @@ export default function DashboardPage() {
           delay={200}
         />
         <StatsCard
-          title={t('avgOrderValue')}
-          value={formatCurrency(avgOrderValue)}
+          title={t('todaysRevenue')}
+          value={formatCurrency(todaysRevenue)}
           icon={TrendingUp}
           color="violet"
           delay={300}
