@@ -10,7 +10,13 @@ module.exports = {
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
+      config: {
+        name: 'XonaPOS',
+        authors: 'xoxod33p',
+        description: 'Xona POS Desktop Client',
+        setupExe: 'XonaPOS-Setup-1.0.0.exe',
+        setupIcon: './assets/icon.ico',
+      },
     },
     {
       name: '@electron-forge/maker-zip',

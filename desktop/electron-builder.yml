@@ -1,0 +1,29 @@
+appId: com.xonapos.desktop
+productName: Xona POS
+copyright: Copyright © 2026 xoxod33p
+
+directories:
+  output: dist
+
+win:
+  icon: assets/icon.ico
+  artifactName: "Xona-POS-Desktop-Setup-v${version}.exe"
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  perMachine: true
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  differentialPackage: false
+  license: assets/license.txt
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: Xona POS
+  installerIcon: assets/icon.ico
+  uninstallerIcon: assets/icon.ico
+  deleteAppDataOnUninstall: false
+  runAfterFinish: true

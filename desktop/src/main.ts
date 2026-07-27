@@ -339,6 +339,26 @@ const createWindow = () => {
     },
   });
   mainWindow.setMenu(null);
+
+  mainWindow.on('close', (e) => {
+    const choice = dialog.showMessageBoxSync(mainWindow, {
+      type: 'question',
+      buttons: ['Yes, Exit', 'No, Cancel'],
+      defaultId: 1,
+      cancelId: 1,
+      title: 'Exit Confirmation',
+      message: 'Are you sure you want to exit Xona POS?',
+      detail: 'All application settings and data will be saved automatically before exiting.',
+    });
+    if (choice === 0) {
+      try {
+        mainWindow.webContents.send('app-before-close');
+      } catch (_) {}
+    } else {
+      e.preventDefault();
+    }
+  });
+
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {

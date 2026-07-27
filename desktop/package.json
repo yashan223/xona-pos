@@ -1,8 +1,8 @@
 {
   "name": "xona-pos-desktop",
-  "productName": "xona-pos-desktop",
+  "productName": "Xona POS",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "Xona POS - Point of Sale Desktop Client",
   "main": ".vite/build/main.js",
   "private": true,
   "scripts": {
@@ -10,12 +10,13 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\""
+    "lint": "echo \"No linting configured\"",
+    "build:installer": "taskkill /f /im \"Xona POS.exe\" 2>nul & electron-forge package && node build-installer.js"
   },
   "keywords": [],
   "author": {
-    "name": "yashan223",
-    "email": "yashanpererax200302@gmail.com"
+    "name": "xoxod33p",
+    "email": "xoxod33p@gmail.com"
   },
   "license": "MIT",
   "devDependencies": {
@@ -33,6 +34,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
     "electron": "43.1.0",
+    "electron-builder": "^25.1.8",
     "tailwindcss": "^4.3.2",
     "typescript": "^7.0.2",
     "vite": "^5.4.21"

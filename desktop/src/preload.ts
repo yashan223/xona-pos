@@ -21,3 +21,8 @@ contextBridge.exposeInMainWorld('electronPrinter', {
   printSerial: (config: { port: string; baud: number }, receipt: unknown) =>
     ipcRenderer.invoke('printer-print-serial', config, receipt),
 });
+contextBridge.exposeInMainWorld('electronApp', {
+  onBeforeClose: (callback: () => void) => {
+    ipcRenderer.on('app-before-close', () => callback());
+  },
+});

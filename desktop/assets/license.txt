@@ -1,0 +1,18 @@
+END-USER LICENSE AGREEMENT (EULA) FOR XONA POS
+
+IMPORTANT - READ CAREFULLY:
+This End-User License Agreement ("EULA") is a legal agreement between you (either an individual or a single entity) and Xona POS ("Licensor") for the Xona POS Desktop Application software product, which includes computer software and associated media, printed materials, and electronic documentation.
+
+1. GRANT OF LICENSE
+Licensor grants you a non-exclusive, non-transferable license to install and use the Xona POS Desktop Application on your computer systems for your point-of-sale and business operations.
+
+2. OWNERSHIP & INTELLECTUAL PROPERTY
+The Software is licensed, not sold. All rights, title, interest, and intellectual property rights in and to the Software remain with Licensor.
+
+3. RESTRICTIONS
+You may not reverse engineer, decompile, disassemble, or modify the Software, except to the extent that such activity is expressly permitted by applicable law.
+
+4. DISCLAIMER OF WARRANTY
+The Software is provided "AS IS" without warranty of any kind, express or implied. Licensor disclaims all warranties regarding performance, reliability, or accuracy.
+
+By clicking "I Agree" or proceeding with the installation, you agree to be bound by the terms of this EULA.

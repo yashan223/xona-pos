@@ -5,9 +5,10 @@ echo       DEPLOYING XONA POS APPLICATION
 echo ==========================================
 echo.
 
-set ROOT_DIR=%~dp0
+set SCRIPT_DIR=%~dp0
+for %%I in ("%SCRIPT_DIR%..") do set ROOT_DIR=%%~fI
 
-echo [1/3] Building Backend Server...
+echo [1/2] Building Backend Server...
 cd /d "%ROOT_DIR%\backend"
 echo Installing backend dependencies...
 call npm install
@@ -20,21 +21,20 @@ if %errorlevel% neq 0 (
 )
 echo.
 
-echo [2/3] Building Desktop Client...
+echo [2/2] Building Desktop Client Installer...
 cd /d "%ROOT_DIR%\desktop"
-echo Installing frontend dependencies...
+taskkill /f /im "Xona POS.exe" 2>nul
+echo Installing desktop dependencies...
 call npm install
-echo Packaging/Making desktop installers...
-call npm run make
+echo Packaging app and generating NSIS installer...
+call npm run build:installer
 if %errorlevel% neq 0 (
     echo.
-    echo ERROR: Desktop build failed!
+    echo ERROR: Desktop installer build failed!
     goto error
 )
 echo.
 
-echo [3/3] Finalizing Deploy...
-echo.
 echo ==========================================
 echo       DEPLOY COMPLETED SUCCESSFULLY!
 echo ==========================================
@@ -42,8 +42,8 @@ echo.
 echo Backend build location:
 echo   %ROOT_DIR%\backend\dist
 echo.
-echo Frontend installer locations:
-echo   %ROOT_DIR%\desktop\out\make
+echo Frontend installer location:
+echo   %ROOT_DIR%\desktop\dist\Xona-POS-Desktop-Setup-v1.0.0.exe
 echo.
 goto end
 
@@ -57,3 +57,4 @@ echo.
 :end
 cd /d "%ROOT_DIR%"
 pause
+
