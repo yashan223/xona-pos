@@ -13,7 +13,7 @@ class UserRepository {
         createdAt,
         role,
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     return { id, username, email, createdAt, role };

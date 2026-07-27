@@ -38,7 +38,7 @@ class TransactionRepository {
         paymentStatus: record.paymentStatus,
         createdAt: record.createdAt,
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     for (const item of record.items) {
@@ -47,7 +47,7 @@ class TransactionRepository {
       if (prod && prod.stock >= 0) {
         updateObj.$inc.stock = -item.quantity;
       }
-      await ProductModel.findByIdAndUpdate(item.productId, updateObj, { new: true });
+      await ProductModel.findByIdAndUpdate(item.productId, updateObj, { returnDocument: 'after' });
     }
 
     const itemIds = record.items.map(i => i.productId);
@@ -89,7 +89,7 @@ class TransactionRepository {
     const refundedDoc = await TransactionModel.findByIdAndUpdate(
       id,
       { $set: { paymentStatus: 'refunded' } },
-      { new: true }
+      { returnDocument: 'after' }
     ).lean() as any;
 
     if (!refundedDoc) return null;
@@ -100,7 +100,7 @@ class TransactionRepository {
       if (prod && prod.stock >= 0) {
         updateObj.$inc.stock = item.quantity;
       }
-      await ProductModel.findByIdAndUpdate(item.productId, updateObj, { new: true });
+      await ProductModel.findByIdAndUpdate(item.productId, updateObj, { returnDocument: 'after' });
     }
 
     return this.docToTransaction(refundedDoc);

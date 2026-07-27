@@ -43,7 +43,7 @@ class ProductRepository {
         createdAt: record.createdAt,
         updatedAt: record.updatedAt,
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     await GraphNodeModel.findOneAndUpdate(
@@ -72,7 +72,7 @@ class ProductRepository {
     const doc = await ProductModel.findByIdAndUpdate(
       id,
       { $set: { ...productData, updatedAt: now } },
-      { new: true }
+      { returnDocument: 'after' }
     ).lean();
 
     if (!doc) return null;

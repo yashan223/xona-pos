@@ -26,7 +26,7 @@ class CustomerRepository {
         email: record.email,
         createdAt: record.createdAt,
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     return record;
