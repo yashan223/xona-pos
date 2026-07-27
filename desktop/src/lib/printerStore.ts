@@ -1,8 +1,5 @@
-/**
- * Printer Configuration Store � Xona POS Desktop
- * Manages POS printer settings and dispatches receipt print jobs
- * to the appropriate IPC channel (Network / Windows Queue / Serial).
- */
+import { getConfig, setConfig } from '@/lib/configStore';
+
 declare global {
   interface Window {
     electronPrinter?: {
@@ -66,6 +63,15 @@ const DEFAULTS: PrinterConfig = {
 };
 export function getPrinterConfig(): PrinterConfig {
   try {
+    const raw = getConfig(CONFIG_KEY);
+    if (raw && typeof raw === 'object') {
+      return { ...DEFAULTS, ...raw };
+    }
+    if (typeof raw === 'string') {
+      return { ...DEFAULTS, ...JSON.parse(raw) };
+    }
+  } catch {}
+  try {
     const raw = localStorage.getItem(CONFIG_KEY);
     return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : { ...DEFAULTS };
   } catch {
@@ -74,7 +80,11 @@ export function getPrinterConfig(): PrinterConfig {
 }
 export function savePrinterConfig(partial: Partial<PrinterConfig>): void {
   const current = getPrinterConfig();
-  localStorage.setItem(CONFIG_KEY, JSON.stringify({ ...current, ...partial }));
+  const merged = { ...current, ...partial };
+  setConfig(CONFIG_KEY, merged);
+  try {
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(merged));
+  } catch {}
 }
 export async function listWindowsPrinters(): Promise<string[]> {
   if (!window.electronPrinter) return [];
