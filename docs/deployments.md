@@ -90,7 +90,7 @@ The Web Admin Portal is a static Single Page Application (SPA). It can be hosted
 
 ## 💻 4. Distributing the Desktop Cashier Client (`desktop/`)
 
-The Desktop client runs locally on the cashier's hardware and relies on Electron to package the application into a standalone executable (`.exe`, `.dmg`, `.deb`).
+The Desktop client runs locally on the cashier's hardware and relies on Electron and electron-builder to package the application into a standalone installer (`Xona-POS-Desktop-Setup-v1.0.0.exe`).
 
 1. **Navigate to the directory**:
    ```bash
@@ -106,19 +106,26 @@ The Desktop client runs locally on the cashier's hardware and relies on Electron
    Create a `.env` file with the production backend connection details:
    ```env
    VITE_API_BASE_URL=<YOUR_API_BASE_URL>
-   VITE_API_KEY=<YOUR_SECURE_API_KEY>
-   VITE_WS_URL=<YOUR_WS_URL>
+   VITE_DEVICE_API_KEY=<YOUR_SECURE_API_KEY>
    ```
 
-4. **Build & Package the Executable**:
-   Use Electron Forge to package the app for your current operating system:
+4. **Build & Package the Custom NSIS Setup Installer**:
+   Run the dedicated build script:
    ```bash
-   npm run make
+   npm run build:installer
    ```
-   * This process will create a `.exe` installer (on Windows), a `.dmg` (on macOS), or `.deb`/`.rpm` (on Linux) inside the `out/` directory.
+   * This command packages the application and builds a custom interactive NSIS installer at `desktop/dist/Xona-POS-Desktop-Setup-v1.0.0.exe`.
+   * **Installer Features:** EULA License Agreement, custom folder browser, user scope selection, Desktop & Start Menu shortcuts, auto-launch option, and Administrator UAC elevation.
 
-5. **Distribute**:
-   Copy the generated installer from the `out/make/` folder to the target cashier PCs and install it.
+5. **Automated Root Deployment Script (Windows)**:
+   From the project root, double-click or run:
+   ```cmd
+   windows\deploy.cmd
+   ```
+   This script automatically builds the backend TypeScript server and generates the desktop installer.
+
+6. **Distribute**:
+   Copy `desktop/dist/Xona-POS-Desktop-Setup-v1.0.0.exe` to target cashier PCs and run the installer setup.
 
 ---
 

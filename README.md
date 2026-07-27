@@ -9,12 +9,12 @@ It is designed with a **dual-layer architecture**: the Desktop Client runs **100
 ## 📚 Documentation Index (Central Navigation Hub)
 
 * [📐 System Architecture Guide](./docs/architecture.md) — Network topology diagrams, component breakdown, and offline auto-sync sequence flow.
-* [🗄️ Database Documentation](./docs/database.md) — Comprehensive schema specifications for Cloud MongoDB collections and local SQLite tables (`pos_local.db`).
-* [⚙️ Backend API Server Documentation](./docs/backend.md) — Node.js & Express REST API server, WAL SQLite engine, and background sync flusher.
-* [💻 Desktop Client Documentation](./docs/desktop.md) — React + Vite + Electron desktop application, client database engine, and Sinhala font integration.
+* [🗄️ Database Documentation](./docs/database.md) — Comprehensive schema specifications for Cloud MongoDB collections and local database storage.
+* [⚙️ Backend API Server Documentation](./docs/backend.md) — Node.js & Express REST API server, authentication, and background sync flusher.
+* [💻 Desktop Client Documentation](./docs/desktop.md) — React + Vite + Electron desktop application, printer settings persistence, exit confirmation with auto-save, and installer setup.
 * [🌐 Web Admin Portal Documentation](./docs/webapp.md) — Cloud-only React SPA for remote owners/admins to monitor reports and inventory.
-* [🚀 Production Deployment Guide](./docs/deployments.md) — Instructions for configuring, building, and deploying the backend, web portal, and desktop app to production environments.
-* [🌱 Items Seeding Backend Documentation](./docs/items-backend.md) — Lightweight, isolated Node.js script for seeding the product catalog directly to MongoDB.
+* [🚀 Production Deployment Guide](./docs/deployments.md) — Instructions for building the custom NSIS setup installer, backend, and web portal for production.
+* [🌱 Items Seeding Backend Documentation](./docs/items-backend.md) — Lightweight Node.js script for seeding the product catalog directly to MongoDB.
 
 > **Note:** A utility script `generate-api-key.cmd` is included in the root directory to help you generate secure 256-bit API keys for device authentication.
 
@@ -23,12 +23,14 @@ It is designed with a **dual-layer architecture**: the Desktop Client runs **100
 ## ⚡ Key Features
 
 * **🛒 Offline-First POS Register:** Fast product lookup, cash payment handling, instant discount calculations, tax handling, and instant receipt printing. Operates 100% offline without requiring a local backend server.
-* **🔄 Automatic Cloud Synchronization:** Background flusher that queues offline products and transactions locally, then uploads pending records to Cloud MongoDB in strict dependency order (Products $\rightarrow$ Transactions).
+* **💾 Printer & Setting Persistence:** All printer configs (Network IPs, Serial ports, System spoolers) and application settings save directly to `xona_config.json` on disk via native IPC.
+* **🔒 Exit Confirmation & Auto-Save:** Native prompt on window close that flushes and saves all pending transactions, database changes, and app settings before exiting.
+* **📦 Custom NSIS Setup Installer:** Professional Windows installation wizard (`Xona-POS-Desktop-Setup-v1.0.0.exe`) with EULA license agreement, custom folder picker, user scope selection, shortcuts creation, and Administrator elevation.
+* **🔄 Automatic Cloud Synchronization:** Background flusher that queues offline products and transactions locally, then uploads pending records to Cloud MongoDB in strict dependency order.
 * **🔒 Seamless Offline Login:** Offline user credentials caching allows cashiers and admins to log in and operate the app even when disconnected from the internet.
-* **⚡ Always Offline Mode Toggle:** Setting switch that forces the app to run strictly from local disk storage without issuing remote cloud network requests or error notifications.
+* **⚡ Always Offline Mode Toggle:** Setting switch that forces the app to run strictly from local disk storage without issuing remote cloud network requests.
 * **📦 Catalog Management:** Full inventory CRUD controls, SKU management, stock tracking, price/cost adjustments, and product image uploads.
 * **🚚 Bulk Stock Presets:** Define, save, and instantly apply batch inventory restock templates to update multiple products at once with tracking for the user who made the update.
-
 * **🕸️ Product Co-Occurrence Net:** Graph relationship visualization (powered by ECharts) highlighting items frequently purchased together using BFS & DFS graph algorithms.
 * **🇱🇰 Multi-Language & Sinhala Typography:** Integrated Google Font `Noto Sans Sinhala` for proper Sinhala text shaping across all views, menus, and receipts.
 * **🧾 Transaction & Audit Logs:** Detailed transaction history, line-item audit views, and instant refund processing with inventory reversal.
@@ -36,12 +38,12 @@ It is designed with a **dual-layer architecture**: the Desktop Client runs **100
 
 ---
 
-## 🖥️ Application Modules
+## 🖥️ Application Modules & Deployment
 
+* **Desktop Setup Installer:** Built to `desktop/dist/Xona-POS-Desktop-Setup-v1.0.0.exe`.
+* **Root Deployment Script:** Double-click `windows/deploy.cmd` to build backend & compile the desktop setup installer.
 * **Dashboard:** Real-time revenue metrics, transaction counts, Average Order Value (AOV), and top-selling product lists.
 * **Checkout Register:** Cashier terminal with category filtering, instant cart calculations, and product co-occurrence recommendation panel.
 * **Products Catalog:** Inventory catalog manager supporting live search, price/stock updates, and image asset uploads.
 * **Transactions:** Complete history log with search filters, transaction status badges, and one-click refund capabilities.
-* **Co-Occurrence Net:** Interactive visual graph mapping connections between categories and items commonly purchased in single checkouts.
-* **System Settings:** VAT tax rate configuration, Always Offline Mode toggle, Cloud Sync connection indicator, and English / Sinhala language switcher.
-* **DB Maintenance:** Local Storage & Cloud MongoDB engine health monitors, local JSON backup export, and full database restore tools.
+* **System Settings:** VAT tax rate configuration, Always Offline Mode toggle, Cloud Sync connection indicator, printer preferences, and English / Sinhala language switcher.
