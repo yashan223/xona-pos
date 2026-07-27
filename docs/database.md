@@ -49,6 +49,7 @@ Stores finalized checkouts, payment preferences, line-item arrays, taxes, discou
 | :--- | :--- | :--- | :--- |
 | `_id` | `String` | Yes | Unique transaction receipt ID. |
 | `cashierId` | `String` | Yes | Link to the cashier user ID who processed checkout. |
+| `customerId` | `String` | No | Optional customer ID reference. |
 | `items` | `Array` | Yes | Nested array of `TransactionItem` structures (see below). |
 | `subtotal` | `Number` | Yes | Gross aggregate amount before tax/discounts. |
 | `discount` | `Number` | Yes | Discount amount subtracted from subtotal. |
@@ -92,15 +93,17 @@ Captures connection pathways and increments transaction co-occurrence weights.
 
 ---
 
-## 💾 Local SQLite Database Tables (`pos_local.db`)
+## 💾 Client Offline Disk Storage (`offlineStore.ts`)
 
-When operating in local/offline mode, the system uses WAL-enabled SQLite (`pos_local.db`):
+When operating offline or in Force-Offline mode, the Desktop Client uses a dual-layer local JSON disk storage engine:
 
-* `local_users` (`id`, `username`, `passwordHash`, `email`, `role`, `synced`, `createdAt`)
-* `local_products` (`id`, `name`, `sku`, `category`, `price`, `cost`, `stock`, `description`, `imageUrl`, `salesCount`, `synced`, `createdAt`, `updatedAt`)
-* `local_transactions` (`id`, `cashierId`, `itemsJson`, `subtotal`, `discount`, `tax`, `totalAmount`, `paymentMethod`, `paymentStatus`, `synced`, `createdAt`)
-* `local_graph_nodes` (`id`, `type`, `label`, `metadataJson`, `synced`)
-* `local_graph_edges` (`id`, `source`, `target`, `type`, `metadataJson`, `synced`)
+* **Layer 1 (Browser `localStorage`)**: Synchronous UI cache for instant product searches and cached user credentials.
+* **Layer 2 (Hard Disk File IPC via `window.electronDB`)**: Permanent JSON files stored under `%AppData%/xona-pos/` (or custom configured folder):
+  * `xona_local_products_db`: Local product catalog cache.
+  * `xona_local_customers_db`: Local customer registry.
+  * `xona_local_transactions_db`: Saved local receipts.
+  * `xona_local_sync_queue_db`: Unsynced transactions queue pending upload.
+  * `xona_config.json`: System settings, force offline toggle, and printer configurations.
 
 ---
 
@@ -116,5 +119,12 @@ erDiagram
     graphnodes ||--o{ graphedges : "connects_source"
     graphedges }o--|| graphnodes : "connects_target"
 ```
- 
+
+---
+
+## 🔗 Related Documentation
+
+* [Main Project README](../README.md)
+* [System Architecture Guide](./architecture.md)
+* [Backend API Server Documentation](./backend.md)
 * [Production Deployment Guide](./deployments.md)

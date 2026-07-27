@@ -6,8 +6,8 @@ The Xona POS Desktop Client is a modern, offline-first cashier application built
 
 ## ⚡ Core Features
 
-* **Offline-First Storage Engine (`offlineStore.ts`)**: Runs 100% locally on the cashier PC. Saves catalog items, CRM profiles, and transactions directly in client storage.
-* **Printer & Setting Persistence (`xona_config.json`)**: Printer choices (Network IPs, Serial ports, System spoolers) and application settings save permanently to disk via native IPC (`electronConfig`).
+* **Offline-First Storage Engine (`offlineStore.ts`)**: Runs 100% locally on the cashier PC. Saves catalog items, CRM profiles, and transactions directly in client storage via dual-layer `localStorage` and native `electronDB` JSON disk files.
+* **Printer & Setting Persistence (`xona_config.json`)**: Printer choices (Network IPs, Serial ports, System spoolers), VAT tax rates, and application settings save permanently to disk via native IPC (`electronConfig`).
 * **🔒 Exit Confirmation & Auto-Save**: Intercepts window closing with a native question dialog (`"Are you sure you want to exit Xona POS?"`) and automatically flushes and saves all state to disk before exiting.
 * **📦 Custom NSIS Setup Installer (`Xona-POS-Desktop-Setup-v1.0.0.exe`)**: Built with electron-builder, featuring:
   - 📜 EULA License Agreement screen (`assets/license.txt`).
@@ -16,11 +16,12 @@ The Xona POS Desktop Client is a modern, offline-first cashier application built
   - 🖥️ Desktop and Start Menu shortcut creation.
   - 🚀 Post-install application auto-launch option.
   - 🛡️ Automatic Administrator (UAC) privilege elevation prompt.
-* **Auto-Cloud Sync Flusher**: Automatically uploads pending checkouts and catalog additions up to the Cloud API whenever network connection is restored.
+* **Auto-Cloud Sync Flusher**: Automatically uploads pending checkouts and catalog additions to the backend API whenever network connection is restored.
 * **Sinhala Typography (`Noto Sans Sinhala`)**: Complete localization with proper Sinhala font shaping across all views, receipts, and navigation.
 * **Always Offline Mode**: Toggle setting that silences error toasts and keeps the app running strictly locally on the client PC.
 * **Interactive Co-Occurrence Net**: ECharts graph visualization highlighting products frequently bought together.
 * **Bulk Stock Presets**: Manage batch restock templates to quickly update inventory levels.
+* **📊 Role-Restricted Sales Reports**: Sales Reports page access is strictly restricted to Admin and Owner roles.
 
 ---
 

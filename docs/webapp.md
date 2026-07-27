@@ -2,20 +2,22 @@
 
 This directory contains the **Web Admin Portal** for the Xona POS system. 
 
-Unlike the desktop application, this web portal is a **Cloud-Only** React Single Page Application (SPA). It directly connects to the remote backend API and does not maintain any local SQLite offline storage or hardware integrations (such as receipt printers).
+Unlike the desktop application, this web portal is a **Cloud-Connected** React Single Page Application (SPA). It directly connects to the remote backend API and does not maintain local SQLite hardware integrations (such as thermal receipt printers).
 
 ## 🔒 Role-Based Access
 This portal is strictly designed for **remote monitoring** and administration. 
 - Only **Admin** and **Owner** roles can log into this application.
 - Cashiers and standard users are blocked.
 - Features like "Checkout Register" have been completely removed to prevent accidental sales mutations from a remote web terminal.
+- Sales Reports tab is strictly restricted to Admin and Owner users.
 
 ## 🚀 Key Features
 - **Remote Dashboard:** Live analytics and metrics straight from the cloud.
 - **Inventory Monitoring:** View and manage the product catalog (Products Page).
 - **Bulk Stock Presets:** Manage batch restock templates to quickly update remote inventory levels.
-- **Sales Reports:** Generate PDF sales reports and view historical data remotely.
+- **Sales Reports:** Generate PDF sales reports and view historical data remotely (Admin/Owner only).
 - **Transactions Log:** Review historical transactions processed by physical POS terminals.
+- **System Settings:** Language selection (English / Sinhala) and custom report save path configuration.
 
 ## ⚙️ Development Setup
 
@@ -40,5 +42,5 @@ To build the web portal for production deployment (e.g., on Vercel, Netlify, or 
 npm run build
 ```
 The compiled static files will be located in the `dist/` directory.
- 
-* [Production Deployment Guide](./deployments.md) 
+
+* [Production Deployment Guide](./deployments.md)
