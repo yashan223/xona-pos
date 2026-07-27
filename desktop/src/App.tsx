@@ -25,9 +25,23 @@ export default function App() {
       handleLogout();
     };
     window.addEventListener('logout_all_users', handleLogoutAll);
+    const handleF11 = (e: KeyboardEvent) => {
+      if (e.key === 'F11') {
+        e.preventDefault();
+        if (window.electronApp?.toggleFullscreen) {
+          window.electronApp.toggleFullscreen();
+        } else if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+    };
+    window.addEventListener('keydown', handleF11);
     return () => {
       stopWS();
       window.removeEventListener('logout_all_users', handleLogoutAll);
+      window.removeEventListener('keydown', handleF11);
     };
   }, []);
   useEffect(() => {

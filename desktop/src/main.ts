@@ -3,6 +3,33 @@ import path from 'node:path';
 import fs from 'node:fs';
 import net from 'node:net';
 import started from 'electron-squirrel-startup';
+function cleanupUserDataAndConfigs(): void {
+  try {
+    app.setLoginItemSettings({ openAtLogin: false });
+  } catch (_) {}
+  try {
+    const customDir = getCustomDbDir();
+    if (customDir && fs.existsSync(customDir)) {
+      fs.rmSync(customDir, { recursive: true, force: true });
+    }
+  } catch (_) {}
+  try {
+    const userData = app.getPath('userData');
+    if (userData && fs.existsSync(userData)) {
+      fs.rmSync(userData, { recursive: true, force: true });
+    }
+  } catch (_) {}
+}
+
+const isUninstalling = process.argv.some((arg) => {
+  const lower = arg.toLowerCase();
+  return lower.includes('squirrel-uninstall') || lower.includes('uninstall');
+});
+
+if (isUninstalling) {
+  cleanupUserDataAndConfigs();
+}
+
 if (started) {
   app.quit();
 }
@@ -111,11 +138,48 @@ ipcMain.on('config-set', (event, key: string, value: any) => {
 ipcMain.handle('db-browse-folder', async () => {
   const win = BrowserWindow.getFocusedWindow();
   const result = await dialog.showOpenDialog(win!, {
-    title: 'Select Local Database Storage Folder',
+    title: 'Select Local Storage Folder',
     properties: ['openDirectory', 'createDirectory'],
   });
   if (result.canceled || result.filePaths.length === 0) return null;
   return result.filePaths[0];
+});
+ipcMain.handle('app-browse-folder', async () => {
+  const win = BrowserWindow.getFocusedWindow();
+  const result = await dialog.showOpenDialog(win!, {
+    title: 'Select Local Storage Folder',
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return result.filePaths[0];
+});
+ipcMain.handle('app-get-run-on-startup', async () => {
+  try {
+    return app.getLoginItemSettings().openAtLogin;
+  } catch {
+    return false;
+  }
+});
+ipcMain.handle('app-set-run-on-startup', async (_event, enabled: boolean) => {
+  try {
+    app.setLoginItemSettings({
+      openAtLogin: enabled,
+      path: app.getPath('exe'),
+    });
+    return app.getLoginItemSettings().openAtLogin;
+  } catch (err) {
+    console.error('[Startup] Failed to set login item:', err);
+    return false;
+  }
+});
+ipcMain.handle('app-toggle-fullscreen', async () => {
+  const win = BrowserWindow.getFocusedWindow();
+  if (win) {
+    const isFS = win.isFullScreen();
+    win.setFullScreen(!isFS);
+    return !isFS;
+  }
+  return false;
 });
 interface ReceiptData {
   storeName: string;

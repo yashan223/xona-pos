@@ -25,4 +25,7 @@ contextBridge.exposeInMainWorld('electronApp', {
   onBeforeClose: (callback: () => void) => {
     ipcRenderer.on('app-before-close', () => callback());
   },
+  getRunOnStartup: () => ipcRenderer.invoke('app-get-run-on-startup'),
+  setRunOnStartup: (enabled: boolean) => ipcRenderer.invoke('app-set-run-on-startup', enabled),
+  toggleFullscreen: () => ipcRenderer.invoke('app-toggle-fullscreen'),
 });

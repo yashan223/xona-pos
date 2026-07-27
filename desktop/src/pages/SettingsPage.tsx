@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, Cloud, RefreshCw, CheckCircle2, CloudOff, HardDrive, FolderOpen, Save, Printer, Wifi, Usb, TestTube, Globe, Calculator, Database, Folder } from 'lucide-react';
+import { Settings, Cloud, RefreshCw, CheckCircle2, CloudOff, HardDrive, FolderOpen, Save, Printer, Wifi, Usb, TestTube, Globe, Calculator, Database, Folder, Download, Maximize } from 'lucide-react';
 import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
 import { syncApi, SyncStatus } from '@/lib/api';
@@ -53,6 +53,59 @@ export default function SettingsPage() {
   const [dbPath, setDbPath] = useState('');
   const [dbPathInput, setDbPathInput] = useState('');
   const [savingPath, setSavingPath] = useState(false);
+  const [runOnStartup, setRunOnStartup] = useState(false);
+
+  useEffect(() => {
+    if (window.electronApp?.getRunOnStartup) {
+      window.electronApp.getRunOnStartup().then((val) => setRunOnStartup(val));
+    } else {
+      const saved = localStorage.getItem('xona_run_on_startup');
+      setRunOnStartup(saved === 'true');
+    }
+  }, []);
+
+  const handleToggleRunOnStartup = async (enabled: boolean) => {
+    setRunOnStartup(enabled);
+    localStorage.setItem('xona_run_on_startup', String(enabled));
+    if (window.electronApp?.setRunOnStartup) {
+      const res = await window.electronApp.setRunOnStartup(enabled);
+      setRunOnStartup(res);
+      toast.success(`Run on Startup ${res ? 'enabled' : 'disabled'}.`);
+    } else {
+      toast.success(`Run on Startup ${enabled ? 'enabled' : 'disabled'}.`);
+    }
+  };
+
+  const handleExportLocalConfig = () => {
+    try {
+      const printerConfig = getPrinterConfig();
+      const configData = {
+        appName: 'Xona POS',
+        exportedAt: new Date().toISOString(),
+        vatEnabled,
+        vatPercentage,
+        forceOffline: isForceOfflineEnabled(),
+        dbPath,
+        customReportPath,
+        runOnStartup,
+        printerConfig,
+        language: localStorage.getItem('xona_language') || 'en',
+      };
+      const jsonStr = JSON.stringify(configData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `xona-pos-local-config-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Successfully exported local application configuration JSON.');
+    } catch (err) {
+      toast.error('Failed to export local configuration file.');
+    }
+  };
   useEffect(() => {
     const load = async () => {
       if (window.electronDB?.getDbPath) {
@@ -620,9 +673,9 @@ export default function SettingsPage() {
         </div>
         )}
         {activeTab === 'general' && (
-        <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
+        <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2 space-y-4">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
-            {t('appLanguage')}
+            General & Startup Preferences
           </h3>
           <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
             <div>
@@ -647,6 +700,63 @@ export default function SettingsPage() {
                 </button>
               ))}
             </div>
+          </div>
+          <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-semibold text-foreground">Run on Startup</h4>
+              <p className="text-xs text-muted-foreground mt-0.5 max-w-[280px]">
+                Launch Xona POS automatically when your computer starts up.
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer select-none flex-shrink-0">
+              <input
+                type="checkbox"
+                checked={runOnStartup}
+                onChange={(e) => handleToggleRunOnStartup(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-secondary/60 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+            </label>
+          </div>
+          <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-semibold text-foreground">Export Local Config</h4>
+              <p className="text-xs text-muted-foreground mt-0.5 max-w-[280px]">
+                Export local application preferences, printer configurations, and DB settings to a JSON file.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleExportLocalConfig}
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-xs hover:bg-primary/90 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shrink-0"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Export Config
+            </button>
+          </div>
+          <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-semibold text-foreground">Immersive Fullscreen Mode</h4>
+              <p className="text-xs text-muted-foreground mt-0.5 max-w-[280px]">
+                Press <kbd className="px-1.5 py-0.5 rounded bg-secondary/60 border border-border/50 text-[10px] font-mono font-bold text-primary">F11</kbd> anytime to toggle immersive full screen with taskbars hidden.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (window.electronApp?.toggleFullscreen) {
+                  window.electronApp.toggleFullscreen();
+                } else if (!document.fullscreenElement) {
+                  document.documentElement.requestFullscreen().catch(() => {});
+                } else if (document.exitFullscreen) {
+                  document.exitFullscreen().catch(() => {});
+                }
+              }}
+              className="px-4 py-2 rounded-lg bg-secondary/50 hover:bg-secondary text-foreground border border-border/50 font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <Maximize className="w-3.5 h-3.5" />
+              Toggle F11
+            </button>
           </div>
         </div>
         )}

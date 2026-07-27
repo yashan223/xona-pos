@@ -28,5 +28,8 @@ interface Window {
   };
   electronApp?: {
     onBeforeClose: (callback: () => void) => void;
+    getRunOnStartup: () => Promise<boolean>;
+    setRunOnStartup: (enabled: boolean) => Promise<boolean>;
+    toggleFullscreen: () => Promise<boolean>;
   };
 }

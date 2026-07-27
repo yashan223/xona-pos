@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Database, Cloud, HardDrive, RefreshCw, Trash2, Download } from 'lucide-react';
 import { reportApi, syncApi, BASE_HOST, SyncStatus } from '@/lib/api';
-import { getCachedProducts, getCachedCustomers, getPendingOfflineTransactions, saveCachedProducts, saveCachedCustomers } from '@/lib/offlineStore';
+import { getCachedProducts, getCachedCustomers, getPendingOfflineTransactions, saveCachedProducts, saveCachedCustomers, isForceOfflineEnabled } from '@/lib/offlineStore';
 import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
 export default function MaintenancePage() {
@@ -187,7 +187,7 @@ export default function MaintenancePage() {
           <div className="flex justify-between items-center border-b border-border/40 pb-2">
             <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
               <HardDrive className="w-4 h-4 text-emerald-400" />
-              Local Storage / SQLite Database
+              Local Offline Database (SQLite Storage)
             </h3>
             <span className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold px-2 py-0.5 rounded-full">
               🟢 Active
@@ -214,6 +214,32 @@ export default function MaintenancePage() {
             >
               <Download className="w-3.5 h-3.5" />
               Export Local JSON
+            </button>
+            <button
+              onClick={() => {
+                const configData = {
+                  appName: 'Xona POS',
+                  exportedAt: new Date().toISOString(),
+                  language: localStorage.getItem('xona_language') || 'en',
+                  forceOffline: isForceOfflineEnabled(),
+                };
+                const jsonStr = JSON.stringify(configData, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `xona-pos-local-config-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                toast.success('Exported local application configuration JSON.');
+              }}
+              className="py-1.5 px-3 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold border border-primary/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              title="Export Local Config"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Export Config
             </button>
             <button
               onClick={handleClearLocalCache}

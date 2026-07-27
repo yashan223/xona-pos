@@ -25,5 +25,6 @@ nsis:
   shortcutName: Xona POS
   installerIcon: assets/icon.ico
   uninstallerIcon: assets/icon.ico
-  deleteAppDataOnUninstall: false
+  deleteAppDataOnUninstall: true
+  include: assets/installer.nsh
   runAfterFinish: true
