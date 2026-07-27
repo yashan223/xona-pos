@@ -54,7 +54,7 @@ class TransactionRepository {
       for (let j = i + 1; j < itemIds.length; j++) {
         const [source, target] = [itemIds[i], itemIds[j]].sort();
         const edgeId = `edge:${source}:${target}:BOUGHT_WITH`;
-        const existingRow = db.prepare('SELECT metadataJson FROM local_graph_edges WHERE source = ? AND target = ? AND type = "BOUGHT_WITH"').get(source, target) as any;
+        const existingRow = db.prepare("SELECT metadataJson FROM local_graph_edges WHERE source = ? AND target = ? AND type = 'BOUGHT_WITH'").get(source, target) as any;
         let weight = 1;
         if (existingRow && existingRow.metadataJson) {
           try {
