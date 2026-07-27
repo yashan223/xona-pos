@@ -230,10 +230,35 @@ export const authApi = {
   delete: (id: string) => request<{ message: string }>(`/auth/users/${id}`, { method: 'DELETE' }),
   updateRole: (id: string, role: string) => request<{ message: string }>(`/auth/users/${id}/role`, { method: 'POST', body: JSON.stringify({ role }) }),
   update: (id: string, data: { username?: string; password?: string; email?: string; role?: string }) => request<{ message: string }>(`/auth/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  logoutAll: () => request<{ message: string }>('/auth/logout-all', { method: 'POST' }),
 };
 export const syncApi = {
-  getStatus: () => request<SyncStatus>('/sync/status').catch(() => ({ isOnline: false, pendingCount: 0, isSyncing: false, lastSyncTime: null })),
-  trigger: () => request<{ success: boolean; status: SyncStatus }>('/sync/trigger').catch(() => ({ success: false, status: { isOnline: false, pendingCount: 0, isSyncing: false, lastSyncTime: null } })),
+  getStatus: async (): Promise<SyncStatus> => {
+    try {
+      const raw = await request<any>('/sync/status');
+      const isOnline = Boolean(raw?.isOnline ?? raw?.online ?? true);
+      const pendingCount = Number(raw?.pendingCount ?? raw?.pending ?? 0);
+      const isSyncing = Boolean(raw?.isSyncing ?? raw?.syncInProgress ?? false);
+      const lastSyncTime = raw?.lastSyncTime ?? new Date().toISOString();
+      return { isOnline, pendingCount: isNaN(pendingCount) ? 0 : pendingCount, isSyncing, lastSyncTime };
+    } catch {
+      return { isOnline: false, pendingCount: 0, isSyncing: false, lastSyncTime: null };
+    }
+  },
+  trigger: async (): Promise<{ success: boolean; status: SyncStatus }> => {
+    try {
+      const res = await request<any>('/sync/trigger', { method: 'POST' });
+      const raw = res?.status || res;
+      const isOnline = Boolean(raw?.isOnline ?? raw?.online ?? true);
+      const pendingCount = Number(raw?.pendingCount ?? raw?.pending ?? 0);
+      const isSyncing = Boolean(raw?.isSyncing ?? raw?.syncInProgress ?? false);
+      const lastSyncTime = raw?.lastSyncTime ?? new Date().toISOString();
+      const statusObj: SyncStatus = { isOnline, pendingCount: isNaN(pendingCount) ? 0 : pendingCount, isSyncing, lastSyncTime };
+      return { success: Boolean(res?.success ?? isOnline), status: statusObj };
+    } catch {
+      return { success: false, status: { isOnline: false, pendingCount: 0, isSyncing: false, lastSyncTime: null } };
+    }
+  },
 };
 export const activityApi = {
   getAll: () => request<ActivityRecord[]>('/activity'),

@@ -94,14 +94,23 @@ export function queueOfflineUser(payload: { username: string; password?: string;
   pushToSyncQueue({ id, type: 'USER', payload, createdAt: now });
   return { message: 'User created permanently on local disk', user: newUser };
 }
-export function updateOfflineUser(id: string, payload: Partial<User>): void {
+export function updateOfflineUser(id: string, payload: Partial<User> & { password?: string }): void {
   const users = getCachedUsersList();
   const updated = users.map((u) => (u.id === id ? { ...u, ...payload } : u));
   saveCachedUsersList(updated);
+
+  const currentUser = getOfflineUser();
+  if (currentUser && currentUser.id === id) {
+    saveOfflineUser({ ...currentUser, ...payload });
+  }
+
+  pushToSyncQueue({ id, type: 'USER', payload: { id, ...payload }, createdAt: new Date().toISOString() });
+  window.dispatchEvent(new CustomEvent('users_updated'));
 }
 export function deleteOfflineUser(id: string): void {
   const users = getCachedUsersList().filter((u) => u.id !== id);
   saveCachedUsersList(users);
+  window.dispatchEvent(new CustomEvent('users_updated'));
 }
 export function saveCachedProducts(products: ProductRecord[]): void {
   try {

@@ -42,7 +42,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       const user = JSON.parse(saved);
       if (user?.id) headers['x-user-id'] = user.id;
       if (user?.role) headers['x-user-role'] = user.role;
-    } catch (e) {
+    } catch (e) {
     }
   }
   if (options?.headers) {
@@ -57,7 +57,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     throw new Error(body.error || `Request failed: ${res.status}`);
   }
   return res.json();
-}
+}
 export interface ProductRecord {
   id: string;
   name: string;
@@ -143,7 +143,7 @@ export interface SavedReportRecord {
   reportType: string;
   localPath?: string;
   generatedBy?: string;
-}
+}
 export const productApi = {
   create: async (data: {
     name: string;
@@ -239,7 +239,7 @@ export const productApi = {
       return uploadOfflineImage(file);
     }
   },
-};
+};
 export const transactionApi = {
   create: async (data: {
     cashierId: string;
@@ -264,7 +264,7 @@ export const transactionApi = {
   getAll: () => request<TransactionRecord[]>('/transactions'),
   getById: (id: string) => request<TransactionRecord>(`/transactions/${id}`),
   refund: (id: string) => request<{ message: string; transaction: TransactionRecord }>(`/transactions/${id}/refund`, { method: 'POST' }),
-};
+};
 export const customerApi = {
   create: async (data: { name: string; phone?: string; email?: string }): Promise<CustomerRecord> => {
     if (isForceOfflineEnabled()) {
@@ -295,7 +295,7 @@ export const customerApi = {
   },
   getById: (id: string) => request<CustomerRecord>(`/customers/${id}`),
   delete: (id: string) => request<{ message: string }>(`/customers/${id}`, { method: 'DELETE' }),
-};
+};
 export const graphApi = {
   getVisualization: () => request<{ nodes: GraphNode[]; edges: GraphEdge[]; stats: any }>('/graph/visualization'),
   getRecommendations: (productId: string) => request<GraphNode[]>(`/graph/recommendations/${productId}`),
@@ -303,7 +303,7 @@ export const graphApi = {
     request<{ nodes: GraphNode[]; edges: GraphEdge[] }>(`/graph/subgraph/${productId}?depth=${depth}`),
   getSubgraph: (nodeId: string, depth = 2) =>
     request<{ nodes: GraphNode[]; edges: GraphEdge[] }>(`/graph/subgraph/${nodeId}?depth=${depth}`),
-};
+};
 export interface User {
   id: string;
   username: string;
@@ -431,7 +431,17 @@ export const authApi = {
       return { message: 'User updated locally' };
     }
   },
-};
+  logoutAll: async (): Promise<{ message: string }> => {
+    try {
+      const res = await request<{ message: string }>('/auth/logout-all', { method: 'POST' });
+      window.dispatchEvent(new CustomEvent('logout_all_users'));
+      return res;
+    } catch (err) {
+      window.dispatchEvent(new CustomEvent('logout_all_users'));
+      return { message: 'Local users logged out successfully' };
+    }
+  },
+};
 export const reportApi = {
   stats: () => request<SystemStats>('/reports/stats'),
   timeline: () => request<TransactionRecord[]>('/reports/timeline'),
@@ -471,7 +481,7 @@ export const syncApi = {
       return { isOnline: false, pendingCount: pendingOffline, isSyncing: false, lastSyncTime: null };
     }
     try {
-      const status = await request<SyncStatus>('/sync/status');
+      const raw = await request<any>('/sync/status');
       if (pendingOffline > 0) {
         syncAllOfflineData({
           createCustomer: (data) => request<CustomerRecord>('/customers', { method: 'POST', body: JSON.stringify(data) }),
@@ -480,12 +490,16 @@ export const syncApi = {
           registerUser: (data) => request<{ message: string; user: User }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
         });
       }
-      return { ...status, pendingCount: status.pendingCount + pendingOffline };
+      const isOnline = Boolean(raw?.isOnline ?? raw?.online ?? true);
+      const backendPending = Number(raw?.pendingCount ?? raw?.pending ?? 0);
+      const isSyncing = Boolean(raw?.isSyncing ?? raw?.syncInProgress ?? false);
+      const lastSyncTime = raw?.lastSyncTime ?? new Date().toISOString();
+      return { isOnline, pendingCount: (isNaN(backendPending) ? 0 : backendPending) + pendingOffline, isSyncing, lastSyncTime };
     } catch (err) {
       return { isOnline: false, pendingCount: pendingOffline, isSyncing: false, lastSyncTime: null };
     }
   },
-  trigger: async () => {
+  trigger: async (): Promise<{ success: boolean; status: SyncStatus }> => {
     const pendingOffline = getTotalPendingOfflineCount();
     if (isForceOfflineEnabled()) {
       return {
@@ -502,7 +516,17 @@ export const syncApi = {
       });
     }
     try {
-      return await request<{ success: boolean; status: SyncStatus }>('/sync/trigger', { method: 'POST' });
+      const res = await request<any>('/sync/trigger', { method: 'POST' });
+      const raw = res?.status || res;
+      const isOnline = Boolean(raw?.isOnline ?? raw?.online ?? true);
+      const backendPending = Number(raw?.pendingCount ?? raw?.pending ?? 0);
+      const isSyncing = Boolean(raw?.isSyncing ?? raw?.syncInProgress ?? false);
+      const lastSyncTime = raw?.lastSyncTime ?? new Date().toISOString();
+      const statusObj: SyncStatus = { isOnline, pendingCount: (isNaN(backendPending) ? 0 : backendPending) + getTotalPendingOfflineCount(), isSyncing, lastSyncTime };
+      return {
+        success: Boolean(res?.success ?? isOnline),
+        status: statusObj,
+      };
     } catch (err) {
       return {
         success: false,
@@ -510,7 +534,7 @@ export const syncApi = {
       };
     }
   },
-};
+};
 export interface ActivityRecord {
   _id: string;
   action: string;

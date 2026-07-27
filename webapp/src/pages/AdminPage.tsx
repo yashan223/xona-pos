@@ -8,6 +8,7 @@ import {
   Plus,
   X,
   Edit3,
+  LogOut,
 } from 'lucide-react';
 import { authApi } from '@/lib/api';
 import type { User } from '@/lib/api';
@@ -183,6 +184,25 @@ export default function AdminPage() {
       setError(err.message || 'Failed to save user.');
     }
   };
+  const handleLogoutAllUsers = async () => {
+    const confirmed = await confirm({
+      title: 'Logout Every User',
+      message: 'Are you sure you want to log out all users across all connected registers and active sessions?',
+      confirmText: 'Logout All Users',
+      cancelText: 'Cancel',
+      type: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      await authApi.logoutAll();
+      toast.success('Successfully logged out all users');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to logout users');
+    }
+  };
+
   return (
     <>
       <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6 animate-fade-in">
@@ -203,6 +223,14 @@ export default function AdminPage() {
           >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">{t('addUser')}</span>
+          </button>
+          <button
+            onClick={handleLogoutAllUsers}
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive font-semibold hover:bg-destructive hover:text-white transition-all cursor-pointer text-sm shadow-sm"
+            title="Log out all active user sessions"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Logout Every User</span>
           </button>
           <button
             onClick={loadData}

@@ -21,8 +21,13 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   useEffect(() => {
     const stopWS = startWebSocketListener();
+    const handleLogoutAll = () => {
+      handleLogout();
+    };
+    window.addEventListener('logout_all_users', handleLogoutAll);
     return () => {
       stopWS();
+      window.removeEventListener('logout_all_users', handleLogoutAll);
     };
   }, []);
   useEffect(() => {

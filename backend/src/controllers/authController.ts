@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import userRepository from '../repositories/userRepository.js';
 import { hashPassword, verifyPassword } from '../lib/crypto.js';
 import { logActivity } from '../lib/logger.js';
+import { broadcast } from '../lib/websocket.js';
 class AuthController {
   private _generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -148,6 +149,16 @@ class AuthController {
     } catch (err) {
       console.error('[auth] updateUser error:', err);
       res.status(500).json({ error: 'Failed to update user' });
+    }
+  };
+  logoutAll = async (req: Request, res: Response) => {
+    try {
+      broadcast('LOGOUT_ALL_USERS');
+      await logActivity(req, 'LOGOUT_ALL', 'System', undefined, { triggeredBy: req.headers['x-user-id'] || 'admin' });
+      res.json({ message: 'Logout command broadcasted to all connected devices' });
+    } catch (err) {
+      console.error('[auth] logoutAll error:', err);
+      res.status(500).json({ error: 'Failed to logout all users' });
     }
   };
 }
