@@ -14,6 +14,7 @@ import type { User } from '@/lib/api';
 import DarkVeil from '@/components/DarkVeil';
 import { startWebSocketListener } from '@/lib/websocket';
 import { NotificationProvider } from '@/context/NotificationContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 import { Menu, X } from 'lucide-react';
 import Logo from '@/components/Logo';
 export default function App() {
@@ -173,21 +174,23 @@ export default function App() {
     );
   };
   return (
-    <NotificationProvider>
-      <div className="relative w-screen h-screen overflow-hidden bg-background text-foreground z-10 flex">
-        <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden" style={{ width: '100%', height: '100%', opacity: 0.65 }}>
-          <DarkVeil
-            hueShift={0}
-            noiseIntensity={0}
-            scanlineIntensity={0}
-            speed={0.5}
-            scanlineFrequency={0}
-            warpAmount={0}
-            resolutionScale={1}
-          />
+    <ThemeProvider>
+      <NotificationProvider>
+        <div className="relative w-screen h-screen overflow-hidden bg-background text-foreground z-10 flex">
+          <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden" style={{ width: '100%', height: '100%', opacity: 0.65 }}>
+            <DarkVeil
+              hueShift={0}
+              noiseIntensity={0}
+              scanlineIntensity={0}
+              speed={0.5}
+              scanlineFrequency={0}
+              warpAmount={0}
+              resolutionScale={1}
+            />
+          </div>
+          {renderContent()}
         </div>
-        {renderContent()}
-      </div>
-    </NotificationProvider>
+      </NotificationProvider>
+    </ThemeProvider>
   );
 }

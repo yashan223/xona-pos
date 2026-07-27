@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Receipt, Search, RotateCcw, Printer, Clock } from 'lucide-react';
 import { useNotification } from '@/context/NotificationContext';
 import { transactionApi } from '@/lib/api';
@@ -14,7 +15,7 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
   const [transactions, setTransactions] = useState<TransactionRecord[]>(cachedTransactions || []);
   const [filteredTransactions, setFilteredTransactions] = useState<TransactionRecord[]>(cachedTransactions || []);
   const [loading, setLoading] = useState(!cachedTransactions);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedTx, setSelectedTx] = useState<TransactionRecord | null>(null);
   useEffect(() => {
     loadTransactions();
@@ -58,7 +59,7 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
     });
     if (!isConfirmed) return;
     try {
-      const res = await transactionApi.refund(id);
+      const res = await transactionApi.refund(id);
       setTransactions(prev => {
         const updated = prev.map(t => t.id === id ? res.transaction : t);
         cachedTransactions = updated;
@@ -73,6 +74,24 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
   const formatCurrency = (val: number) => {
     return `Rs. ${Number(val).toFixed(2)}`;
   };
+  const handlePrintReceipt = async (tx: TransactionRecord) => {
+    if (typeof window !== 'undefined' && (window as any).electronPrinter) {
+      try {
+        const { printReceipt } = await import('@/lib/printerStore');
+        const res = await printReceipt(tx as any);
+        if (res.success) {
+          toast.success('Receipt printed successfully.');
+          return;
+        } else if (res.error) {
+          toast.error(res.error);
+        }
+      } catch (e) {
+        console.warn('Thermal print failed, calling system print:', e);
+      }
+    }
+    window.print();
+  };
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -113,61 +132,61 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
       ) : (
         <div className="space-y-4">
           {filteredTransactions.map(tx => (
-            <div key={tx.id} className="glass-card p-5 border border-border/40 rounded-2xl bg-card/30 flex flex-col justify-between hover:bg-card/60 transition-all">
-              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-border/20 pb-3 mb-3">
+            <div key={tx.id} className="glass-card p-5 border border-border/60 rounded-2xl bg-card/60 flex flex-col justify-between hover:bg-card/80 transition-all shadow-md">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-border/30 pb-3 mb-3">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs font-bold text-foreground">
                       ID: #{tx.id}
                     </span>
                     <span className={`text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full ${
-                      tx.paymentStatus === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                      tx.paymentStatus === 'paid' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
                     }`}>
                       {tx.paymentStatus}
                     </span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground">Processed: {new Date(tx.createdAt).toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground font-medium">Processed: {new Date(tx.createdAt).toLocaleString()}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Grand Total</p>
-                  <p className="font-bold text-base text-primary">{formatCurrency(tx.totalAmount)}</p>
+                  <p className="text-xs text-muted-foreground font-medium">Grand Total</p>
+                  <p className="font-bold text-lg text-primary">{formatCurrency(tx.totalAmount)}</p>
                 </div>
               </div>
               <div className="space-y-2">
-                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Purchase Summary</p>
+                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Purchase Summary</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   {tx.items.map(item => (
-                    <div key={item.productId} className="flex justify-between p-2 rounded-lg bg-secondary/30">
-                      <span className="font-medium truncate max-w-[200px] text-foreground">{item.name} (x{item.quantity})</span>
-                      <span className="font-bold text-muted-foreground">{formatCurrency(item.subtotal)}</span>
+                    <div key={item.productId} className="flex justify-between p-2.5 rounded-xl bg-secondary/50 border border-border/30">
+                      <span className="font-semibold truncate max-w-[200px] text-foreground">{item.name} (x{item.quantity})</span>
+                      <span className="font-bold text-foreground/90">{formatCurrency(item.subtotal)}</span>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="flex justify-between items-center mt-5 pt-3 border-t border-border/20">
-                <div className="flex gap-4 text-[10px] text-muted-foreground">
+              <div className="flex justify-between items-center mt-5 pt-3 border-t border-border/30">
+                <div className="flex gap-4 text-xs text-muted-foreground font-medium">
                   <p>
-                    Cashier: <span className="font-medium text-foreground">{tx.cashierId}</span>
+                    Cashier: <span className="font-semibold text-foreground">{tx.cashierId}</span>
                   </p>
                   <p>
-                    Customer: <span className="font-medium text-foreground">{tx.customerId || 'Walk-in'}</span>
+                    Customer: <span className="font-semibold text-foreground">{tx.customerId || 'Walk-in'}</span>
                   </p>
                   <p>
-                    Method: <span className="font-medium text-foreground uppercase">{tx.paymentMethod}</span>
+                    Method: <span className="font-semibold text-foreground uppercase">{tx.paymentMethod}</span>
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSelectedTx(tx)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-foreground text-xs font-semibold hover:bg-secondary/80 transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-secondary border border-border/60 text-foreground text-xs font-semibold hover:bg-secondary/90 transition-colors cursor-pointer shadow-sm"
                   >
                     <Printer className="w-3.5 h-3.5" />
-                    Print
+                    View / Print
                   </button>
                   {(currentUser?.role === 'admin' || currentUser?.role === 'owner') && tx.paymentStatus !== 'refunded' && (
                     <button
                       onClick={() => handleRefund(tx.id)}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-destructive/15 border border-destructive/20 text-destructive text-xs font-semibold hover:bg-destructive/25 transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-destructive/15 border border-destructive/30 text-destructive text-xs font-semibold hover:bg-destructive/25 transition-colors cursor-pointer"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       Refund
@@ -179,81 +198,86 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
           ))}
         </div>
       )}
-      {selectedTx && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-card border border-border rounded-xl shadow-xl p-6 font-mono text-xs text-foreground flex flex-col justify-between h-[450px]">
-            <div className="text-center space-y-1 border-b border-border/40 pb-3">
+      {selectedTx && createPortal(
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[99999] flex items-center justify-center p-4">
+          <div
+            id="printable-receipt"
+            className="w-full max-w-sm bg-[#0d1322] border border-slate-700/80 rounded-2xl shadow-2xl p-6 font-mono text-xs text-slate-100 flex flex-col justify-between h-[470px] relative z-[100000]"
+          >
+            <div className="text-center space-y-1 border-b border-slate-700/60 pb-3">
               <Receipt className="w-8 h-8 mx-auto text-primary" />
-              <h3 className="text-sm font-bold">XONA POS SYSTEM</h3>
-              <p className="text-[10px] text-muted-foreground">Receipt Reprint</p>
+              <h3 className="text-sm font-bold tracking-wide text-white">XONA POS SYSTEM</h3>
+              <p className="text-[10px] text-slate-400">Receipt Reprint</p>
             </div>
-            <div className="flex-1 overflow-y-auto my-3 space-y-2.5">
+            <div className="flex-1 overflow-y-auto my-3 space-y-2.5 pr-1 text-slate-200">
               <div className="flex justify-between">
-                <span>Receipt ID:</span>
-                <span>{selectedTx.id}</span>
+                <span className="text-slate-400">Receipt ID:</span>
+                <span className="font-semibold text-white">{selectedTx.id}</span>
               </div>
               <div className="flex justify-between">
-                <span>Date:</span>
+                <span className="text-slate-400">Date:</span>
                 <span>{new Date(selectedTx.createdAt).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span>Cashier:</span>
-                <span>{selectedTx.cashierId}</span>
+                <span className="text-slate-400">Cashier:</span>
+                <span className="font-semibold text-white">{selectedTx.cashierId}</span>
               </div>
               <div className="flex justify-between">
-                <span>Customer:</span>
-                <span>{selectedTx.customerId || 'Walk-in'}</span>
+                <span className="text-slate-400">Customer:</span>
+                <span className="font-semibold text-white">{selectedTx.customerId || 'Walk-in'}</span>
               </div>
-              <div className="border-t border-border/30 pt-2 border-dotted">
-                <p className="font-bold border-b border-border/10 pb-1">Items</p>
+              <div className="border-t border-slate-700/60 pt-2 border-dotted">
+                <p className="font-bold text-white border-b border-slate-700/40 pb-1">Items</p>
                 {selectedTx.items.map(item => (
-                  <div key={item.productId} className="flex justify-between my-0.5 text-[10px]">
-                    <span>{item.name} (x{item.quantity})</span>
-                    <span>{formatCurrency(item.subtotal)}</span>
+                  <div key={item.productId} className="flex justify-between my-1 text-[11px]">
+                    <span className="text-slate-200">{item.name} (x{item.quantity})</span>
+                    <span className="font-semibold text-white">{formatCurrency(item.subtotal)}</span>
                   </div>
                 ))}
               </div>
-              <div className="border-t border-border/30 pt-2 border-dotted space-y-1 text-[10px]">
+              <div className="border-t border-slate-700/60 pt-2 border-dotted space-y-1 text-[11px]">
                 <div className="flex justify-between">
-                  <span>Subtotal:</span>
+                  <span className="text-slate-400">Subtotal:</span>
                   <span>{formatCurrency(selectedTx.subtotal)}</span>
                 </div>
                 {selectedTx.discount > 0 && (
-                  <div className="flex justify-between text-success">
+                  <div className="flex justify-between text-green-400">
                     <span>Discount:</span>
                     <span>-{formatCurrency(selectedTx.discount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>Tax (8%):</span>
+                  <span className="text-slate-400">Tax (8%):</span>
                   <span>{formatCurrency(selectedTx.tax)}</span>
                 </div>
-                <div className="flex justify-between font-bold text-xs border-t border-border/10 pt-1">
+                <div className="flex justify-between font-bold text-xs border-t border-slate-700/40 pt-1 text-white">
                   <span>Grand Total:</span>
-                  <span>{formatCurrency(selectedTx.totalAmount)}</span>
+                  <span className="text-primary">{formatCurrency(selectedTx.totalAmount)}</span>
                 </div>
               </div>
-              <div className="flex justify-between border-t border-border/30 pt-2 border-dotted">
-                <span>Status / Method:</span>
-                <span className="uppercase">{selectedTx.paymentStatus} / {selectedTx.paymentMethod}</span>
+              <div className="flex justify-between border-t border-slate-700/60 pt-2 border-dotted text-[10px]">
+                <span className="text-slate-400">Status / Method:</span>
+                <span className="uppercase font-semibold text-white">{selectedTx.paymentStatus} / {selectedTx.paymentMethod}</span>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-2 border-t border-slate-700/60">
               <button
-                onClick={() => window.print()}
-                className="flex-1 py-1.5 rounded bg-secondary text-foreground font-semibold hover:bg-secondary/80 cursor-pointer"
+                onClick={() => handlePrintReceipt(selectedTx)}
+                className="flex-1 py-2 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 cursor-pointer flex items-center justify-center gap-1.5 transition-all shadow-md"
               >
-                Print
+                <Printer className="w-4 h-4" />
+                Print Receipt
               </button>
               <button
                 onClick={() => setSelectedTx(null)}
-                className="flex-1 py-1.5 rounded bg-primary text-primary-foreground font-semibold hover:bg-primary/95 cursor-pointer"
+                className="flex-1 py-2 rounded-xl bg-slate-800 text-slate-200 border border-slate-700 font-semibold hover:bg-slate-700/80 cursor-pointer transition-all"
               >
                 Close
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

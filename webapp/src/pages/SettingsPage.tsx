@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { Settings, Globe, Folder, FolderOpen } from 'lucide-react';
+import { Settings, Globe, Folder, FolderOpen, Palette } from 'lucide-react';
 import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
+import ThemeSelector from '@/components/ThemeSelector';
+
 export default function SettingsPage() {
   const { t, lang, setLanguage } = useTranslation();
   const { toast } = useNotification();
-  const [activeTab, setActiveTab] = useState<'general' | 'reports'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'reports'>('general');
   const tabs = [
     { id: 'general', label: t('appLanguage') || 'General', icon: Globe },
+    { id: 'appearance', label: 'Appearance & Theme', icon: Palette },
     { id: 'reports', label: 'Reports', icon: Folder },
   ];
   const [customReportPath, setCustomReportPath] = useState(() => {
@@ -32,7 +35,7 @@ export default function SettingsPage() {
           {t('systemSettings')}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Configure application defaults, VAT rates, and localization
+          Configure application defaults, color themes, VAT rates, and localization
         </p>
       </div>
       <div className="flex items-center gap-2 border-b border-border/50 pb-2 overflow-x-auto">
@@ -87,6 +90,13 @@ export default function SettingsPage() {
           </div>
         </div>
         )}
+
+        {activeTab === 'appearance' && (
+        <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
+          <ThemeSelector />
+        </div>
+        )}
+
         {activeTab === 'reports' && (
         <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">

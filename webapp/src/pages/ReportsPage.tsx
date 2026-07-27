@@ -127,7 +127,7 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
               <ChevronDown className={`w-3 h-3 transition-transform ${showExportPanel ? 'rotate-180' : ''}`} />
             </button>
             {showExportPanel && (
-              <div className="absolute right-0 top-full mt-2 w-64 glass-card border border-border/50 rounded-xl p-3 shadow-xl z-50 space-y-3 bg-[#0d0e12]/95 backdrop-blur-md">
+              <div className="absolute right-0 top-full mt-2 w-64 glass-card border border-border/50 rounded-xl p-3 shadow-xl z-50 space-y-3 bg-popover/95 backdrop-blur-md">
                 <p className="text-xs font-semibold text-muted-foreground">Select Report Type</p>
                 <div className="space-y-1">
                   {([

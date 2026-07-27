@@ -120,7 +120,7 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
             <select
               value={selectedReportType}
               onChange={(e) => setSelectedReportType(e.target.value as any)}
-              className="bg-[#0d0e12] border border-border/50 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-primary text-foreground cursor-pointer"
+              className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-primary text-foreground cursor-pointer"
             >
               <option value="summary">Overview Summary Report</option>
               <option value="category">Category-wise Sales Report</option>

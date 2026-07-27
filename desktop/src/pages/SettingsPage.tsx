@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Settings, Cloud, RefreshCw, CheckCircle2, CloudOff, HardDrive, FolderOpen, Save, Printer, Wifi, Usb, TestTube, Globe, Calculator, Database, Folder, Download, Maximize } from 'lucide-react';
+import { Settings, Cloud, RefreshCw, CheckCircle2, CloudOff, HardDrive, FolderOpen, Save, Printer, Wifi, Usb, TestTube, Globe, Calculator, Database, Folder, Download, Maximize, Palette } from 'lucide-react';
 import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
 import { syncApi, SyncStatus } from '@/lib/api';
 import { isForceOfflineEnabled, setForceOfflineEnabled } from '@/lib/offlineStore';
 import { getConfig, setConfig } from '@/lib/configStore';
+import ThemeSelector from '@/components/ThemeSelector';
 
 import {
   getPrinterConfig,
@@ -17,9 +18,10 @@ import {
 export default function SettingsPage() {
   const { t, lang, setLanguage } = useTranslation();
   const { toast } = useNotification();
-  const [activeTab, setActiveTab] = useState<'general' | 'tax' | 'db' | 'printer' | 'reports'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'tax' | 'db' | 'printer' | 'reports'>('general');
   const tabs = [
     { id: 'general', label: t('appLanguage') || 'General', icon: Globe },
+    { id: 'appearance', label: 'Appearance & Theme', icon: Palette },
     { id: 'tax', label: t('taxVatSettings') || 'Tax & VAT', icon: Calculator },
     { id: 'db', label: 'Database & Sync', icon: Database },
     { id: 'printer', label: 'Receipt Printer', icon: Printer },
@@ -760,6 +762,13 @@ export default function SettingsPage() {
           </div>
         </div>
         )}
+
+        {activeTab === 'appearance' && (
+        <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
+          <ThemeSelector />
+        </div>
+        )}
+
         {activeTab === 'reports' && (
         <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
           <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
