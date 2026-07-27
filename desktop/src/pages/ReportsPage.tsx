@@ -41,19 +41,26 @@ export default function ReportsPage({ currentUser }: ReportsPageProps) {
   async function generatePdfReport() {
     setExporting(true);
     try {
-      const saved = getConfig('currentUser');
       const headers: Record<string, string> = {};
       let role = currentUser?.role || 'cashier';
       const apiKey = import.meta.env.VITE_DEVICE_API_KEY;
       if (apiKey) {
         headers['x-api-key'] = apiKey;
       }
-      if (saved) {
-        const user = JSON.parse(saved);
-        if (user?.id) headers['x-user-id'] = user.id;
-        if (user?.role) {
-          headers['x-user-role'] = user.role;
-          role = user.role;
+      const userObj = currentUser || (() => {
+        const saved = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+        if (saved) {
+          try {
+            return typeof saved === 'string' ? JSON.parse(saved) : saved;
+          } catch (_) {}
+        }
+        return null;
+      })();
+      if (userObj) {
+        if (userObj.id) headers['x-user-id'] = userObj.id;
+        if (userObj.role) {
+          headers['x-user-role'] = userObj.role;
+          role = userObj.role;
         }
       }
       const customPath = getConfig('customReportPath') || '';

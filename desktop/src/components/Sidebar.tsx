@@ -30,7 +30,7 @@ const navItems: { page: Page; label: string; icon: React.ElementType; role?: 'ad
   { page: 'admin', label: 'User Panel', icon: Shield, role: 'admin' },
   { page: 'products', label: 'Products Catalog', icon: Package },
   { page: 'transactions', label: 'Transactions Log', icon: Receipt, role: 'user' },
-  { page: 'reports', label: 'Sales Reports', icon: BarChart3 },
+  { page: 'reports', label: 'Sales Reports', icon: BarChart3, role: 'admin' },
   { page: 'settings', label: 'System Settings', icon: Settings, role: 'admin' },
   { page: 'maintenance', label: 'Database Maintenance', icon: Database, role: 'admin' },
   { page: 'activity', label: 'System Activity', icon: Activity, role: 'admin' },

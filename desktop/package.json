@@ -11,7 +11,7 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "echo \"No linting configured\"",
-    "build:installer": "taskkill /f /im \"Xona POS.exe\" 2>nul & electron-forge package && node build-installer.js"
+    "build:installer": "taskkill /f /im electron.exe 2>nul & taskkill /f /im \"Xona POS.exe\" 2>nul & electron-forge package && node build-installer.js"
   },
   "keywords": [],
   "author": {

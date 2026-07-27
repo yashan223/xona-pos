@@ -7,17 +7,7 @@ const LOCAL_TRANSACTIONS_TABLE = 'xona_local_transactions_db';
 const PENDING_SYNC_QUEUE_TABLE = 'xona_local_sync_queue_db';
 const CACHED_USER_KEY = 'xona_offline_user';
 const CACHED_USERS_LIST_KEY = 'xona_offline_users_list';
-declare global {
-  interface Window {
-    electronDB?: {
-      readPermanentFile: (key: string) => Promise<string | null>;
-      writePermanentFile: (key: string, data: string) => Promise<boolean>;
-      getDbPath: () => Promise<string>;
-      setDbPath: (dirPath: string) => Promise<{ success: boolean; error?: string }>;
-      browseDbFolder: () => Promise<string | null>;
-    };
-  }
-}
+
 if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
   navigator.storage.persist().then((persistent) => {
     console.log(`[PermanentDB] Client storage persistent status: ${persistent}`);

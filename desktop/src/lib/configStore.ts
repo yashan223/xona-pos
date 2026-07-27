@@ -7,11 +7,13 @@ export function getConfig(key: string, defaultValue: any = null): any {
   }
   
   const localVal = typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
-  if (localVal !== null) {
+  const sessionVal = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(key) : null;
+  const targetVal = localVal !== null ? localVal : sessionVal;
+  if (targetVal !== null) {
     try {
-      return JSON.parse(localVal);
+      return JSON.parse(targetVal);
     } catch (e) {
-      return localVal;
+      return targetVal;
     }
   }
   

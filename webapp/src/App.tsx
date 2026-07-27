@@ -28,15 +28,34 @@ export default function App() {
     };
   }, []);
   useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (currentUser) {
+        try {
+          const remember = localStorage.getItem('rememberMePreference') === 'true';
+          if (remember) {
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          } else {
+            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+          }
+        } catch (_) {}
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [currentUser]);
+  useEffect(() => {
     const checkAuth = async () => {
       try {
-        const saved = localStorage.getItem('currentUser');
+        const saved = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
         if (saved) {
           const parsed = JSON.parse(saved);
           setCurrentUser(parsed);
           setCurrentPage('dashboard');
         }
-      } catch (e) {
+      } catch (e) {
       } finally {
         setIsInitializing(false);
       }
@@ -53,6 +72,7 @@ export default function App() {
       localStorage.setItem('rememberMePreference', 'true');
     } else {
       localStorage.removeItem('currentUser');
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
       localStorage.setItem('rememberMePreference', 'false');
     }
     setCurrentPage('dashboard');
@@ -60,6 +80,7 @@ export default function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('currentUser');
+    sessionStorage.removeItem('currentUser');
   };
   const renderPage = () => {
     const isAdminOrOwner = currentUser?.role === 'admin' || currentUser?.role === 'owner';
@@ -71,6 +92,7 @@ export default function App() {
       case 'transactions':
         return <SolutionsPage currentUser={currentUser} />;
       case 'reports':
+        if (!isAdminOrOwner) return <DashboardPage />;
         return <ReportsPage currentUser={currentUser} />;
       case 'settings':
         if (!isAdminOrOwner) return <DashboardPage />;

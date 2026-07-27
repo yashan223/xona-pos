@@ -26,6 +26,22 @@ export default function App() {
     };
   }, []);
   useEffect(() => {
+    if (window.electronApp?.onBeforeClose) {
+      window.electronApp.onBeforeClose(() => {
+        if (currentUser) {
+          try {
+            const remember = localStorage.getItem('rememberMePreference') === 'true';
+            if (remember) {
+              localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            } else {
+              sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+            }
+          } catch (_) {}
+        }
+      });
+    }
+  }, [currentUser]);
+  useEffect(() => {
     const checkAuth = async () => {
       try {
         const saved = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
@@ -70,6 +86,7 @@ export default function App() {
       case 'transactions':
         return <SolutionsPage currentUser={currentUser} />;
       case 'reports':
+        if (!isAdminOrOwner) return <DashboardPage />;
         return <ReportsPage currentUser={currentUser} />;
       case 'settings':
         if (!isAdminOrOwner) return <DashboardPage />;

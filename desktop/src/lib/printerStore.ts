@@ -1,24 +1,6 @@
 import { getConfig, setConfig } from '@/lib/configStore';
 
-declare global {
-  interface Window {
-    electronPrinter?: {
-      listPrinters: () => Promise<string[]>;
-      printNetwork: (
-        config: { ip: string; port: number },
-        receipt: ReceiptPayload
-      ) => Promise<{ success: boolean; error?: string }>;
-      printQueue: (
-        printerName: string,
-        receipt: ReceiptPayload
-      ) => Promise<{ success: boolean; error?: string }>;
-      printSerial: (
-        config: { port: string; baud: number },
-        receipt: ReceiptPayload
-      ) => Promise<{ success: boolean; error?: string }>;
-    };
-  }
-}
+
 export type PrintMethod = 'network' | 'queue' | 'serial';
 export interface PrinterConfig {
   enabled: boolean;

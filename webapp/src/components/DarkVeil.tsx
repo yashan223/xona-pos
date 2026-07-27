@@ -77,10 +77,10 @@ export default function DarkVeil({
   hueShift = 0,
   noiseIntensity = 0,
   scanlineIntensity = 0,
-  speed = 0.5,
+  speed = 0.35,
   scanlineFrequency = 0,
   warpAmount = 0,
-  resolutionScale = 1
+  resolutionScale = 0.4
 }: DarkVeilProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -89,7 +89,7 @@ export default function DarkVeil({
     const parent = canvas.parentElement;
     if (!parent) return;
     const renderer = new Renderer({
-      dpr: Math.min(window.devicePixelRatio, 2),
+      dpr: 1,
       canvas
     });
     const gl = renderer.gl;
@@ -111,24 +111,34 @@ export default function DarkVeil({
     const resize = () => {
       const w = parent.clientWidth,
         h = parent.clientHeight;
-      renderer.setSize(w * resolutionScale, h * resolutionScale);
+      renderer.setSize(Math.max(1, Math.floor(w * resolutionScale)), Math.max(1, Math.floor(h * resolutionScale)));
       program.uniforms.uResolution.value.set(w, h);
     };
     window.addEventListener('resize', resize);
     resize();
     const start = performance.now();
     let frame = 0;
-    const loop = () => {
-      program.uniforms.uTime.value = ((performance.now() - start) / 1000) * speed;
-      program.uniforms.uHueShift.value = hueShift;
-      program.uniforms.uNoise.value = noiseIntensity;
-      program.uniforms.uScan.value = scanlineIntensity;
-      program.uniforms.uScanFreq.value = scanlineFrequency;
-      program.uniforms.uWarp.value = warpAmount;
-      renderer.render({ scene: mesh });
+    let lastRenderTime = 0;
+    const frameInterval = 1000 / 30; // Max 30 FPS cap for ambient background
+
+    const loop = (now: number) => {
+      if (document.hidden) {
+        frame = requestAnimationFrame(loop);
+        return;
+      }
+      if (now - lastRenderTime >= frameInterval) {
+        lastRenderTime = now - ((now - lastRenderTime) % frameInterval);
+        program.uniforms.uTime.value = ((now - start) / 1000) * speed;
+        program.uniforms.uHueShift.value = hueShift;
+        program.uniforms.uNoise.value = noiseIntensity;
+        program.uniforms.uScan.value = scanlineIntensity;
+        program.uniforms.uScanFreq.value = scanlineFrequency;
+        program.uniforms.uWarp.value = warpAmount;
+        renderer.render({ scene: mesh });
+      }
       frame = requestAnimationFrame(loop);
     };
-    loop();
+    frame = requestAnimationFrame(loop);
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener('resize', resize);

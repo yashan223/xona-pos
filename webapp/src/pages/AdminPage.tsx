@@ -15,19 +15,19 @@ import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
 export default function AdminPage() {
   const { t } = useTranslation();
-  const { confirm, toast } = useNotification();
+  const { confirm, toast } = useNotification();
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isEditing, setIsEditing] = useState<'new' | User | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isEditing, setIsEditing] = useState<'new' | User | null>(null);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('cashier');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  useEffect(() => {
-    const saved = localStorage.getItem('currentUser');
+  useEffect(() => {
+    const saved = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
     if (saved) {
       setCurrentUser(JSON.parse(saved));
     }
@@ -166,7 +166,12 @@ export default function AdminPage() {
         setSuccess('User updated successfully!');
         if (isEditing.id === currentUser?.id) {
           const updatedUser = { ...currentUser, username: username.trim(), email: email.trim(), role: role };
-          localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+          const remember = localStorage.getItem('rememberMePreference') === 'true';
+          if (remember) {
+            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+          } else {
+            sessionStorage.setItem('currentUser', JSON.stringify(updatedUser));
+          }
           setCurrentUser(updatedUser);
         }
       }
