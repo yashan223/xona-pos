@@ -1,11 +1,31 @@
 import express, { Request, Response } from 'express';
-import { getSyncStatus, syncPendingToCloud } from '../persistence/syncEngine.js';
+import mongoose from 'mongoose';
+
 const router = express.Router();
-router.get('/status', (req: Request, res: Response) => {
-  res.json(getSyncStatus());
+
+router.get('/status', (_req: Request, res: Response) => {
+  const isOnline = mongoose.connection.readyState === 1;
+  res.json({
+    online: isOnline,
+    pending: 0,
+    unsyncedCount: 0,
+    syncInProgress: false,
+    lastSyncTime: new Date().toISOString(),
+  });
 });
-router.post('/trigger', async (req: Request, res: Response) => {
-  const success = await syncPendingToCloud();
-  res.json({ success, status: getSyncStatus() });
+
+router.post('/trigger', async (_req: Request, res: Response) => {
+  const isOnline = mongoose.connection.readyState === 1;
+  res.json({
+    success: isOnline,
+    status: {
+      online: isOnline,
+      pending: 0,
+      unsyncedCount: 0,
+      syncInProgress: false,
+      lastSyncTime: new Date().toISOString(),
+    },
+  });
 });
+
 export default router;
