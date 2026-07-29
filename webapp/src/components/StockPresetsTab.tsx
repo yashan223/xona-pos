@@ -49,7 +49,7 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
   const handleApplyPreset = async (presetId: string) => {
     const isConfirmed = await confirm({
       title: 'Apply Preset',
-      message: 'This will overwrite the stock quantity for all products in this preset. Proceed?',
+      message: 'This will add the specified stock quantity to the current left stock for all products in this preset. Proceed?',
       confirmText: 'Apply',
       cancelText: 'Cancel'
     });
@@ -135,9 +135,16 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
                 {preset.items.map(item => {
                   const p = products.find(prod => prod.id === item.productId);
                   return (
-                    <div key={item.productId} className="flex justify-between text-sm">
+                    <div key={item.productId} className="flex justify-between items-center text-sm">
                       <span className="text-muted-foreground truncate pr-2">{p ? p.name : 'Unknown Product'}</span>
-                      <span className="font-mono text-foreground font-medium">{item.qty}</span>
+                      <div className="text-right">
+                        <span className="font-mono text-emerald-400 font-semibold">+{item.qty}</span>
+                        {p && (
+                          <span className="text-[10px] text-muted-foreground block">
+                            (Left: {p.stock >= 0 ? p.stock : '∞'})
+                          </span>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -198,19 +205,26 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
                       />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{product.name}</p>
-                        <p className="text-xs text-muted-foreground">{product.sku}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {product.sku} • Current left stock: <span className="font-semibold text-foreground">{product.stock >= 0 ? product.stock : 'Unlimited'}</span>
+                        </p>
                       </div>
                     </div>
                     {isSelected && (
                       <div className="flex items-center space-x-2 pl-4">
-                        <span className="text-xs text-muted-foreground">Qty:</span>
+                        <span className="text-xs text-muted-foreground">+ Add Qty:</span>
                         <input
                           type="number"
                           min="0"
                           value={isSelected.qty}
                           onChange={e => updateProductQty(product.id, parseInt(e.target.value) || 0)}
-                          className="w-20 px-2 py-1 text-sm bg-background border border-border/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
+                          className="w-20 px-2 py-1 text-sm bg-background border border-border/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground font-semibold"
                         />
+                        {product.stock >= 0 && (
+                          <span className="text-xs font-mono text-emerald-400">
+                            (= {product.stock + (isSelected.qty || 0)})
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>

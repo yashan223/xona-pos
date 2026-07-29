@@ -59,12 +59,16 @@ class InventoryController {
       }
       const timestamp = new Date().toISOString();
       for (const item of preset.items) {
-        await ProductModel.findByIdAndUpdate(item.productId, {
-          stock: item.qty,
-          lastStockUpdatedBy: updatedBy,
-          lastStockUpdatedAt: timestamp,
-          updatedAt: timestamp
-        });
+        const prod = await ProductModel.findById(item.productId);
+        if (prod) {
+          const newStock = prod.stock >= 0 ? prod.stock + item.qty : item.qty;
+          await ProductModel.findByIdAndUpdate(item.productId, {
+            stock: newStock,
+            lastStockUpdatedBy: updatedBy,
+            lastStockUpdatedAt: timestamp,
+            updatedAt: timestamp
+          });
+        }
       }
       await logActivity(req, 'APPLY_PRESET', 'StockPreset', id, { updatedProductsCount: preset.items.length, presetName: preset.name });
       res.json({ message: 'Preset applied successfully' });

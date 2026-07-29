@@ -30,7 +30,8 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
   const [formImageUrl, setFormImageUrl] = useState('');
   const [formError, setFormError] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [formTrackStock, setFormTrackStock] = useState(true);
+  const [formTrackStock, setFormTrackStock] = useState(true);
+  const [addStockQty, setAddStockQty] = useState('');
   const [showNewCatInput, setShowNewCatInput] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   useEffect(() => {
@@ -106,6 +107,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
     setFormCost(prod.cost.toString());
     setFormTrackStock(prod.stock >= 0);
     setFormStock(prod.stock >= 0 ? prod.stock.toString() : '');
+    setAddStockQty('');
     setFormDescription(prod.description || '');
     setFormImageUrl(prod.imageUrl || '');
     setFormError('');
@@ -121,6 +123,7 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
     setFormCost('');
     setFormTrackStock(true);
     setFormStock('');
+    setAddStockQty('');
     setFormDescription('');
     setFormImageUrl('');
     setFormError('');
@@ -525,14 +528,41 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                       Track Inventory
                     </label>
                   </div>
-                  <input
-                    type="number"
-                    value={formStock}
-                    onChange={e => setFormStock(e.target.value)}
-                    disabled={!formTrackStock}
-                    className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-40 transition-all text-foreground"
-                    placeholder={formTrackStock ? "Stock count" : "Unlimited stock"}
-                  />
+                  <div className="space-y-2">
+                    <input
+                      type="number"
+                      value={formStock}
+                      onChange={e => {
+                        setFormStock(e.target.value);
+                        setAddStockQty('');
+                      }}
+                      disabled={!formTrackStock}
+                      className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-40 transition-all text-foreground"
+                      placeholder={formTrackStock ? "Stock count" : "Unlimited stock"}
+                    />
+                    {formTrackStock && isEditing !== 'new' && (
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                        <span className="text-xs text-emerald-400 font-medium whitespace-nowrap">+ Add Stock Qty:</span>
+                        <input
+                          type="number"
+                          value={addStockQty}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setAddStockQty(val);
+                            const origStock = products.find(p => p.id === isEditing)?.stock ?? 0;
+                            const baseStock = Math.max(0, origStock);
+                            const added = parseInt(val || '0', 10);
+                            setFormStock((baseStock + added).toString());
+                          }}
+                          placeholder="0"
+                          className="w-24 bg-background border border-emerald-500/30 rounded px-2 py-1 text-xs text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        />
+                        <span className="text-[11px] text-muted-foreground truncate">
+                          (Current left stock: {products.find(p => p.id === isEditing)?.stock ?? 0})
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
