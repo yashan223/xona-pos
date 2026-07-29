@@ -58,9 +58,11 @@ class InventoryController {
         return;
       }
       const timestamp = new Date().toISOString();
+      const updatedProductsLog: any[] = [];
       for (const item of preset.items) {
         const prod = await ProductModel.findById(item.productId);
         if (prod) {
+          const prevStock = prod.stock;
           const newStock = prod.stock >= 0 ? prod.stock + item.qty : item.qty;
           await ProductModel.findByIdAndUpdate(item.productId, {
             stock: newStock,
@@ -68,9 +70,20 @@ class InventoryController {
             lastStockUpdatedAt: timestamp,
             updatedAt: timestamp
           });
+          updatedProductsLog.push({
+            name: prod.name,
+            addedQty: item.qty,
+            previousStock: prevStock,
+            newStock
+          });
         }
       }
-      await logActivity(req, 'APPLY_PRESET', 'StockPreset', id, { updatedProductsCount: preset.items.length, presetName: preset.name });
+      await logActivity(req, 'APPLY_PRESET', 'StockPreset', id, {
+        presetName: preset.name,
+        updatedProductsCount: updatedProductsLog.length,
+        updatedBy,
+        items: updatedProductsLog
+      });
       res.json({ message: 'Preset applied successfully' });
     } catch (err) {
       console.error('[inventory] Error applying preset:', err);

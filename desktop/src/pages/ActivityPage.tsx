@@ -69,10 +69,11 @@ export default function ActivityPage({ currentUser: user }: { currentUser: User 
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
-                        log.action === 'CREATE' ? 'bg-emerald-500/10 text-emerald-500' :
-                        log.action === 'UPDATE' || log.action === 'UPDATE_ROLE' ? 'bg-blue-500/10 text-blue-500' :
-                        log.action === 'DELETE' ? 'bg-rose-500/10 text-rose-500' :
-                        log.action === 'REFUND' ? 'bg-amber-500/10 text-amber-500' :
+                        log.action === 'CREATE' || log.action === 'CREATE_PRESET' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+                        log.action === 'UPDATE' || log.action === 'UPDATE_ROLE' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' :
+                        log.action === 'APPLY_PRESET' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                        log.action === 'DELETE' || log.action === 'DELETE_PRESET' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' :
+                        log.action === 'REFUND' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
                         'bg-secondary text-foreground'
                       }`}>
                         {log.action}
@@ -84,7 +85,7 @@ export default function ActivityPage({ currentUser: user }: { currentUser: User 
                     <td className="px-6 py-4 text-muted-foreground">
                       {log.userId === 'system' ? 'System' : log.userId?.substring(0, 8)}
                     </td>
-                    <td className="px-6 py-4 text-xs font-mono text-muted-foreground max-w-[300px] truncate">
+                    <td className="px-6 py-4 text-xs font-mono text-muted-foreground max-w-[320px] truncate" title={log.details ? JSON.stringify(log.details, null, 2) : ''}>
                       {log.details ? JSON.stringify(log.details) : '-'}
                     </td>
                   </tr>
