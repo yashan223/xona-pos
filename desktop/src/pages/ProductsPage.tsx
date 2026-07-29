@@ -6,6 +6,7 @@ import { productApi } from '@/lib/api';
 import type { ProductRecord, User } from '@/lib/api';
 import { useTranslation } from '@/lib/translations';
 import StockPresetsTab from '@/components/StockPresetsTab';
+import NumericUpDown from '@/components/NumericUpDown';
 let cachedProducts: ProductRecord[] | null = null;
 interface ProductsPageProps {
   currentUser: User | null;
@@ -543,19 +544,16 @@ export default function ProductsPage({ currentUser }: ProductsPageProps) {
                     {formTrackStock && isEditing !== 'new' && (
                       <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                         <span className="text-xs text-emerald-400 font-medium whitespace-nowrap">+ Add Stock Qty:</span>
-                        <input
-                          type="number"
+                        <NumericUpDown
                           value={addStockQty}
-                          onChange={e => {
-                            const val = e.target.value;
-                            setAddStockQty(val);
+                          onChange={val => {
+                            setAddStockQty(val.toString());
                             const origStock = products.find(p => p.id === isEditing)?.stock ?? 0;
                             const baseStock = Math.max(0, origStock);
-                            const added = parseInt(val || '0', 10);
-                            setFormStock((baseStock + added).toString());
+                            setFormStock((baseStock + val).toString());
                           }}
-                          placeholder="0"
-                          className="w-24 bg-background border border-emerald-500/30 rounded px-2 py-1 text-xs text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                          min={0}
+                          size="sm"
                         />
                         <span className="text-[11px] text-muted-foreground truncate">
                           (Current left stock: {products.find(p => p.id === isEditing)?.stock ?? 0})

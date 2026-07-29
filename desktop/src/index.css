@@ -435,3 +435,13 @@ input:-webkit-autofill:active {
     border: none !important;
   }
 }
+
+/* Remove default white browser spin buttons on number inputs */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}

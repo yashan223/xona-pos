@@ -4,6 +4,7 @@ import { Package, Plus, Play, Trash2, X } from 'lucide-react';
 import { inventoryApi, productApi, StockPresetRecord, ProductRecord } from '@/lib/api';
 import { useNotification } from '@/context/NotificationContext';
 import SearchBar from './SearchBar';
+import NumericUpDown from './NumericUpDown';
 export function StockPresetsTab({ currentUser }: { currentUser: any }) {
   const { toast, confirm } = useNotification();
   const [presets, setPresets] = useState<StockPresetRecord[]>([]);
@@ -212,16 +213,15 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
                     </div>
                     {isSelected && (
                       <div className="flex items-center space-x-2 pl-4">
-                        <span className="text-xs text-muted-foreground">+ Add Qty:</span>
-                        <input
-                          type="number"
-                          min="0"
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">+ Add Qty:</span>
+                        <NumericUpDown
                           value={isSelected.qty}
-                          onChange={e => updateProductQty(product.id, parseInt(e.target.value) || 0)}
-                          className="w-20 px-2 py-1 text-sm bg-background border border-border/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground font-semibold"
+                          onChange={val => updateProductQty(product.id, val)}
+                          min={0}
+                          size="sm"
                         />
                         {product.stock >= 0 && (
-                          <span className="text-xs font-mono text-emerald-400">
+                          <span className="text-xs font-mono text-emerald-400 whitespace-nowrap">
                             (= {product.stock + (isSelected.qty || 0)})
                           </span>
                         )}
