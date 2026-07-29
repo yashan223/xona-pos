@@ -1,22 +1,18 @@
 import { useState } from 'react';
-import { Settings, Globe, Folder, FolderOpen, Palette, Calculator } from 'lucide-react';
+import { Settings, Globe, Folder, FolderOpen, Palette } from 'lucide-react';
 import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
-import { getVatConfig, setVatConfig } from '@/lib/configStore';
 import ThemeSelector from '@/components/ThemeSelector';
 
 export default function SettingsPage() {
   const { t, lang, setLanguage } = useTranslation();
   const { toast } = useNotification();
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'tax' | 'reports'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'reports'>('general');
   const tabs = [
     { id: 'general', label: t('appLanguage') || 'General', icon: Globe },
     { id: 'appearance', label: 'Appearance & Theme', icon: Palette },
-    { id: 'tax', label: t('taxVatSettings') || 'Tax & VAT', icon: Calculator },
     { id: 'reports', label: 'Reports', icon: Folder },
   ];
-  const [vatEnabled, setVatEnabled] = useState(() => getVatConfig().enabled);
-  const [vatPercentage, setVatPercentage] = useState(() => getVatConfig().percentage);
   const [customReportPath, setCustomReportPath] = useState(() => {
     return localStorage.getItem('customReportPath') || '';
   });
@@ -39,7 +35,7 @@ export default function SettingsPage() {
           {t('systemSettings')}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Configure application defaults, color themes, VAT rates, and localization
+          Configure application defaults, color themes, and localization
         </p>
       </div>
       <div className="flex items-center gap-2 border-b border-border/50 pb-2 overflow-x-auto">
@@ -98,66 +94,6 @@ export default function SettingsPage() {
         {activeTab === 'appearance' && (
         <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
           <ThemeSelector />
-        </div>
-        )}
-
-        {activeTab === 'tax' && (
-        <div className="glass-card p-6 space-y-4 bg-card/30 border border-border/40 rounded-2xl md:col-span-2">
-          <h3 className="text-base font-semibold flex items-center gap-2 border-b border-border/50 pb-2 text-foreground">
-            {t('taxVatSettings')}
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/20 border border-border/50">
-              <div>
-                <h4 className="text-sm font-semibold text-foreground">{t('enableVat')}</h4>
-                <p className="text-xs text-muted-foreground mt-0.5 max-w-[280px]">
-                  {t('enableVatDesc')}
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer select-none flex-shrink-0">
-                <input
-                  type="checkbox"
-                  checked={vatEnabled}
-                  onChange={(e) => {
-                    const val = e.target.checked;
-                    setVatConfig(val, vatPercentage);
-                    setVatEnabled(val);
-                    toast.success(`VAT calculations ${val ? 'enabled' : 'disabled'} successfully.`);
-                    window.dispatchEvent(new CustomEvent('products_updated'));
-                  }}
-                  className="sr-only peer"
-                />
-                <div className="w-9 h-5 bg-secondary/60 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-              </label>
-            </div>
-            <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 space-y-3">
-              <div>
-                <h4 className="text-sm font-semibold">{t('vatPercentage')}</h4>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {t('vatPercentageDesc')}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 max-w-[150px]">
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value={vatPercentage}
-                  onChange={(e) => {
-                    const raw = parseFloat(e.target.value);
-                    const val = isNaN(raw) ? 0 : Math.max(0, raw);
-                    setVatConfig(vatEnabled, val);
-                    setVatPercentage(val);
-                    window.dispatchEvent(new CustomEvent('products_updated'));
-                  }}
-                  disabled={!vatEnabled}
-                  className="w-full bg-secondary/40 border border-border/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-primary disabled:opacity-40 transition-all text-foreground"
-                />
-                <span className="text-sm font-bold text-foreground">%</span>
-              </div>
-            </div>
-          </div>
         </div>
         )}
 
