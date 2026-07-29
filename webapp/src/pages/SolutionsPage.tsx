@@ -232,10 +232,12 @@ export default function SolutionsPage({ currentUser }: SolutionsPageProps) {
                     <span>-{formatCurrency(selectedTx.discount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Tax (8%):</span>
-                  <span>{formatCurrency(selectedTx.tax)}</span>
-                </div>
+                {selectedTx.tax > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">VAT / Tax:</span>
+                    <span>{formatCurrency(selectedTx.tax)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-bold text-xs border-t border-slate-700/40 pt-1 text-white">
                   <span>Grand Total:</span>
                   <span className="text-primary">{formatCurrency(selectedTx.totalAmount)}</span>

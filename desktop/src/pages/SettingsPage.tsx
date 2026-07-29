@@ -4,7 +4,7 @@ import { useTranslation } from '@/lib/translations';
 import { useNotification } from '@/context/NotificationContext';
 import { syncApi, SyncStatus } from '@/lib/api';
 import { isForceOfflineEnabled, setForceOfflineEnabled } from '@/lib/offlineStore';
-import { getConfig, setConfig } from '@/lib/configStore';
+import { getConfig, setConfig, getVatConfig, setVatConfig } from '@/lib/configStore';
 import ThemeSelector from '@/components/ThemeSelector';
 
 import {
@@ -27,14 +27,8 @@ export default function SettingsPage() {
     { id: 'printer', label: 'Receipt Printer', icon: Printer },
     { id: 'reports', label: 'Reports', icon: Folder },
   ];
-  const [vatEnabled, setVatEnabled] = useState(() => {
-    const saved = getConfig('vatEnabled');
-    return saved !== null ? saved === 'true' : true;
-  });
-  const [vatPercentage, setVatPercentage] = useState(() => {
-    const saved = getConfig('vatPercentage');
-    return saved !== null ? parseFloat(saved) : 15;
-  });
+  const [vatEnabled, setVatEnabled] = useState(() => getVatConfig().enabled);
+  const [vatPercentage, setVatPercentage] = useState(() => getVatConfig().percentage);
   const [customReportPath, setCustomReportPath] = useState(() => {
     return getConfig('customReportPath') || '';
   });
@@ -274,7 +268,7 @@ export default function SettingsPage() {
                   checked={vatEnabled}
                   onChange={(e) => {
                     const val = e.target.checked;
-                    setConfig('vatEnabled', String(val));
+                    setVatConfig(val, vatPercentage);
                     setVatEnabled(val);
                     toast.success(`VAT calculations ${val ? 'enabled' : 'disabled'} successfully.`);
                     window.dispatchEvent(new CustomEvent('products_updated'));
@@ -299,8 +293,9 @@ export default function SettingsPage() {
                   step="0.1"
                   value={vatPercentage}
                   onChange={(e) => {
-                    const val = parseFloat(e.target.value) || 0;
-                    setConfig('vatPercentage', String(val));
+                    const raw = parseFloat(e.target.value);
+                    const val = isNaN(raw) ? 0 : Math.max(0, raw);
+                    setVatConfig(vatEnabled, val);
                     setVatPercentage(val);
                     window.dispatchEvent(new CustomEvent('products_updated'));
                   }}

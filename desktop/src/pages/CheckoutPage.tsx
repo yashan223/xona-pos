@@ -1,4 +1,4 @@
-import { getConfig } from '@/lib/configStore';
+import { getVatConfig } from '@/lib/configStore';
 import { useState, useEffect, useRef } from 'react';
 import { ShoppingCart, Search, Plus, Minus, Trash2, Tag, Sparkles, CheckCircle2, RefreshCw, Printer, Banknote } from 'lucide-react';
 import { useNotification } from '@/context/NotificationContext';
@@ -196,8 +196,8 @@ export default function CheckoutPage({ currentUser }: CheckoutPageProps) {
       toast.error(err.message || 'Checkout process failed.');
     }
   };
-  const vatEnabled = getConfig('vatEnabled') !== 'false';
-  const vatPercentage = parseFloat(getConfig('vatPercentage') || '8');
+  const vatEnabled = getVatConfig().enabled;
+  const vatPercentage = getVatConfig().percentage;
   const cartSubtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
   const discountAmount = parseFloat((cartSubtotal * (discountPercent / 100)).toFixed(2));
   const cartTax = vatEnabled ? parseFloat(((cartSubtotal - discountAmount) * (vatPercentage / 100)).toFixed(2)) : 0;
