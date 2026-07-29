@@ -48,20 +48,20 @@ export function NumericUpDown({
     }
   };
 
-  const btnPadding = size === 'sm' ? 'p-1' : 'p-1.5';
+  const btnPadding = size === 'sm' ? 'px-2 py-1' : 'px-2.5 py-1.5';
   const iconSize = size === 'sm' ? 14 : 16;
-  const inputWidth = size === 'sm' ? 'w-14 text-xs' : 'w-20 text-sm';
+  const inputWidth = size === 'sm' ? 'w-16 text-xs' : 'w-20 text-sm';
 
   return (
-    <div className={`inline-flex items-center rounded-xl border border-border/50 bg-secondary/50 p-1 shadow-sm transition-all hover:border-primary/40 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${className}`}>
+    <div className={`inline-flex items-center rounded-xl border border-primary/40 bg-background shadow-md transition-all hover:border-primary focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30 ${className}`}>
       <button
         type="button"
         onClick={handleDecrement}
         disabled={min !== undefined && numVal <= min}
-        className={`${btnPadding} rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:active:scale-100 transition-all select-none cursor-pointer`}
+        className={`${btnPadding} rounded-lg bg-secondary text-foreground hover:bg-primary/20 hover:text-primary active:scale-95 disabled:opacity-30 disabled:hover:bg-secondary disabled:hover:text-foreground disabled:active:scale-100 transition-all select-none cursor-pointer flex items-center justify-center font-bold`}
         title="Decrease"
       >
-        <Minus size={iconSize} />
+        <Minus size={iconSize} strokeWidth={2.5} />
       </button>
       <input
         type="number"
@@ -71,16 +71,16 @@ export function NumericUpDown({
         value={value === '' ? '' : numVal}
         onChange={handleInputChange}
         placeholder={placeholder}
-        className={`${inputWidth} bg-transparent text-center font-mono font-bold text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+        className={`${inputWidth} bg-transparent text-center font-mono font-bold text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none px-1`}
       />
       <button
         type="button"
         onClick={handleIncrement}
         disabled={max !== undefined && numVal >= max}
-        className={`${btnPadding} rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:active:scale-100 transition-all select-none cursor-pointer`}
+        className={`${btnPadding} rounded-lg bg-secondary text-foreground hover:bg-primary/20 hover:text-primary active:scale-95 disabled:opacity-30 disabled:hover:bg-secondary disabled:hover:text-foreground disabled:active:scale-100 transition-all select-none cursor-pointer flex items-center justify-center font-bold`}
         title="Increase"
       >
-        <Plus size={iconSize} />
+        <Plus size={iconSize} strokeWidth={2.5} />
       </button>
     </div>
   );

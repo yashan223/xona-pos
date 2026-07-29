@@ -36,6 +36,30 @@ class InventoryController {
       res.status(500).json({ error: 'Failed to create preset' });
     }
   };
+  updatePreset = async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id as string;
+      const { name, items } = req.body;
+      if (!name || !items || !Array.isArray(items)) {
+        res.status(400).json({ error: 'Invalid preset data' });
+        return;
+      }
+      const updated = await StockPresetModel.findByIdAndUpdate(
+        id,
+        { name, items, updatedAt: new Date().toISOString() },
+        { new: true }
+      );
+      if (!updated) {
+        res.status(404).json({ error: 'Preset not found' });
+        return;
+      }
+      await logActivity(req, 'UPDATE_PRESET', 'StockPreset', id, { name, itemsCount: items.length });
+      res.json({ message: 'Preset updated successfully', preset: updated });
+    } catch (err) {
+      console.error('[inventory] Error updating preset:', err);
+      res.status(500).json({ error: 'Failed to update preset' });
+    }
+  };
   deletePreset = async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string;

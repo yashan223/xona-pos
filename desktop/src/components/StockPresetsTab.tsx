@@ -1,22 +1,26 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Package, Plus, Play, Trash2, X } from 'lucide-react';
+import { Package, Plus, Play, Trash2, Edit3, X } from 'lucide-react';
 import { inventoryApi, productApi, StockPresetRecord, ProductRecord } from '@/lib/api';
 import { useNotification } from '@/context/NotificationContext';
 import SearchBar from './SearchBar';
 import NumericUpDown from './NumericUpDown';
+
 export function StockPresetsTab({ currentUser }: { currentUser: any }) {
   const { toast, confirm } = useNotification();
   const [presets, setPresets] = useState<StockPresetRecord[]>([]);
   const [products, setProducts] = useState<ProductRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
   const [presetName, setPresetName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItems, setSelectedItems] = useState<{ productId: string; qty: number }[]>([]);
+
   useEffect(() => {
     loadData();
   }, []);
+
   async function loadData() {
     setLoading(true);
     try {
@@ -33,20 +37,44 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
       setLoading(false);
     }
   }
-  const handleCreatePreset = async () => {
+
+  const startCreatePreset = () => {
+    setEditingPresetId(null);
+    setPresetName('');
+    setSelectedItems([]);
+    setSearchQuery('');
+    setIsModalOpen(true);
+  };
+
+  const startEditPreset = (preset: StockPresetRecord) => {
+    setEditingPresetId(preset._id);
+    setPresetName(preset.name);
+    setSelectedItems(preset.items.map(item => ({ productId: item.productId, qty: item.qty })));
+    setSearchQuery('');
+    setIsModalOpen(true);
+  };
+
+  const handleSavePreset = async () => {
     if (!presetName.trim()) return toast.error('Please enter a preset name');
     if (selectedItems.length === 0) return toast.error('Please select at least one product');
     try {
-      await inventoryApi.createPreset({ name: presetName, items: selectedItems });
-      toast.success('Preset saved successfully');
+      if (editingPresetId) {
+        await inventoryApi.updatePreset(editingPresetId, { name: presetName, items: selectedItems });
+        toast.success('Preset updated successfully');
+      } else {
+        await inventoryApi.createPreset({ name: presetName, items: selectedItems });
+        toast.success('Preset saved successfully');
+      }
       setIsModalOpen(false);
+      setEditingPresetId(null);
       setPresetName('');
       setSelectedItems([]);
       loadData();
     } catch (err) {
-      toast.error('Failed to save preset');
+      toast.error(editingPresetId ? 'Failed to update preset' : 'Failed to save preset');
     }
   };
+
   const handleApplyPreset = async (presetId: string) => {
     const isConfirmed = await confirm({
       title: 'Apply Preset',
@@ -63,6 +91,7 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
       toast.error('Failed to apply preset');
     }
   };
+
   const handleDeletePreset = async (presetId: string) => {
     const isConfirmed = await confirm({
       title: 'Delete Preset',
@@ -80,6 +109,7 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
       toast.error('Failed to delete preset');
     }
   };
+
   const toggleProductSelection = (productId: string) => {
     if (selectedItems.find(i => i.productId === productId)) {
       setSelectedItems(selectedItems.filter(i => i.productId !== productId));
@@ -87,13 +117,16 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
       setSelectedItems([...selectedItems, { productId, qty: 0 }]);
     }
   };
+
   const updateProductQty = (productId: string, qty: number) => {
     setSelectedItems(selectedItems.map(i => i.productId === productId ? { ...i, qty } : i));
   };
+
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     p.sku.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -102,8 +135,8 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
           <p className="text-sm text-muted-foreground mt-1">Create bulk stock update presets for quickly updating inventory.</p>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center space-x-2 bg-primary/20 text-primary hover:bg-primary/30 px-4 py-2 rounded-xl transition-all"
+          onClick={startCreatePreset}
+          className="flex items-center space-x-2 bg-primary/20 text-primary hover:bg-primary/30 px-4 py-2 rounded-xl transition-all cursor-pointer select-none"
         >
           <Plus size={18} />
           <span>New Preset</span>
@@ -118,7 +151,7 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
           <Package className="w-12 h-12 text-muted-foreground/50 mb-4" />
           <h3 className="text-lg font-medium text-foreground">No Presets Found</h3>
           <p className="text-sm text-muted-foreground mt-1 mb-4">Create your first stock preset to manage inventory in bulk.</p>
-          <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors select-none">
+          <button onClick={startCreatePreset} className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors select-none">
             Create Preset
           </button>
         </div>
@@ -151,16 +184,25 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
                 })}
               </div>
               <div className="flex justify-between items-center pt-4 border-t border-border/30 mt-auto">
-                <button
-                  onClick={() => handleDeletePreset(preset._id)}
-                  className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                  title="Delete Preset"
-                >
-                  <Trash2 size={18} />
-                </button>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => startEditPreset(preset)}
+                    className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
+                    title="Edit Preset"
+                  >
+                    <Edit3 size={18} />
+                  </button>
+                  <button
+                    onClick={() => handleDeletePreset(preset._id)}
+                    className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer"
+                    title="Delete Preset"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
                 <button
                   onClick={() => handleApplyPreset(preset._id)}
-                  className="flex items-center space-x-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-4 py-2 rounded-xl transition-all"
+                  className="flex items-center space-x-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-4 py-2 rounded-xl transition-all cursor-pointer"
                 >
                   <Play size={16} className="fill-current" />
                   <span className="font-medium">Apply Stock</span>
@@ -174,7 +216,9 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
           <div className="w-full max-w-2xl bg-card border border-border/50 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between p-4 border-b border-border/30">
-              <h3 className="text-lg font-semibold text-foreground">Create Bulk Stock Preset</h3>
+              <h3 className="text-lg font-semibold text-foreground">
+                {editingPresetId ? 'Edit Bulk Stock Preset' : 'Create Bulk Stock Preset'}
+              </h3>
               <button onClick={() => setIsModalOpen(false)} className="p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary/50 transition-colors">
                 <X size={20} />
               </button>
@@ -202,7 +246,7 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
                         type="checkbox"
                         checked={!!isSelected}
                         onChange={() => toggleProductSelection(product.id)}
-                        className="w-4 h-4 rounded border-border/50 text-primary focus:ring-primary/50 bg-background"
+                        className="w-4 h-4 rounded border-border/50 text-primary focus:ring-primary/50 bg-background cursor-pointer"
                       />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{product.name}</p>
@@ -232,11 +276,11 @@ export function StockPresetsTab({ currentUser }: { currentUser: any }) {
               })}
             </div>
             <div className="p-4 border-t border-border/30 bg-card/50 flex justify-end space-x-3">
-              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
                 Cancel
               </button>
-              <button onClick={handleCreatePreset} className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors select-none">
-                Save Preset ({selectedItems.length} items)
+              <button onClick={handleSavePreset} className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors select-none">
+                {editingPresetId ? 'Update Preset' : 'Save Preset'} ({selectedItems.length} items)
               </button>
             </div>
           </div>

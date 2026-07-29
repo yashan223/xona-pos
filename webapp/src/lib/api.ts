@@ -266,6 +266,7 @@ export const activityApi = {
 export const inventoryApi = {
   getPresets: () => request<StockPresetRecord[]>('/inventory/presets'),
   createPreset: (data: { name: string; items: { productId: string; qty: number }[] }) => request<{ message: string; preset: StockPresetRecord }>('/inventory/presets', { method: 'POST', body: JSON.stringify(data) }),
+  updatePreset: (id: string, data: { name: string; items: { productId: string; qty: number }[] }) => request<{ message: string; preset: StockPresetRecord }>(`/inventory/presets/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   applyPreset: (id: string, data: { updatedBy: string }) => request<{ message: string }>(`/inventory/presets/${id}/apply`, { method: 'POST', body: JSON.stringify(data) }),
   deletePreset: (id: string) => request<{ message: string }>(`/inventory/presets/${id}`, { method: 'DELETE' }),
 };
